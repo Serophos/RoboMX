@@ -76,12 +76,12 @@ IDR_SERVER              ICON    DISCARDABLE     "res\\idr_serv.ico"
 // Bitmap
 //
 
-IDB_BG                  BITMAP  DISCARDABLE     "res\\bg.bmp"
 IDR_MAINFRAME           BITMAP  MOVEABLE PURE   "res\\channel.bmp"
 IDR_FULLSCREEN          BITMAP  DISCARDABLE     "res\\toolbar1.bmp"
 IDB_TOOLBAR256          BITMAP  DISCARDABLE     "res\\Toolbar_256.bmp"
 IDB_TOOLBAR256_DEACT    BITMAP  DISCARDABLE     "res\\toolbar2.bmp"
 IDB_MENU_BUTTON         BITMAP  DISCARDABLE     "res\\bitmap1.bmp"
+IDB_PREF                BITMAP  DISCARDABLE     "res\\pref.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -119,7 +119,6 @@ BEGIN
     POPUP "&RoboMX"
     BEGIN
         MENUITEM "Connect &New Channel\tCtrl+N", ID_MYFILE_NEW
-        MENUITEM "&Recent Channels",            65535
         MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
         MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
@@ -164,13 +163,13 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "&Display in Channel"
         BEGIN
-            MENUITEM "Winamp song",                 ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG
+            MENUITEM "Winamp song\tF8",             ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG
 
-            MENUITEM "System Uptime",               ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME
+            MENUITEM "System Uptime\tF2",           ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME
 
-            MENUITEM "System Info",                 ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO
+            MENUITEM "System Info\tF3",             ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO
 
-            MENUITEM "Average Lag",                 ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG
+            MENUITEM "Average Lag\tF4",             ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG
 
         END
         POPUP "&Text Tricks"
@@ -184,15 +183,18 @@ BEGIN
         END
         POPUP "&Away Control"
         BEGIN
-            MENUITEM "test",                        ID_CHATROOM_AWAYCONTROL_TEST
+            MENUITEM "Set Back",                    ID_CHATROOM_AWAYCONTROL_SETBACK
+
+            MENUITEM "Set Silent Back",             ID_CHATROOM_AWAYCONTROL_SETSILENTBACK
 
         END
         MENUITEM SEPARATOR
         MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
         MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
         MENUITEM SEPARATOR
-        MENUITEM "Clear &Screen",               ID_CHATROOM_CLEARSCREEN
         MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
+        MENUITEM SEPARATOR
+        MENUITEM "Clear &Window",               ID_CHATROOM_CLEARSCREEN
     END
     POPUP "&User"
     BEGIN
@@ -339,24 +341,49 @@ BEGIN
         BEGIN
             MENUITEM "Bubbles",                     ID_CHATROOM_TEXTTRICKS_BUBBLES
 
-            MENUITEM "Box",                         ID_CHATROOM_TEXTTRICKS_BOX
+            MENUITEM "Blocks",                      ID_CHATROOM_TEXTTRICKS_BOX
 
             MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+
+            MENUITEM "ASCII Art Designer",          ID_CHATROOM_ASCIIARTDESIGN
 
         END
         POPUP "&Away Control"
         BEGIN
-            MENUITEM "test",                        ID_CHATROOM_AWAYCONTROL_TEST
+            MENUITEM "Set Back",                    ID_CHATROOM_AWAYCONTROL_SETBACK
+
+            MENUITEM "Set Silent Back",             ID_CHATROOM_AWAYCONTROL_SETSILENTBACK
 
         END
         MENUITEM SEPARATOR
         MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
         MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
         MENUITEM SEPARATOR
-        MENUITEM "Clear &Screen",               ID_CHATROOM_CLEARSCREEN
-        MENUITEM SEPARATOR
         MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
         MENUITEM SEPARATOR
+        MENUITEM "Clear &Window",               ID_CHATROOM_CLEARSCREEN
+    END
+END
+
+IDR_AWAY MENU DISCARDABLE 
+BEGIN
+    POPUP "Away Control"
+    BEGIN
+        MENUITEM "ZZzZZzzZzZzzzzzz",            ID_AWAYCONTROL_ZZZZZZZZZZZZZZZZ
+
+        MENUITEM "Work",                        ID_AWAYCONTROL_WORK
+        MENUITEM "Sleep",                       ID_AWAYCONTROL_SLEEP
+        MENUITEM "Fresh Air",                   ID_AWAYCONTROL_FRESHAIR
+        MENUITEM "Bathroom",                    ID_AWAYCONTROL_BATHROOM
+        MENUITEM "Smoke Break",                 ID_AWAYCONTROL_SMOKEBREAK
+        MENUITEM "Store",                       ID_AWAYCONTROL_STORE
+        MENUITEM "Food",                        ID_AWAYCONTROL_FOOD
+        MENUITEM "Beer",                        ID_AWAYCONTROL_BEER
+        MENUITEM "TV",                          ID_AWAYCONTROL_TV
+        MENUITEM "None of your buisness",       ID_AWAYCONTROL_NONEOFYOURBUISNESS
+
+        MENUITEM SEPARATOR
+        MENUITEM "Enter Reason",                ID_AWAYCONTROL_ENTERREASON
     END
 END
 
@@ -370,6 +397,12 @@ IDR_MAINFRAME ACCELERATORS PRELOAD MOVEABLE PURE
 BEGIN
     "L",            ID_CHANNEL_CHANNELLIST, VIRTKEY, CONTROL, NOINVERT
     "N",            ID_MYFILE_NEW,          VIRTKEY, CONTROL, NOINVERT
+    VK_F2,          ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME, VIRTKEY, 
+                                                    NOINVERT
+    VK_F3,          ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO, VIRTKEY, 
+                                                    NOINVERT
+    VK_F4,          ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG, VIRTKEY, 
+                                                    NOINVERT
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
     VK_F8,          ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, VIRTKEY, 
@@ -394,7 +427,7 @@ STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About RoboMX [:]"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,7,7,21,20
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
     CTEXT           "RoboMX 0.1 ALPHA",IDC_STATIC,109,7,106,8,SS_NOPREFIX
     CTEXT           "Copyright (C) 2004 by Thees Christian Winkler",
                     IDC_STATIC,56,17,212,8
@@ -403,15 +436,17 @@ BEGIN
                     IDC_STATIC,82,28,161,8
     LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2.0 of the License, or (at your option) any later version.",
                     IDC_STATIC,11,88,302,25
-    LTEXT           "This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.",
+    LTEXT           "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.",
                     IDC_STATIC,11,116,303,27
     LTEXT           "You should have received a copy of the GNU General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA",
                     IDC_STATIC,12,145,300,27
     GROUPBOX        "",IDC_STATIC,7,79,311,97
     LTEXT           "Email: Bender979@yahoo.com --- Home: http://mxcontrol.sourceforge.net",
-                    IDC_STATIC,46,46,233,8
+                    IDC_STATIC,46,62,233,8
     LTEXT           "Warning - This is a test version. It is not fit for general usage.",
-                    IDC_STATIC,67,61,190,8
+                    IDC_STATIC,67,71,190,8
+    LTEXT           "Parts of this program are based on BendMX 3.0",
+                    IDC_STATIC,87,45,150,8
 END
 
 IDD_METIS3_FORM DIALOGEX 0, 0, 458, 235
@@ -419,18 +454,18 @@ STYLE DS_3DLOOK | WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
     EDITTEXT        IDC_INPUT,1,219,403,14,ES_AUTOHSCROLL
-    CONTROL         "",IDC_STATIC_CHAT,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,57,293,160
-    CONTROL         "",IDC_STATIC_SYSOUT,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,2,293,52
     CONTROL         "List1",IDC_USERLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SORTASCENDING | WS_BORDER | 
                     WS_TABSTOP,296,2,161,215
+    PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
+    CONTROL         "",IDC_STATIC_SYSOUT,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,1,2,293,52
+    CONTROL         "",IDC_STATIC_CHAT,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,1,57,293,160
     CONTROL         "",IDC_SPLITTER_1,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,294,2,2,215
     CONTROL         "",IDC_SPLITTER_2,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,1,54,293,3
-    PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
 END
 
 IDD_CONNECT DIALOG DISCARDABLE  0, 0, 339, 118
@@ -476,28 +511,254 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,197,71,50,14
 END
 
-IDD_CHANNELLIST DIALOG DISCARDABLE  0, 0, 340, 150
+IDD_CHANNELLIST DIALOG DISCARDABLE  0, 0, 381, 150
 STYLE WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "List1",IDC_CHANNELS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
-                    WS_BORDER | WS_TABSTOP,2,35,336,113
+                    WS_BORDER | WS_TABSTOP,2,35,377,113
     PUSHBUTTON      "&Update",IDC_REFRESH,268,2,54,14,WS_DISABLED
-    PUSHBUTTON      "&Reload",IDC_CLEAR_REFRESH,268,18,54,14,WS_DISABLED
+    PUSHBUTTON      "&Reload",IDC_CLEAR_REFRESH,325,2,54,14,WS_DISABLED
     LTEXT           "Search:",IDC_STATIC_SEARCH,2,5,41,8
     EDITTEXT        IDC_SEARCH,47,2,217,14,ES_AUTOHSCROLL
     LTEXT           "",IDC_STATIC_MESSAGES,2,20,134,10
-    RTEXT           "",IDC_STATIC_ROOMS,143,21,122,8
+    RTEXT           "",IDC_STATIC_ROOMS,142,21,122,8
+    CONTROL         "Lock Scroll on selection",IDC_SELECTION_NOSCROLL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,268,20,111,10
 END
 
-IDD_SETTINGS DIALOG DISCARDABLE  0, 0, 404, 225
+IDD_SETTINGS DIALOG DISCARDABLE  0, 0, 443, 291
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configuration"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,294,204,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,347,204,50,14
+    CONTROL         "List1",IDC_CAT,"SysListView32",LVS_SINGLESEL | 
+                    LVS_SHOWSELALWAYS | LVS_NOLABELWRAP | LVS_NOSCROLL | 
+                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | 
+                    WS_TABSTOP,7,7,51,277
+    DEFPUSHBUTTON   "OK",IDOK,277,270,50,14
+    PUSHBUTTON      "Apply",IDC_APPLY,331,270,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,386,270,50,14
+    LTEXT           "",IDC_STATIC_CLIENT,66,7,370,260,NOT WS_VISIBLE | NOT 
+                    WS_GROUP
+END
+
+IDD_GENERAL DIALOG DISCARDABLE  0, 0, 361, 256
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Auto Greet Channels",IDC_STATIC,189,1,171,119
+    EDITTEXT        IDC_CHANNELNAME,194,14,103,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_ADDCHANNEL,303,14,50,14
+    LISTBOX         IDC_CHANNELLIST,194,28,103,66,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_REMOVECHANNEL,303,42,50,16
+    CONTROL         "All Channels",IDC_ALLCHANNELS,"Button",BS_AUTOCHECKBOX | 
+                    BS_MULTILINE | WS_TABSTOP,303,62,50,29
+    LTEXT           "Greeting:",IDC_STATIC_GREETING,194,95,159,8
+    GROUPBOX        "Language Setup",IDC_STATIC_LANG,1,1,181,30,WS_DISABLED
+    COMBOBOX        IDC_LANG,7,12,168,141,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,33,181,123
+    CONTROL         "Enable History",IDC_ENABLE_HISTORY,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,7,45,94,10
+    CONTROL         "Limit Chatwindow to ",IDC_LINES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,62,94,9
+    EDITTEXT        IDC_LINESNUM,104,60,40,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_HISTORDEPTH,104,44,40,12,ES_AUTOHSCROLL | 
+                    WS_DISABLED
+    CONTROL         "Timestamp for Messages",IDC_TIMESTAMP,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,139,168,10
+    EDITTEXT        IDC_GREETING,194,103,159,12,ES_AUTOHSCROLL
+    GROUPBOX        "Plugins",IDC_STATIC_PLUGINS,3,156,357,99,WS_DISABLED
+    CONTROL         "List1",IDC_PLUGINLIST,"SysListView32",LVS_REPORT | 
+                    LVS_NOSORTHEADER | WS_DISABLED | WS_BORDER | WS_TABSTOP,
+                    7,169,289,79
+    PUSHBUTTON      "Uninstall",IDC_REMOVE,304,234,50,14,WS_DISABLED
+    PUSHBUTTON      "Reload All",IDC_RELOAD_ALL,304,194,50,14,WS_DISABLED
+    PUSHBUTTON      "Unload All",IDC_UNLOAD_ALL,304,215,50,14,WS_DISABLED
+    PUSHBUTTON      "&Configure",IDC_CONFIGURE,304,169,50,14,WS_DISABLED
+    CONTROL         "Minimize to tray",IDC_MINITRAY,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,76,138,10
+    GROUPBOX        "Timeformat:",IDC_STATIC_TIMEFORMAT,190,124,170,32
+    COMBOBOX        IDC_TIME,194,137,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "Print PING notification",IDC_PING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,88,139,10
+END
+
+IDD_COLORS DIALOGEX 0, 0, 363, 242
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Message",IDC_STATIC_MESSAGE,1,1,116,75
+    LTEXT           "Enclosement",IDC_STATIC_NICKENC_MSG,5,11,47,8
+    LTEXT           "Front:",IDC_STATIC_FRONT_MSG,5,27,19,8
+    EDITTEXT        IDC_MSG_FRONT,29,25,23,12,ES_AUTOHSCROLL
+    LTEXT           "End:",IDC_STATIC_END_MSG,5,43,16,8
+    EDITTEXT        IDC_MSG_END,29,41,23,12,ES_AUTOHSCROLL
+    LTEXT           "Message Color",IDC_STATIC_NICKNAME_MSG,57,41,48,8
+    PUSHBUTTON      "Color",IDC_ENC_MSG_COLOR,5,56,21,14
+    LTEXT           "",IDC_STATIC_COLOR_ENC_MSG_PREV,29,56,23,14,0,
+                    WS_EX_STATICEDGE
+    PUSHBUTTON      "Color",IDC_COLOR_MESSAGE,57,56,24,14
+    LTEXT           "",IDC_STATIC_COLOR_MSG_PREV,89,56,24,13,0,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "Action",IDC_STATIC_ACTION,123,1,117,75
+    LTEXT           "Enclosement",IDC_STATIC_NICKENC_MSG2,131,10,47,8
+    LTEXT           "Front:",IDC_STATIC_FRONT_ACTION,131,26,19,8
+    EDITTEXT        IDC_ACTION_FRONT,155,24,23,12,ES_AUTOHSCROLL
+    LTEXT           "End:",IDC_STATIC_END_ACTION,131,42,16,8
+    EDITTEXT        IDC_ACTION_END,155,40,23,12,ES_AUTOHSCROLL
+    LTEXT           "Action Color",IDC_STATIC_NICKNAME_ACTION,183,42,39,8
+    PUSHBUTTON      "Color",IDC_ENC_ACTION_COLOR,131,55,21,14
+    LTEXT           "",IDC_STATIC_COLOR_ENG_ACTION_PREV,155,56,23,14,0,
+                    WS_EX_STATICEDGE
+    PUSHBUTTON      "Color",IDC_COLOR_ACTION,183,55,24,14
+    LTEXT           "",IDC_STATIC_COLOR_ACTION_PREV,209,56,24,13,0,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "Channel",IDC_STATIC_MISCCOLOR,1,78,116,92
+    PUSHBUTTON      "Topic",IDC_TOPIC,5,90,24,14
+    LTEXT           "",IDC_STATIC_TOPIC,31,91,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Motd",IDC_MOTD,5,107,24,14
+    LTEXT           "",IDC_STATIC_MOTD,31,108,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Join",IDC_JOIN,58,90,24,14
+    LTEXT           "",IDC_STATIC_JOIN,84,90,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Part",IDC_PART,58,107,24,14
+    LTEXT           "",IDC_STATIC_PART,84,108,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Background",IDC_BACKG,31,125,50,14
+    LTEXT           "",IDC_STATIC_BG,83,126,22,13,0,WS_EX_STATICEDGE
+    GROUPBOX        "Font",IDC_STATIC_FONT,245,78,117,92
+    COMBOBOX        IDC_FONT,251,88,100,79,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Size",IDC_STATIC_SIZE,251,127,43,8
+    EDITTEXT        IDC_FONTSIZE,299,125,48,12,ES_AUTOHSCROLL
+    COMBOBOX        IDC_ENCODING,251,109,100,76,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Bold",IDC_BOLD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    251,143,43,10
+    CONTROL         "Italic",IDC_ITALIC,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,299,143,60,10
+    CONTROL         "Underline",IDC_UNDERLINE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,251,155,108,10
+    GROUPBOX        "Userlist / Channellist",IDC_STATIC_USERLIST,245,1,116,
+                    75
+    PUSHBUTTON      "Line",IDC_LINE,251,22,24,14
+    LTEXT           "",IDC_STATIC_LINE,277,23,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Files",IDC_FILES,251,39,24,14
+    LTEXT           "",IDC_STATIC_FILES,277,40,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "IP",IDC_NODEIP,304,22,24,14
+    LTEXT           "",IDC_STATIC_NODEIP,330,22,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Port",IDC_PORT,304,39,24,14
+    LTEXT           "",IDC_STATIC_NODEPORT,330,40,22,12,0,WS_EX_STATICEDGE
+    CONTROL         "Color Name in Actions",IDC_COLORACTIONNAME,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,11,146,85,10
+    GROUPBOX        "System",IDC_STATIC_SYSTEM,123,78,117,92
+    PUSHBUTTON      "Pending",IDC_PENDING,131,90,50,14
+    LTEXT           "",IDC_STATIC_PENDING,183,91,22,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Success",IDC_SUCCESS,131,107,50,14
+    LTEXT           "",IDC_STATIC_SUCCESS,183,108,22,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Error",IDC_ERROR,131,124,50,14
+    LTEXT           "",IDC_STATIC_ERROR,183,126,22,13,0,WS_EX_STATICEDGE
+    GROUPBOX        "Background Image",IDC_STATIC_BGIMAGE,123,173,238,68
+    CONTROL         "Enable Background Image",IDC_USE_BGIMAGE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,131,188,100,10
+    PUSHBUTTON      "Change",IDC_SELECT_IMAGE,131,204,50,14
+    LTEXT           "",IDC_STATIC_IMAGEPATH,185,205,169,13,SS_CENTERIMAGE,
+                    WS_EX_STATICEDGE
+    GROUPBOX        "Input Focus Color",IDC_STATIC_HILIGHT,1,173,116,68
+    PUSHBUTTON      "Focus Color",IDC_COLORFOCUS,9,204,58,14
+    LTEXT           "",IDC_STATIC_FOCUS,84,205,22,12,0,WS_EX_STATICEDGE
+    CONTROL         "Change color if focus",IDC_FOCUSCLR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,190,83,10
+END
+
+IDD_MESSAGES DIALOG DISCARDABLE  0, 0, 357, 233
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Quick Messages",IDC_STATIC_QUICK,2,1,354,74
+    EDITTEXT        IDC_MSG_ADD,8,12,288,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_MSG_ADD_BTN,301,12,50,12
+    LISTBOX         IDC_QUICKCMDS,8,28,288,42,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_QUICKREM,301,28,50,12
+    PUSHBUTTON      "Up",IDC_QUICKUP,301,43,50,12
+    PUSHBUTTON      "Down",IDC_QUICKDOWN,301,58,50,13
+    GROUPBOX        "Join / Part Messages",IDC_STATIC_JOINPART,2,76,354,65
+    EDITTEXT        IDC_JOIN,54,96,297,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PART,54,125,297,12,ES_AUTOHSCROLL
+    LTEXT           "Join",IDC_STATIC_JOIN,8,98,40,8
+    LTEXT           "Part",IDC_STATIC_PART,8,127,40,8
+    LTEXT           "Variables in Part Message %NAME% %ROOM%",
+                    IDC_STATIC_PART_VAR,54,114,297,8
+    LTEXT           "Variables for Join Message: %NAME% %LINE% %FILES % ROOM%",
+                    IDC_STATIC_JOIN_VAR,54,86,297,8
+    GROUPBOX        "MP3 / Video Announcement (F8) [Requires Winamp 2.x or 5.x]",
+                    IDC_STATIC_WINAMP,2,146,354,86
+    LTEXT           "MP3 / Audio:",IDC_STATIC_MUSIC,8,162,46,8
+    EDITTEXT        IDC_NOWLISTENING,54,161,297,12,ES_AUTOHSCROLL
+    LTEXT           "Video:",IDC_STATIC_VIDEO,8,181,40,8
+    EDITTEXT        IDC_NOW_WATCHING,54,179,297,12,ES_AUTOHSCROLL
+    LTEXT           "%WA-SONG% %WA-ARTIST% %WA-REMTIME% %WA-ELATIME% %WA-TOTALTIME%\n%WA-BITRATE% %WA-SAMPLERATE% %WA-CHANNELS% %WA-VERSION%",
+                    IDC_STATIC_VARS,8,205,343,21
+END
+
+IDD_SOUND DIALOG DISCARDABLE  0, 0, 360, 261
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Sound Effects",IDC_STATIC_SFX,1,1,354,133
+    CONTROL         "Enable Soundeffects",IDC_ENABLE_SFX,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,11,82,10
+    PUSHBUTTON      "&Connected",IDC_CONNECTED,9,21,50,14
+    LTEXT           "",IDC_STATIC_CONNECT,65,21,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    PUSHBUTTON      "&Disconnected",IDC_DISCONNECTED,9,37,50,14
+    LTEXT           "",IDC_STATIC_DISCONNECTED,65,37,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    PUSHBUTTON      "&Topic",IDC_TOPIC,9,52,50,14
+    LTEXT           "",IDC_STATIC_TOPIC,65,52,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    PUSHBUTTON      "&Motd",IDC_MOTD,9,69,50,14
+    LTEXT           "",IDC_STATIC_MOTD,65,69,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    PUSHBUTTON      "&Redirected",IDC_REDIRECTED,9,85,50,14
+    LTEXT           "",IDC_STATIC_REDIRECTED,65,85,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    PUSHBUTTON      "Start&up",IDC_STARTUP,9,101,50,14
+    LTEXT           "",IDC_STATIC_STARTUP,65,101,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    PUSHBUTTON      "E&rror",IDC_SYSERROR,9,117,50,14
+    LTEXT           "",IDC_STATIC_SYSERROR,65,117,286,14,SS_CENTERIMAGE | 
+                    SS_SUNKEN
+    GROUPBOX        "Chat Sounds",IDC_STATIC_CHATSOUNDS,1,140,358,120
+    CONTROL         "Enable Chat Sounds",IDC_ENABLE_CSFX,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,148,120,10
+    PUSHBUTTON      "&Add",IDC_ADD,9,161,29,14
+    PUSHBUTTON      "&Edit",IDC_EDIT,9,179,29,14
+    PUSHBUTTON      "&Delete",IDC_DELETE,9,196,29,14
+    PUSHBUTTON      "&Play",IDC_PLAY,9,213,29,14
+    CONTROL         "List1",IDC_SOUNDLIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SORTASCENDING | LVS_NOLABELWRAP | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,43,163,312,93
+END
+
+IDD_SFX_EDIT DIALOG DISCARDABLE  0, 0, 356, 84
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Sound Editor"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "&Trigger:",IDC_STATIC,12,24,25,8
+    EDITTEXT        IDC_TRIGGER,70,21,273,14,ES_AUTOHSCROLL
+    LTEXT           "&Reaction:",IDC_STATIC,12,41,32,8
+    EDITTEXT        IDC_REACTION,70,38,243,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BROWSE_SOUND,319,38,24,14
+    DEFPUSHBUTTON   "OK",IDOK,243,63,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,300,63,50,14
+    GROUPBOX        "Sound details",IDC_STATIC,7,7,343,51
+    PUSHBUTTON      "Play &Sound",IDC_PLAY,147,63,50,14
 END
 
 
@@ -606,7 +867,8 @@ BEGIN
     IDD_CHANNELLIST, DIALOG
     BEGIN
         LEFTMARGIN, 2
-        RIGHTMARGIN, 338
+        RIGHTMARGIN, 379
+        VERTGUIDE, 264
         VERTGUIDE, 268
         VERTGUIDE, 322
         TOPMARGIN, 2
@@ -618,9 +880,80 @@ BEGIN
     IDD_SETTINGS, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 397
+        RIGHTMARGIN, 436
+        VERTGUIDE, 58
+        VERTGUIDE, 66
         TOPMARGIN, 7
-        BOTTOMMARGIN, 218
+        BOTTOMMARGIN, 284
+        HORZGUIDE, 267
+        HORZGUIDE, 270
+    END
+
+    IDD_GENERAL, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 360
+        VERTGUIDE, 7
+        VERTGUIDE, 194
+        VERTGUIDE, 354
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 255
+        HORZGUIDE, 120
+        HORZGUIDE, 156
+        HORZGUIDE, 160
+        HORZGUIDE, 169
+        HORZGUIDE, 248
+    END
+
+    IDD_COLORS, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 362
+        VERTGUIDE, 117
+        VERTGUIDE, 123
+        VERTGUIDE, 131
+        VERTGUIDE, 240
+        VERTGUIDE, 245
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 241
+        HORZGUIDE, 76
+        HORZGUIDE, 78
+        HORZGUIDE, 97
+        HORZGUIDE, 114
+        HORZGUIDE, 151
+        HORZGUIDE, 170
+        HORZGUIDE, 173
+        HORZGUIDE, 211
+    END
+
+    IDD_MESSAGES, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 356
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 232
+    END
+
+    IDD_SOUND, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 359
+        VERTGUIDE, 9
+        VERTGUIDE, 38
+        VERTGUIDE, 65
+        VERTGUIDE, 351
+        VERTGUIDE, 355
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 260
+        HORZGUIDE, 16
+    END
+
+    IDD_SFX_EDIT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 349
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 77
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -682,6 +1015,53 @@ BEGIN
 0x3154, "\000" 
     IDC_LINE, 0x403, 3, 0
 0x3354, "\000" 
+    0
+END
+
+IDD_COLORS DLGINIT
+BEGIN
+    IDC_ENCODING, 0x403, 23, 0
+0x4e41, 0x4953, 0x4320, 0x6168, 0x7372, 0x7465, 0x2820, 0x6564, 0x6166, 
+0x6c75, 0x2974, "\000" 
+    IDC_ENCODING, 0x403, 15, 0
+0x6142, 0x746c, 0x6369, 0x4320, 0x6168, 0x7372, 0x7465, "\000" 
+    IDC_ENCODING, 0x403, 22, 0
+0x6843, 0x6e69, 0x7365, 0x2065, 0x6942, 0x2067, 0x2035, 0x6843, 0x7261, 
+0x6573, 0x0074, 
+    IDC_ENCODING, 0x403, 33, 0
+0x6544, 0x6166, 0x6c75, 0x2074, 0x6843, 0x7261, 0x6573, 0x2074, 0x6e28, 
+0x746f, 0x6420, 0x6665, 0x7561, 0x746c, 0x3a20, 0x292d, "\000" 
+    IDC_ENCODING, 0x403, 19, 0
+0x6145, 0x7473, 0x7565, 0x6f72, 0x6570, 0x4320, 0x6168, 0x7372, 0x7465, 
+"\000" 
+    IDC_ENCODING, 0x403, 15, 0
+0x4247, 0x3332, 0x3231, 0x4320, 0x6168, 0x7372, 0x7465, "\000" 
+    IDC_ENCODING, 0x403, 14, 0
+0x7247, 0x6565, 0x206b, 0x6843, 0x7261, 0x6573, 0x0074, 
+    IDC_ENCODING, 0x403, 15, 0
+0x6148, 0x676e, 0x6c75, 0x4320, 0x6168, 0x7372, 0x7465, "\000" 
+    IDC_ENCODING, 0x403, 12, 0
+0x414d, 0x2043, 0x6843, 0x7261, 0x6573, 0x0074, 
+    IDC_ENCODING, 0x403, 12, 0
+0x454f, 0x204d, 0x6843, 0x7261, 0x6573, 0x0074, 
+    IDC_ENCODING, 0x403, 16, 0
+0x7552, 0x7373, 0x6169, 0x206e, 0x6843, 0x7261, 0x6573, 0x0074, 
+    IDC_ENCODING, 0x403, 16, 0
+0x6853, 0x7469, 0x696a, 0x2073, 0x6843, 0x7261, 0x6573, 0x0074, 
+    IDC_ENCODING, 0x403, 15, 0
+0x7953, 0x626d, 0x6c6f, 0x4320, 0x6168, 0x7372, 0x7465, "\000" 
+    IDC_ENCODING, 0x403, 16, 0
+0x7554, 0x6b72, 0x7369, 0x2068, 0x6843, 0x7261, 0x6573, 0x0074, 
+    0
+END
+
+IDD_GENERAL DLGINIT
+BEGIN
+    IDC_TIME, 0x403, 26, 0
+0x3432, 0x6820, 0x756f, 0x7372, 0x6620, 0x726f, 0x616d, 0x2074, 0x6428, 
+0x6665, 0x7561, 0x746c, 0x0029, 
+    IDC_TIME, 0x403, 16, 0
+0x3231, 0x6820, 0x756f, 0x7372, 0x6620, 0x726f, 0x616d, 0x0074, 
     0
 END
 
@@ -845,11 +1225,19 @@ BEGIN
     ID_RECONNECT            "Reconnect to channel\nReconnect to channel"
     IDR_START_NODESERVER    "Starts a Nodeserver. Enables you to send and recieve PMs in channels\nStart Nodeserver"
     ID_VIEW_FULL_SCREEN     "Toggles Full Screen mode on/off"
+    ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME 
+                            "Display how long your Windows has been running in channel\nSystem Uptime"
+    ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO 
+                            "Display Information about your Windows and Computer in the channel\nSystem Info"
+    ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG 
+                            "Displays the average Lag between what you type and when you see it in the channel\nAverage Lag"
 END
 
 STRINGTABLE DISCARDABLE 
 BEGIN
     ID_VIEW_CHANNELBAR      "Show or hide the channelbar\nToggle Channel Bar"
+    ID_CHATROOM_ASCIIARTDESIGN 
+                            "Opens a dialog where you can edit ASCII art pictures in and then paste it into the channel"
 END
 
 #endif    // English (U.S.) resources

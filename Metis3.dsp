@@ -53,7 +53,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /machine:I386
-# ADD LINK32 /nologo /subsystem:windows /map /machine:I386 /out:"Release/RoboMX.exe" /MAPINFO:LINES /MAPINFO:EXPORTS
+# ADD LINK32 winmm.lib /nologo /subsystem:windows /map /machine:I386 /out:"Release/RoboMX.exe" /MAPINFO:LINES /MAPINFO:EXPORTS
 # SUBTRACT LINK32 /pdb:none /incremental:yes /debug
 
 !ELSEIF  "$(CFG)" == "Metis3 - Win32 Debug"
@@ -80,7 +80,7 @@ BSC32=bscmake.exe
 # ADD BSC32 /nologo
 LINK32=link.exe
 # ADD BASE LINK32 /nologo /subsystem:windows /debug /machine:I386 /pdbtype:sept
-# ADD LINK32 /nologo /subsystem:windows /debug /machine:I386 /out:"Debug/RoboMX.exe" /pdbtype:sept
+# ADD LINK32 winmm.lib /nologo /subsystem:windows /debug /machine:I386 /out:"Debug/RoboMX.exe" /pdbtype:sept
 
 !ENDIF 
 
@@ -91,6 +91,10 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
+# Begin Source File
+
+SOURCE=.\CfgDlg.cpp
+# End Source File
 # Begin Source File
 
 SOURCE=.\ChannelDoc.cpp
@@ -113,11 +117,27 @@ SOURCE=.\Clipboard.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\ColorCfg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ColorStatic.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ColorStatusBar.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\ConnectionDlg.cpp
 # End Source File
 # Begin Source File
 
 SOURCE=.\DocSelect.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\GeneralCfg.cpp
 # End Source File
 # Begin Source File
 
@@ -138,6 +158,10 @@ SOURCE=.\MainFrm.cpp
 # Begin Source File
 
 SOURCE=.\MenuButton.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\MessageCfg.cpp
 # End Source File
 # Begin Source File
 
@@ -185,6 +209,22 @@ SOURCE=.\ServerView.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Settings.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SettingsDlg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SfxCfg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SfxEdit.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\SplitterControl.cpp
 # End Source File
 # Begin Source File
@@ -200,10 +240,18 @@ SOURCE=.\SwitcherButton.cpp
 
 SOURCE=.\SystemInfo.cpp
 # End Source File
+# Begin Source File
+
+SOURCE=.\Tokenizer.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=.\CfgDlg.h
+# End Source File
 # Begin Source File
 
 SOURCE=.\ChannelDoc.h
@@ -226,11 +274,27 @@ SOURCE=.\Clipboard.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\ColorCfg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ColorStatic.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ColorStatusBar.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\ConnectionDlg.h
 # End Source File
 # Begin Source File
 
 SOURCE=.\DocSelect.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\GeneralCfg.h
 # End Source File
 # Begin Source File
 
@@ -251,6 +315,10 @@ SOURCE=.\MainFrm.h
 # Begin Source File
 
 SOURCE=.\MenuButton.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MessageCfg.h
 # End Source File
 # Begin Source File
 
@@ -302,6 +370,22 @@ SOURCE=.\ServerView.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\Settings.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SettingsDlg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SfxCfg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SfxEdit.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\SplitterControl.h
 # End Source File
 # Begin Source File
@@ -315,6 +399,10 @@ SOURCE=.\SwitcherButton.h
 # Begin Source File
 
 SOURCE=.\SystemInfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Tokenizer.h
 # End Source File
 # Begin Source File
 
@@ -363,6 +451,10 @@ SOURCE=.\res\Metis3Doc.ico
 # Begin Source File
 
 SOURCE=.\res\metistyp.ico
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\pref.bmp
 # End Source File
 # Begin Source File
 

@@ -16,60 +16,60 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#if !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
-#define AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_
+#if !defined(AFX_SFXEDIT_H__3DFD8812_A588_48EC_8980_03EEA7694D9A__INCLUDED_)
+#define AFX_SFXEDIT_H__3DFD8812_A588_48EC_8980_03EEA7694D9A__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-// MyEdit.h : header file
+// SfxEdit.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CMyEdit window
+// CSfxEdit dialog
 
-class CMyEdit : public CEdit
+class CSfxEdit : public CDialog
 {
 // Construction
 public:
-	CMyEdit();
-	static int SearchItem(CString strString);
-// Attributes
-public:
+	CSfxEdit(CWnd* pParent = NULL);   // standard constructor
+	void GetValues(int& nEvent, CString& strTrigger, CString& strReaction);
+	void Init(int nEventType, CString strTrigger, CString strReaction);
 
-// Operations
-public:
+// Dialog Data
+	//{{AFX_DATA(CSfxEdit)
+	enum { IDD = IDD_SFX_EDIT };
+	CEdit	m_wndTrigger;
+	CEdit	m_wndRaction;
+	CComboBoxEx	m_cbEvent;
+	CButton	m_wndBrowseBtn;
+	int		m_nEvent;
+	CString	m_strReaction;
+	CString	m_strTrigger;
+	//}}AFX_DATA
+
 
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMyEdit)
-	public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//{{AFX_VIRTUAL(CSfxEdit)
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual BOOL OnInitDialog();
+	virtual void OnOK();
 	//}}AFX_VIRTUAL
 
 // Implementation
-public:
-	void SetBkColor(COLORREF cr);
-	virtual ~CMyEdit();
+protected:
 
 	// Generated message map functions
-protected:
-	COLORREF m_crBg;
-	COLORREF m_crBgFocus;
-	COLORREF m_crDraw;
-	CBrush m_brBkgnd;
-	//{{AFX_MSG(CMyEdit)
-	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	//{{AFX_MSG(CSfxEdit)
+	afx_msg void OnPlay();
+	afx_msg void OnBrowseSound();
 	//}}AFX_MSG
-
 	DECLARE_MESSAGE_MAP()
 };
-
-/////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
+#endif // !defined(AFX_SFXEDIT_H__3DFD8812_A588_48EC_8980_03EEA7694D9A__INCLUDED_)

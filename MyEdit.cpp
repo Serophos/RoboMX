@@ -20,6 +20,9 @@
 #include "stdafx.h"
 #include "Metis3.h"
 #include "MyEdit.h"
+#include "Metis3Doc.h"
+#include "Metis3View.h"
+#include "Settings.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -27,20 +30,25 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+
+extern CSettings g_sSettings;
 /////////////////////////////////////////////////////////////////////////////
 // CMyEdit
 
 UINT UWM_INPUT = ::RegisterWindowMessage("UWM_INPUT-7A14F66B-ABAB-4525-AC01-841C82EC48B6");
 
 extern CStringArray g_aRCMSCommands;
+CStringArray g_aQuick;
 
 #define g_aRCMSCommandsNUM g_aRCMSCommands.GetSize() 
+#define g_aQuickNUM g_aQuick.GetSize() 
 
 CMyEdit::CMyEdit()
 {
 
 	m_crBg = ::GetSysColor(COLOR_WINDOW); // Initializing the Background Color to the system face color.
-	m_brBkgnd.CreateSolidBrush(m_crBg); // Create the Brush Color for the Background.
+	m_crBgFocus = g_sSettings.GetRGBFocus();
+	m_brBkgnd.CreateSolidBrush(m_crBgFocus); // Create the Brush Color for the Background.
 }
 
 CMyEdit::~CMyEdit()
@@ -59,6 +67,24 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CMyEdit message handlers
 
+/////////////////////////////////
+// Search string in autocommand
+/////////////////////////////////
+int CMyEdit::SearchItem(CString strString)
+{
+
+	CString strTmp;
+
+	for(int nIndex = 0; nIndex < g_aQuick.GetSize(); nIndex++){
+
+		strTmp = g_aQuick[nIndex];
+		if(strTmp == strString) break;
+	}
+
+	if((nIndex >= g_aQuick.GetSize())  || g_aQuick.GetSize() == 0) return 0;
+
+	return nIndex + 1;
+}
 
 BOOL CMyEdit::PreTranslateMessage(MSG* pMsg) 
 {
@@ -138,6 +164,85 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 				return TRUE;
 			}
 		}
+		///////////////////////////////////////////////////////
+		// Commands UP UPARROW or MOUSEHWEL UP
+		///////////////////////////////////////////////////////
+		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_UP) && (g_aRCMSCommandsNUM != 0)){
+		
+			TCHAR szTempStr[1024];
+			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
+		
+				DWORD dwIndex = SearchItem(szTempStr);
+				if(dwIndex == 0){ // Item was not found
+
+					CString strOut = g_aQuick[g_aQuick.GetSize() - 1];
+					CMetis3View::ReplaceVars(strOut);
+					lstrcpy(szTempStr, strOut);
+					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					SendMessage(WM_KEYDOWN, VK_END, 0);
+					return TRUE;
+				}
+				else if(dwIndex == 1){ // Item found but we are at no1
+
+					SetWindowText("");
+					//Beep(1000, 50);
+				}
+				else{ // item found 
+
+					CString strOut = g_aQuick[dwIndex - 2];
+					CMetis3View::ReplaceVars(strOut);
+					lstrcpy(szTempStr, strOut);
+					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					SendMessage(WM_KEYDOWN, VK_END, 0);
+				}
+				return TRUE;
+			}
+			else{
+
+				CString strOut = g_aQuick[g_aQuick.GetSize() - 1];
+				CMetis3View::ReplaceVars(strOut);
+				lstrcpy(szTempStr, strOut);
+				SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+				SendMessage(WM_KEYDOWN, VK_END, 0);
+				return TRUE;
+			}
+		}
+		///////////////////////////////////////////////////////
+		// Commands down DOWNARROW or MOUSEWHEEL DOWN
+		///////////////////////////////////////////////////////
+		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DOWN) && (g_aRCMSCommandsNUM != 0)){
+		
+			TCHAR szTempStr[1024];
+			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
+				DWORD dwIndex = SearchItem(szTempStr);
+				if(dwIndex >= g_aQuick.GetSize()){
+
+					SetWindowText("");
+					//Beep(1000, 50);
+				}
+				else{
+
+					CString strOut = g_aQuick[dwIndex];
+					CMetis3View::ReplaceVars(strOut);
+
+					lstrcpy(szTempStr, strOut);
+
+					SetWindowText(szTempStr);
+					SendMessage(WM_KEYDOWN, VK_END, 0);
+				}
+				return TRUE;
+			}
+			else{
+
+				CString strOut = g_aQuick[0];
+				CMetis3View::ReplaceVars(strOut);
+
+				lstrcpy(szTempStr, strOut);
+				SetWindowText(szTempStr);
+				SendMessage(WM_KEYDOWN, VK_END, 0);
+				return TRUE;
+			}
+		}
 	}
 
 	return CEdit::PreTranslateMessage(pMsg);
@@ -150,10 +255,7 @@ HBRUSH CMyEdit::CtlColor(CDC* pDC, UINT nCtlColor)
 
 	HBRUSH hbr;
 	hbr = (HBRUSH)m_brBkgnd;
-	pDC->SetBkColor(m_crBg);
-
-//	if (nCtlColor)       // To get rid of compiler warning
-  //    nCtlColor += 0;
+	pDC->SetBkColor(m_crDraw);
 
 	return hbr;
 	
@@ -164,9 +266,9 @@ void CMyEdit::OnKillFocus(CWnd* pNewWnd)
 
 	CEdit::OnKillFocus(pNewWnd);
 
-	m_crBg = ::GetSysColor(COLOR_WINDOW);
+	m_crDraw = m_crBg;
 	m_brBkgnd.DeleteObject(); 
-	m_brBkgnd.CreateSolidBrush(m_crBg);
+	m_brBkgnd.CreateSolidBrush(m_crDraw);
 	RedrawWindow();
 }
 
@@ -175,8 +277,16 @@ void CMyEdit::OnSetFocus(CWnd* pOldWnd)
 
 	CEdit::OnSetFocus(pOldWnd);
 	
-	m_crBg = RGB(255, 245, 210);
+	m_crDraw = m_crBgFocus;
 	m_brBkgnd.DeleteObject();
-	m_brBkgnd.CreateSolidBrush(m_crBg);
+	m_brBkgnd.CreateSolidBrush(m_crDraw);
 	RedrawWindow();
+}
+
+void CMyEdit::SetBkColor(COLORREF cr)
+{
+
+	m_crBg = cr;
+	m_crBgFocus = g_sSettings.GetRGBFocus();
+	Invalidate();
 }

@@ -22,6 +22,7 @@
 #include "ChatClient.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
+#include "Settings.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -29,6 +30,7 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
+extern CSettings g_sSettings;
 
 // move to utils.cpp
 
@@ -146,19 +148,19 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 		CString strError;
 		strError.Format("Robo-Panic: Could not Connect to %s. %s", pClient->m_strRoomIP, pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, RGB(150, 0, 0));
+		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
 	}
 	// recv protocoll version
 	//recv(m_sSocket, (char*)&buffer, 1, 0);
-	pClient->WriteMessage("Starting handshake", RGB(254, 128, 64));
+	pClient->WriteMessage("Starting handshake", g_sSettings.GetRGBPend());
 	pClient->m_mSocket.Recv(buffer, 1, 5);
 	
 	if(buffer[0] != 0x31){
 		
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. Login failed.",  RGB(150, 0, 0));
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. Login failed.",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -170,7 +172,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	// Send UP Key Block
 	if(pClient->m_mSocket.Send(buffer, 16, 5) != 16){
 		
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. Send Keyblock failed.",  RGB(150, 0, 0));
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. Send Keyblock failed.",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -179,7 +181,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	// Recv DW Key Block
 	if(pClient->m_mSocket.Recv(buffer, 16, 50) != 16){
 		
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. Recieve Keyblock failed.",  RGB(150, 0, 0));
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. Recieve Keyblock failed.",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -189,7 +191,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	if(GetCryptKeyID((BYTE *)buffer) != 0x58){
 	
 		// this was not crypt key from Chatserver :-(
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. ID missmatch.",  RGB(150, 0, 0));
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. ID missmatch.",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -226,7 +228,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 		CString strError;
 		strError.Format("Robo-Panic: Sending login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, RGB(150, 0, 0));
+		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -237,7 +239,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 		CString strError;
 		strError.Format("Robo-Panic: Handshake failed. %s", pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, RGB(150, 0, 0));
+		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -269,7 +271,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 				CString strError;
 				strError.Format("Robo-Panic [a]: %s '(", pClient->m_mSocket.GetLastErrorStr());
-				pClient->WriteMessage(strError, RGB(150, 0, 0));
+				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 				pClient->m_bListen  = FALSE;
 				break;
 			}
@@ -309,7 +311,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 				CString strError;
 				strError.Format("Robo-Panic [b]: %s :'(", pClient->m_mSocket.GetLastErrorStr());
-				pClient->WriteMessage(strError, RGB(150, 0, 0));
+				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 				pClient->m_bListen  = FALSE;
 				break;
 			}
@@ -384,7 +386,7 @@ BOOL CChatClient::SendRename(CString strUser, DWORD dwFiles, WORD wLine)
 
 			CString strError;
 			strError.Format("Robo-Panic [i]: %s '(", m_mSocket.GetLastErrorStr());
-			WriteMessage(strError, RGB(150, 0, 0));
+			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 			return FALSE;
 		}
@@ -421,7 +423,7 @@ void CChatClient::SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction)
 
 			CString strError;
 			strError.Format("Robo-Panic[j]: %s '(", m_mSocket.GetLastErrorStr());
-			WriteMessage(strError, RGB(150, 0, 0));
+			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
 	}
@@ -442,7 +444,11 @@ void CChatClient::Ping()
 		//*(WORD*)buffer = 0x00E8;
 		//*(WORD*)(buffer+2) = 0x00FD;
 		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, 4, m_dwUPKey);
-		WriteMessage("PING", RGB(150,150,150));
+		
+		if(g_sSettings.GetPing()){
+
+			WriteMessage("PING", RGB(150,150,150));
+		}
 
 		int nSend = m_mSocket.Send(buffer, 4,0);
 
@@ -450,7 +456,7 @@ void CChatClient::Ping()
 
 			CString strError;
 			strError.Format("Robo-Panic [k]: %s '(", m_mSocket.GetLastErrorStr());
-			WriteMessage(strError, RGB(150, 0, 0));
+			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
 	}

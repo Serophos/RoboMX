@@ -24,7 +24,7 @@
 
 #include "ChildFrm.h"
 #include "MainFrm.h"
-//#include "RichEditExCtrl.h"
+#include "Settings.h"
 #include "ChannelDoc.h"
 #include "ChannelView.h"
 #include "ServerDoc.h"
@@ -97,6 +97,8 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3App construction
 
+CSettings g_sSettings;
+
 CMetis3App::CMetis3App()
 {
 	// TODO: add construction code here,
@@ -141,7 +143,7 @@ BOOL CMetis3App::InitInstance()
 
 	// Register the application's document templates.  Document templates
 	//  serve as the connection between documents, frame windows and views.
-
+	g_sSettings.Load();
 
 	CMultiDocTemplate* pListTemplate;
 	pListTemplate = new CMultiDocTemplate(
@@ -182,14 +184,20 @@ BOOL CMetis3App::InitInstance()
 	//	return FALSE;
 
 	// Background Image :-)
+	if(g_sSettings.GetUseImage()){
 
-	hBmp = (HBITMAP)::LoadImage(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDB_BG),IMAGE_BITMAP,0,0,LR_DEFAULTCOLOR);
-	if (hBmp == NULL)
-		AfxMessageBox("Bitmap could not be loaded !!!", MB_OK);
+		hBmp = (HBITMAP)::LoadImage(AfxGetInstanceHandle(), g_sSettings.GetImage(),IMAGE_BITMAP,0,0,LR_DEFAULTCOLOR|LR_LOADFROMFILE);
+		if (hBmp == NULL){
 
-	HWND hMain = pMainFrame->GetWindow(GW_CHILD)->GetSafeHwnd();
-	pfnOldWndProc = (WNDPROC)GetWindowLong(hMain, GWL_WNDPROC);
-	SetWindowLong(hMain, GWL_WNDPROC, (long)pfnNewWndProc);
+			AfxMessageBox("Error. Could not load Background image", MB_OK);
+		}
+		else{
+
+			HWND hMain = pMainFrame->GetWindow(GW_CHILD)->GetSafeHwnd();
+			pfnOldWndProc = (WNDPROC)GetWindowLong(hMain, GWL_WNDPROC);
+			SetWindowLong(hMain, GWL_WNDPROC, (long)pfnNewWndProc);
+		}
+	}
 
 	// The one and only window has been initialized, so show and update it.
 	m_pMainWnd->ShowWindow(SW_SHOW);

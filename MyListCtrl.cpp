@@ -32,6 +32,12 @@ static char THIS_FILE[] = __FILE__;
 
 CMyListCtrl::CMyListCtrl()
 {
+
+	m_cr1 = RGB(0,0,0);
+	m_cr2 = RGB(200,0,0);
+	m_cr3 = RGB(0,150,0);
+	m_cr4 = RGB(0,0,150);
+	m_cr5 = RGB(0,0,180);
 }
 
 CMyListCtrl::~CMyListCtrl()
@@ -81,27 +87,28 @@ void CMyListCtrl::OnCustomdrawMyList(NMHDR* pNMHDR, LRESULT* pResult)
 
         if(pLVCD->iSubItem == 1){ // files
 
-            crText = RGB(200,0,0);
+            crText = m_cr2;
 		}
         else if(pLVCD->iSubItem == 2){ // line
 
-            crText = RGB(0,150,0);
+            crText = m_cr3;
 		}
         else if(pLVCD->iSubItem == 3){ // ip
 
-            crText = RGB(0,0,150);
+            crText = m_cr4;
 		}
         else if(pLVCD->iSubItem == 4){ // port
 
-            crText = RGB(0,0,180);
+            crText = m_cr5;
 		}
 		else{
 
-			crText = 0;
+			crText = m_cr1;
 		}
 
         // Store the color back in the NMLVCUSTOMDRAW struct.
         pLVCD->clrText = crText;
+		pLVCD->clrTextBk = m_crBg;
 
         // Tell Windows to paint the control itself.
         *pResult = CDRF_DODEFAULT;
@@ -117,4 +124,21 @@ int CMyListCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	ListView_SetExtendedListViewStyle(m_hWnd, LVS_EX_FULLROWSELECT);
 
 	return 0;
+}
+
+void CMyListCtrl::SetColors(COLORREF cr1, COLORREF cr2, COLORREF cr3, COLORREF cr4, COLORREF cr5)
+{
+
+	m_cr1 = cr1;
+	m_cr2 = cr2;
+	m_cr3 = cr3;
+	m_cr4 = cr4;
+	m_cr5 = cr5;
+}
+
+void CMyListCtrl::SetBkColor(COLORREF cr)
+{
+
+	CListCtrl::SetBkColor(cr);
+	m_crBg = cr;
 }

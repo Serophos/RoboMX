@@ -47,10 +47,18 @@ public:
 
 // Implementation
 public:
+	void SetBkColor(COLORREF cr);
+	void SetColors(COLORREF cr1, COLORREF cr2, COLORREF cr3, COLORREF cr4, COLORREF cr5);
 	virtual ~CMyListCtrl();
 
 	// Generated message map functions
 protected:
+	COLORREF m_cr1;
+	COLORREF m_cr2;
+	COLORREF m_cr3;
+	COLORREF m_cr4;
+	COLORREF m_cr5;
+	COLORREF m_crBg;
 	//{{AFX_MSG(CMyListCtrl)
 	afx_msg void OnCustomdrawMyList(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

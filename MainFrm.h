@@ -25,6 +25,7 @@
 #endif // _MSC_VER > 1000
 
 #include "docselect.h"
+#include "ColorStatusBar.h"
 
 class CMainFrame : public CMDIFrameWnd
 {
@@ -62,7 +63,7 @@ public:
 	CDocSelector	m_wndDocSelector;
 
 protected:  // control bar embedded members
-	CStatusBar  m_wndStatusBar;
+	CColorStatusBar  m_wndStatusBar;
 	CToolBar    m_wndToolBar;
 	
 	// used for full-screen mode

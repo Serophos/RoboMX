@@ -28,6 +28,10 @@
 #include <fstream.h>
 #include "Clipboard.h"
 #include "SystemInfo.h"
+#include "Settings.h"
+#include "Tokenizer.h"
+#include "SfxCfg.h"
+#include <mmsystem.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -56,10 +60,16 @@ extern UINT UWM_ADDUSER;
 extern UINT UWM_UNKNOWN;
 extern UINT UWM_SYSTEM;
 extern UINT UWM_REDIRECT;
+extern UINT UWM_LOAD_SETTINGS;
 
 extern axtoi(char *hexStg, int nLen);
+extern CSettings g_sSettings;
+
+extern CArray<SOUND, SOUND> g_aSounds;
+
 CStringArray g_aIgnored;
 CSystemInfo  g_sSystem;
+CStringArray g_aRooms;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3View
@@ -117,6 +127,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_REGISTERED_MESSAGE(UWM_UNKNOWN, OnUnknown)
 	ON_REGISTERED_MESSAGE(UWM_SYSTEM, OnSystem)
 	ON_REGISTERED_MESSAGE(UWM_REDIRECT, OnRedirect)
+	ON_REGISTERED_MESSAGE(UWM_LOAD_SETTINGS, OnReloadCfg)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -164,11 +175,10 @@ void CMetis3View::OnInitialUpdate()
     GetParentFrame()->RecalcLayout();
     ResizeParentToFit(FALSE);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_CHANNEL );
-	m_pStatusBar = (CStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
+	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	
 	LoadEmoticons();
 	LoadRCMSMenu();
-	m_rChat.Init();
 	CRect rc;
 	CWnd* pWnd = GetDlgItem(IDC_SPLITTER_1);
 	pWnd->GetWindowRect(&rc);
@@ -193,6 +203,7 @@ void CMetis3View::OnInitialUpdate()
 					WS_CLIPCHILDREN | WS_VSCROLL | ES_MULTILINE | ES_READONLY |
 					ES_AUTOVSCROLL | ES_LEFT | ES_WANTRETURN, rc, this, IDC_SYSOUT, NULL);
 
+	m_rSys.Init();
 	pWnd = GetDlgItem(IDC_STATIC_CHAT);
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
@@ -202,7 +213,9 @@ void CMetis3View::OnInitialUpdate()
 					ES_AUTOVSCROLL | ES_LEFT | ES_WANTRETURN, rc, this, IDC_CHAT, NULL);
 
 
+	m_rChat.Init();
 	m_rChat.SendMessage(EM_AUTOURLDETECT, TRUE, 0);
+
 
 	m_fFont.CreateFont(15, 6, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, OUT_STRING_PRECIS, 
 		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, "Arial");
@@ -214,9 +227,18 @@ void CMetis3View::OnInitialUpdate()
 	m_lcUsers.InsertColumn(2, "Line", LVCFMT_CENTER, 80);
 	m_lcUsers.InsertColumn(3, "Node-IP", LVCFMT_RIGHT, 120);
 	m_lcUsers.InsertColumn(4, "Node-Port", LVCFMT_RIGHT, 80);
+	m_lcUsers.SetColors(
+		g_sSettings.GetRGBNormalMsg(),
+		g_sSettings.GetRGBFiles(),
+		g_sSettings.GetRGBLine(),
+		g_sSettings.GetRGBIP(),
+		g_sSettings.GetRGBPort()
+		);
+	m_lcUsers.SetBkColor(g_sSettings.GetRGBBg());
 
 	m_lcUsers.SetFont(&m_fFont);
 	m_eInput.SetFont(&m_fFont);
+	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
 	
 	// Set up client
 	m_sSplitter1.SetRange(150, 50, -1);
@@ -226,22 +248,34 @@ void CMetis3View::OnInitialUpdate()
 	m_mxClient.m_strUser	= GetDocument()->m_strName;
 
 	m_mxClient.SetRoom(GetDocument()->m_strRoom);
-	WriteSystemMsg("Connecting. Stand by...", RGB(255,128,64));
+	WriteSystemMsg("Connecting. Stand by...", g_sSettings.GetRGBPend());
 
 	OnUpdate(this, 0, NULL);
 	
-/*	CBitmap		bitmap;
-
-	// Set up toolbar image lists.
-	// Create and set the normal toolbar image list.
-	bitmap.LoadMappedBitmap(IDB_ROBOMX);
-	m_rChat.InsertBitmap((HBITMAP)bitmap.m_hObject);
-	bitmap.Detach();
-	m_rChat.SetText("\n", 0);*/
-
 	SetTimer(TIMER_CONNECT, 500, 0);
 }
 
+
+LRESULT CMetis3View::OnReloadCfg(WPARAM w, LPARAM l)
+{
+
+	m_lcUsers.SetColors(
+		g_sSettings.GetRGBNormalMsg(),
+		g_sSettings.GetRGBFiles(),
+		g_sSettings.GetRGBLine(),
+		g_sSettings.GetRGBIP(),
+		g_sSettings.GetRGBPort()
+		);
+	m_lcUsers.SetBkColor(g_sSettings.GetRGBBg());
+	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
+	m_rSys.Init();
+	m_rSys.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
+	m_rChat.Init();
+	m_rChat.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
+	Invalidate();
+
+	return 1;
+}
 
 BOOL CMetis3View::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) 
 {
@@ -313,6 +347,11 @@ void CMetis3View::OnDestroy()
 	KillTimer(TIMER_UPDATE);
 	KillTimer(TIMER_PING);
 
+	if(g_sSettings.GetSoundFX()){
+
+		PlaySound(g_sSettings.GetSfxPart(), NULL, SND_FILENAME|SND_SYNC);
+	}
+
 	CFormView::OnDestroy();
 	
 	m_mxClient.Disconnect();
@@ -330,6 +369,9 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 			return;	
 		}
 		KillTimer(TIMER_CONNECT);
+	
+		InputWelcome();
+
 		SetTimer(TIMER_PING, 5*60*1000, 0);
 		SetTimer(TIMER_UPDATE, 1000, 0);
 	}
@@ -339,10 +381,7 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 	}
 	else if(nIDEvent == TIMER_UPDATE){
 
-		if(((CMainFrame*)GetApp()->m_pMainWnd)->GetActiveFrame() == GetParentFrame()){
-
-			OnUpdate(this, 0, NULL);
-		}
+		OnUpdate(this, 0, NULL);
 	}
 	CFormView::OnTimer(nIDEvent);
 }
@@ -351,14 +390,14 @@ void CMetis3View::WriteSystemMsg(CString strMsg, COLORREF crText)
 {
 
 	strMsg.Replace("\\rtf", "#rtf");
-	SYSTEMTIME time;
-	GetLocalTime(&time);
+
 	CString strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
+	strTime.Format("[%s]", GetMyLocalTime());
 	
-	m_rSys.SetText(strTime, RGB(255, 255, 255), crText);
-	m_rSys.SetText(" " + strMsg + "\n", crText);
+	m_rSys.SetText(strTime, g_sSettings.GetRGBBg(), crText);
+	m_rSys.SetText(" " + strMsg + "\n", crText, g_sSettings.GetRGBBg());
 }
+
 void CMetis3View::RemoveUser(CString strUser)
 {
 
@@ -410,14 +449,20 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 	CString strTopic = (LPCSTR)lParam;
 
 	strTopic.Replace("\\rtf", "#rtf");
-	SYSTEMTIME time;
-	GetLocalTime(&time);
-	CString strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
-	
-	m_rChat.SetText(strTime, RGB(255, 255, 255), RGB(0, 0, 120));
-	m_rChat.SetText(" Topic: " + strTopic + "\n", RGB(0, 0, 120));
 
+	if(g_sSettings.GetPrintTime()){
+
+		CString strTime;
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBTopic());
+	}
+
+	m_rChat.SetText(" Topic: " + strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
+
+	if(g_sSettings.GetSoundFX()){
+
+		PlaySound(g_sSettings.GetSfxTopic(), NULL, SND_FILENAME|SND_SYNC);
+	}
 	return 1;
 }
 
@@ -426,14 +471,20 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 
 	CString strMotd = (LPCSTR)lParam;
 	strMotd.Replace("\\rtf", "#rtf");
-	SYSTEMTIME time;
-	GetLocalTime(&time);
-	CString strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
-	
-	m_rChat.SetText(strTime, RGB(255, 255, 255), RGB(0, 0, 180));
-	m_rChat.SetText(" " + strMotd + "\n", RGB(0, 0, 180));
 
+	if(g_sSettings.GetPrintTime()){
+
+		CString strTime;
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBMotd());
+	}
+
+	m_rChat.SetText(" " + strMotd + "\n", g_sSettings.GetRGBMotd(), g_sSettings.GetRGBBg());
+
+	if(g_sSettings.GetSoundFX()){
+
+		PlaySound(g_sSettings.GetSfxMotd(), NULL, SND_FILENAME|SND_SYNC);
+	}
 	return 1;
 }
 
@@ -514,11 +565,6 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	
 	strUser.Replace("\\rtf", "#rtf");
 	
-	SYSTEMTIME time;
-	GetLocalTime(&time);
-	CString strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
-	
 	CString strJoin;
 	if((user.wLineType >= 0) && (user.wLineType< NUM_LINES)){
 		
@@ -528,9 +574,21 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 		strTmp = "N/A";
 	}
-	strJoin.Format(" >>> Joins: %s (%d Files, %s)\n", strUser, user.dwNumFiles, strTmp);
-	m_rChat.SetText(strTime, RGB(255,255,255), RGB(255, 150, 0));
-	m_rChat.SetText(strJoin, RGB(255, 150, 0));
+
+	if(g_sSettings.GetPrintTime()){
+
+		CString strTime;
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBJoin());
+	}
+
+	//strJoin.Format(" >>> Joins: %s (%d Files, %s)\n", strUser, user.dwNumFiles, strTmp);
+	strJoin = g_sSettings.GetJoin();
+	strJoin.Replace("%NAME%", strUser);
+	strJoin.Replace("%LINE%", strTmp);
+	strTmp.Format("%d", user.dwNumFiles);
+	strJoin.Replace("%FILES%", strTmp);
+	m_rChat.SetText(" " + strJoin + "\n", g_sSettings.GetRGBJoin(), g_sSettings.GetRGBBg());
 
 	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort);
 
@@ -633,14 +691,17 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 
 	strUser.Replace("\\rtf", "#rtf");
 	
-	SYSTEMTIME time;
-	GetLocalTime(&time);
 	CString strPart, strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
+	if(g_sSettings.GetPrintTime()){
+
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBPart());
+	}
 	
-	strPart.Format(" <<< Parts: %s\n", strUser);
-	m_rChat.SetText(strTime, RGB(255,255,255), RGB(120, 0, 0));
-	m_rChat.SetText(strPart, RGB(120, 0, 0));
+	strPart = g_sSettings.GetPart();
+	strPart.Replace("%NAME%", strUser);
+
+	m_rChat.SetText(" " + strPart + "\n", g_sSettings.GetRGBPart(), g_sSettings.GetRGBBg());
 
 	RemoveUser(strUser);
 
@@ -677,15 +738,29 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
 	
-	SYSTEMTIME time;
-	GetLocalTime(&time);
-	CString strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
-	
-	m_rChat.SetText(strTime, RGB(255,255,255), RGB(255, 0, 0));
-	m_rChat.SetText(" " + strName + " :  ", RGB(255, 0, 0));
-	m_rChat.SetText(strMsg + "\n", RGB(0, 0, 0));
+	if(g_sSettings.GetPrintTime()){
 
+
+		CString strTime;
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBNormalName());
+	}
+	m_rChat.SetText(" " + g_sSettings.GetBrMsgFront(), g_sSettings.GetRGBBrMessage(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(strName, g_sSettings.GetRGBNormalName(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBBrMessage(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+
+	if(g_sSettings.GetSfxChatSfx()){
+
+		for(int i = 0; i < g_aSounds.GetSize(); i++){
+
+			if(strMsg.Find(g_aSounds[i].strTrigger, 0) >= 0){
+
+				PlaySound(g_aSounds[i].strSound, NULL, SND_FILENAME|SND_ASYNC);
+				break;
+			}
+		}
+	}
 	return 1;
 }
 
@@ -720,14 +795,30 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
 	
-	SYSTEMTIME time;
-	GetLocalTime(&time);
-	CString strTime;
-	strTime.Format("[%02d:%02d.%02d]", time.wHour, time.wMinute, time.wSecond);
-	
-	m_rChat.SetText(strTime, RGB(255,255,255), RGB(0, 91, 183));
-	m_rChat.SetText(" * " + strName + " ", RGB(0, 91, 183));
-	m_rChat.SetText(strMsg + "\n", RGB(0, 91, 183));
+	if(g_sSettings.GetPrintTime()){
+
+
+		CString strTime;
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBActionMsg());
+	}
+	m_rChat.SetText(" " + g_sSettings.GetBrMsgFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
+	m_rChat.SetText(g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
+
+	if(g_sSettings.GetSfxChatSfx()){
+
+		for(int i = 0; i < g_aSounds.GetSize(); i++){
+
+			if(strMsg.Find(g_aSounds[i].strTrigger, 0) >= 0){
+
+				PlaySound(g_aSounds[i].strSound, NULL, SND_FILENAME|SND_ASYNC);
+				break;
+			}
+		}
+	}
+
 
 	return 1;
 }
@@ -764,7 +855,14 @@ void CMetis3View::Input(CString strText)
 LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 {
 
-	UpdateData(TRUE);
+	if(wParam == 1){
+
+		m_strInput = (LPTSTR)lParam;
+	}
+	else{
+
+		UpdateData(TRUE);
+	}
 	if(m_strInput.GetLength() > 400){
 
 		m_strInput = m_strInput.Left(400);
@@ -792,12 +890,28 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 		m_strInput = m_strInput.Mid(8);
 		bAction = TRUE;
 	}
+	else if(m_strInput.Find("/all ", 0) == 0){
+
+		m_strInput = m_strInput.Mid(5);
+		((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.BroadcastMessage(UWM_INPUT, 1, (LPARAM)(LPTSTR)(LPCTSTR)m_strInput);
+		m_strInput = "";
+		UpdateData(FALSE);
+		return 1;
+	}
+	else if(m_strInput == "/clear"){
+
+		m_strInput = "";
+		UpdateData(FALSE);
+		m_rChat.SetSel(0,-1);
+		m_rChat.ReplaceSel("");
+	}
 
 	m_mxClient.SendMessage(m_strInput, m_strInput.GetLength(), bAction);
 	UpdateAverageLag();
 
 	m_strInput = "";
 	UpdateData(FALSE);
+	OnUpdate(0,0,0);
 	return 1;
 }
 
@@ -823,7 +937,7 @@ void CMetis3View::OnRename()
 		GetDocument()->m_dwFiles = dlg.m_dwFiles;
 		GetDocument()->m_strName = dlg.m_strName;
 		GetDocument()->m_wLine   = dlg.m_nLine;
-		GetDocument()->SetTitle(dlg.m_strName + "@" + GetDocument()->m_strRoom);
+		GetDocument()->SetTitle(GetDocument()->m_strRoom);
 	}
 }
 
@@ -901,13 +1015,13 @@ LRESULT CMetis3View::OnRedirect(WPARAM wParam, LPARAM lParam)
 	
 	strTarget = (LPCTSTR)lParam;
 	strOut.Format("Redirecting to %s", strTarget);
-	WriteSystemMsg(strOut, RGB(255,128,64));
+	WriteSystemMsg(strOut, g_sSettings.GetRGBPend());
 
 	// 0100007F1A2B
 	if((strTarget.GetLength() - strTarget.ReverseFind('_') -1) != 12){
 
 		strOut.Format("%s does not appear to be a valid room name. Redirect aborted.", strTarget);
-		WriteSystemMsg(strOut, RGB(150, 0, 0));
+		WriteSystemMsg(strOut, g_sSettings.GetRGBErr());
 		if(m_mxClient.m_bListen){
 
 			m_mxClient.Disconnect();
@@ -922,9 +1036,15 @@ LRESULT CMetis3View::OnRedirect(WPARAM wParam, LPARAM lParam)
 		m_lcUsers.DeleteAllItems();
 		m_mxClient.SetRoom(strTarget);
 		GetDocument()->m_strRoom = strTarget;
-		GetDocument()->SetTitle(GetDocument()->m_strName + "@" + GetDocument()->m_strRoom);
+		GetDocument()->SetTitle(GetDocument()->m_strRoom);
 		m_mxClient.Connect();
+		if(g_sSettings.GetSoundFX()){
+
+			PlaySound(g_sSettings.GetSfxRedirect(), NULL, SND_FILENAME|SND_SYNC);
+		}
+
 	}
+
 	return 1;
 }
 
@@ -1359,14 +1479,27 @@ void CMetis3View::LoadRCMSMenu()
 void CMetis3View::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) 
 {
 
+	if(((CMainFrame*)GetApp()->m_pMainWnd)->GetActiveFrame() != GetParentFrame()){
+
+		return;
+	}
+
 	if(m_pStatusBar){
 
 		CString strText;
 		m_pStatusBar->SetPaneText(1, GetDocument()->m_strRoomShort);
 		strText.Format("Average Lag: %u ms", m_dwAvLag);
-		m_pStatusBar->SetPaneText(2, strText);
+		COLORREF cr = 0;
+		if(m_dwAvLag <= 500) cr = RGB(0, 100, 0);
+		else if((m_dwAvLag > 500) && (m_dwAvLag <= 1000)) cr = 0;
+		else if((m_dwAvLag > 1000) && (m_dwAvLag < 1500)) cr = RGB(255, 192, 64);
+		else cr = RGB(200, 0, 0);
+		m_pStatusBar->SetLagColor(cr, strText);
 		strText.Format("%0d users", m_lcUsers.GetItemCount());
+		m_pStatusBar->SetPaneText(2, strText);
+		m_pStatusBar->GetStatusBarCtrl().SetText(strText, 2, SBT_OWNERDRAW); 
 		m_pStatusBar->SetPaneText(3, strText);
+		//m_pStatusBar->Invalidate();
 	}
 }
 
@@ -1395,7 +1528,7 @@ void CMetis3View::OnReconnect()
 
 		m_mxClient.Disconnect();
 	}
-	WriteSystemMsg("Reconnecting. Stand by...", RGB(255, 128, 64));
+	WriteSystemMsg("Reconnecting. Stand by...", g_sSettings.GetRGBPend());
 	m_lcUsers.DeleteAllItems();
 	m_mxClient.Connect();
 }
@@ -1403,7 +1536,7 @@ void CMetis3View::OnReconnect()
 void CMetis3View::OnUpdateReconnect(CCmdUI* pCmdUI) 
 {
 
-	pCmdUI->Enable(!m_mxClient.m_bListen);
+	//pCmdUI->Enable(!m_mxClient.m_bListen);
 }
 
 CString CMetis3View::GetUpTime()
@@ -1479,6 +1612,98 @@ CString CMetis3View::GetMySystemInfo()
 }
 
 
+CString CMetis3View::GetMyLocalTime()
+{
+
+	CString strTime;
+	SYSTEMTIME time;
+	
+	GetLocalTime(&time);
+	char szTime[9];
+	ZeroMemory(&szTime, 9);
+	GetTimeFormat(
+					LOCALE_SYSTEM_DEFAULT, 
+					(g_sSettings.GetTimeFmt() ? TIME_NOSECONDS : TIME_FORCE24HOURFORMAT),
+					&time,
+					(g_sSettings.GetTimeFmt() ? "hh':'mm tt" : "HH':'mm':'ss"),
+					(char*)&szTime, 8
+				 );
+
+	strTime = szTime;
+
+
+	//strTime.Format("%02d:%02d:%02d", time.wHour, time.wMinute, time.wSecond);
+
+	return strTime;
+}
+
+void CMetis3View::ReplaceVars(CString &strMsg)
+{
+
+	if(strMsg.Find("%", 0) < 0 ) return;
+
+	CString strArtist, strSong, strVersion, strPlayTime, strTotalTime, strRemTime, strSampleRate, strBitrate, strNumChannels, strStatus = "not running";
+	
+	strMsg.Replace(_T("%TIME%"), CMetis3View::GetMyLocalTime());
+	
+	
+	CString strTmp = CMetis3View::GetWinampSong();
+
+
+	if(strMsg.Find("%WA-", 0) >= 0){
+
+
+		CTokenizer token(strTmp, "-");
+		token.Next(strArtist);
+		strSong = token.Tail();
+		strArtist.TrimRight();
+		strSong.TrimLeft();
+		
+		HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+
+		if(hwndWinamp != NULL){
+
+
+			strVersion.Format("%x", ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETVERSION));
+			strVersion.SetAt(1, '.');
+
+			int nTotal = 0, nRem = 0, nEla = 0;
+			nTotal = ::SendMessage(hwndWinamp, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+			strTotalTime.Format("%02d:%02d", nTotal/60, nTotal%60);
+
+			nEla= ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;
+			strPlayTime.Format("%02d:%02d", nEla/60, nEla%60);
+			
+			nRem = nTotal - nEla;
+			strRemTime.Format("%02d:%02d", nRem/60, nRem%60);
+
+			strSampleRate.Format("%d", ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETINFO));
+			strBitrate.Format("%d", ::SendMessage(hwndWinamp, WM_WA_IPC, 1, IPC_GETINFO));
+			strNumChannels = (::SendMessage(hwndWinamp, WM_WA_IPC, 2, IPC_GETINFO) == 1 ? "Mono" : "Stereo");
+
+			switch(::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING)){
+
+			case 1: strStatus = "playing";
+				break;
+			case 3: strStatus = "paused";
+				break;
+			default: strStatus = "stopped";
+			}
+
+		}
+		strMsg.Replace(_T("%WA-ARTIST%"), strArtist);
+		strMsg.Replace(_T("%WA-SONG%"), strSong);
+		strMsg.Replace(_T("%WA-VERSION%"), strVersion);
+		strMsg.Replace(_T("%WA-ELATIME%"), strPlayTime);
+		strMsg.Replace(_T("%WA-REMTIME%"), strRemTime);
+		strMsg.Replace(_T("%WA-TOTALTIME%"), strTotalTime);
+		strMsg.Replace(_T("%WA-SAMPLERATE%"), strSampleRate);
+		strMsg.Replace(_T("%WA-BITRATE%"), strBitrate);
+		strMsg.Replace(_T("%WA-CHANNELS%"), strNumChannels);
+		strMsg.Replace(_T("%WA-STATUS%"), strStatus);
+	}	
+}
+
 void CMetis3View::OnDisplayWinampsong() 
 {
 
@@ -1487,12 +1712,15 @@ void CMetis3View::OnDisplayWinampsong()
 	CString strMsg;
 	if(IsVideoPlaying()){
 
-		strMsg.Format("/me watches »%s«", GetWinampSong());
+		strMsg = g_sSettings.GetVideoMsg();
 	}
 	else{
 
-		strMsg.Format("/me listens to »%s«", GetWinampSong());
+		strMsg = g_sSettings.GetWinampMsg();
 	}
+
+	ReplaceVars(strMsg);
+
 	Input(strMsg);
 }
 
@@ -1573,3 +1801,32 @@ void CMetis3View::OnChatroomCopyroomname()
 
 	CClipboard::SetText((LPSTR)(LPCSTR)GetDocument()->m_strRoom);
 }
+
+void CMetis3View::InputWelcome()
+{
+
+	if(g_sSettings.GetSoundFX()){
+
+		PlaySound(g_sSettings.GetSfxJoin(), 0, SND_SYNC|SND_FILENAME);
+	}
+	if(g_sSettings.GetDoEnterMsg()){
+		
+		CString strMsg = g_sSettings.GetEnterMsg();
+		ReplaceVars(strMsg);
+		Input(strMsg);
+	}
+	else{
+
+		for(int i = 0; i < g_aRooms.GetSize(); i++){
+
+			if(GetDocument()->m_strRoom.Find(g_aRooms[i], 0) >= 0){
+
+				CString strMsg = g_sSettings.GetEnterMsg();
+				ReplaceVars(strMsg);
+				Input(strMsg);
+				break;
+			}
+		}
+	}
+}
+

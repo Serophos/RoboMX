@@ -80,7 +80,7 @@ BOOL CMetis3Doc::OnNewDocument()
 		m_strRoomShort = m_strRoom.Left(n);
 	}
 
-	SetTitle(m_strName + "@" + m_strRoom);
+	SetTitle(m_strRoom);
 	return TRUE;
 }
 

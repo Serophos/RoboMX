@@ -6,19 +6,33 @@
 --------------------Configuration: Metis3 - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP4B6.tmp" with contents
+Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP542.tmp" with contents
 [
-/nologo /subsystem:windows /incremental:no /pdb:"Release/RoboMX.pdb" /map:"Release/RoboMX.map" /machine:I386 /out:"Release/RoboMX.exe" /MAPINFO:LINES /MAPINFO:EXPORTS 
+/nologo /MD /W3 /GX /Zd /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /Fp"Release/Metis3.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
+"C:\projects\RoboMX\Metis3View.cpp"
+]
+Creating command line "cl.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP542.tmp" 
+Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP543.tmp" with contents
+[
+winmm.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/RoboMX.pdb" /map:"Release/RoboMX.map" /machine:I386 /out:"Release/RoboMX.exe" /MAPINFO:LINES /MAPINFO:EXPORTS 
+.\Release\CfgDlg.obj
 .\Release\ChannelDoc.obj
 .\Release\ChannelView.obj
 .\Release\ChatClient.obj
 .\Release\ChildFrm.obj
 .\Release\Clipboard.obj
+.\Release\ColorCfg.obj
+.\Release\ColorStatic.obj
+.\Release\ColorStatusBar.obj
 .\Release\ConnectionDlg.obj
+.\Release\DocSelect.obj
+.\Release\GeneralCfg.obj
 .\Release\ImageDataObject.obj
 .\Release\Ini.obj
 .\Release\ListClient.obj
 .\Release\MainFrm.obj
+.\Release\MenuButton.obj
+.\Release\MessageCfg.obj
 .\Release\Metis3.obj
 .\Release\Metis3Doc.obj
 .\Release\Metis3View.obj
@@ -29,16 +43,21 @@ Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP4B6.tmp" with contents
 .\Release\RichEditExCtrl.obj
 .\Release\ServerDoc.obj
 .\Release\ServerView.obj
+.\Release\Settings.obj
+.\Release\SettingsDlg.obj
+.\Release\SfxCfg.obj
+.\Release\SfxEdit.obj
 .\Release\SplitterControl.obj
 .\Release\StdAfx.obj
-.\Release\SystemInfo.obj
-.\Release\Metis3.res
 .\Release\SwitcherButton.obj
-.\Release\DocSelect.obj
-.\Release\MenuButton.obj
+.\Release\SystemInfo.obj
+.\Release\Tokenizer.obj
+.\Release\Metis3.res
 ]
-Creating command line "link.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP4B6.tmp"
+Creating command line "link.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP543.tmp"
 <h3>Output Window</h3>
+Compiling...
+Metis3View.cpp
 Linking...
 
 

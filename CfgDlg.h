@@ -16,60 +16,52 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#if !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
-#define AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_
+#if !defined(AFX_CFGDLG_H__349E6651_4E8D_4907_A338_1933EE12BA79__INCLUDED_)
+#define AFX_CFGDLG_H__349E6651_4E8D_4907_A338_1933EE12BA79__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-// MyEdit.h : header file
+// CfgDlg.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CMyEdit window
+// CCfgDlg dialog
 
-class CMyEdit : public CEdit
+class CCfgDlg : public CDialog
 {
 // Construction
 public:
-	CMyEdit();
-	static int SearchItem(CString strString);
-// Attributes
-public:
+	void OnCancel();
+	void OnOK();
+	CCfgDlg(UINT nIDTemplate, CWnd* pParentWnd = NULL);
 
-// Operations
-public:
+// Dialog Data
+	//{{AFX_DATA(CCfgDlg)
+		// NOTE: the ClassWizard will add data members here
+	//}}AFX_DATA
+	virtual void Load();
+	virtual void Apply();
+
 
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMyEdit)
-	public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//{{AFX_VIRTUAL(CCfgDlg)
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
-public:
-	void SetBkColor(COLORREF cr);
-	virtual ~CMyEdit();
+protected:
 
 	// Generated message map functions
-protected:
-	COLORREF m_crBg;
-	COLORREF m_crBgFocus;
-	COLORREF m_crDraw;
-	CBrush m_brBkgnd;
-	//{{AFX_MSG(CMyEdit)
-	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	//{{AFX_MSG(CCfgDlg)
+		// NOTE: the ClassWizard will add member functions here
 	//}}AFX_MSG
-
 	DECLARE_MESSAGE_MAP()
 };
-
-/////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
+#endif // !defined(AFX_CFGDLG_H__349E6651_4E8D_4907_A338_1933EE12BA79__INCLUDED_)

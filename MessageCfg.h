@@ -16,60 +16,62 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#if !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
-#define AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_
+#if !defined(AFX_MESSAGECFG_H__3A3A53D8_B4E9_468F_816D_55865AC11A75__INCLUDED_)
+#define AFX_MESSAGECFG_H__3A3A53D8_B4E9_468F_816D_55865AC11A75__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-// MyEdit.h : header file
+// MessageCfg.h : header file
 //
 
 /////////////////////////////////////////////////////////////////////////////
-// CMyEdit window
+// CMessageCfg dialog
+#include "CfgDlg.h"
 
-class CMyEdit : public CEdit
+class CMessageCfg : public CCfgDlg
 {
 // Construction
 public:
-	CMyEdit();
-	static int SearchItem(CString strString);
-// Attributes
-public:
+	CMessageCfg(CWnd* pParent = NULL);   // standard constructor
+	void SaveQuickCmds();
+	void LoadQuickCmds();
+	void Apply();
 
-// Operations
-public:
+// Dialog Data
+	//{{AFX_DATA(CMessageCfg)
+	enum { IDD = IDD_MESSAGES };
+	CListBox	m_lbQuick;
+	CString	m_strAdd;
+	CString	m_strJoin;
+	CString	m_strWatch;
+	CString	m_strListen;
+	CString	m_strPart;
+	//}}AFX_DATA
+
 
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMyEdit)
-	public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//{{AFX_VIRTUAL(CMessageCfg)
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
-public:
-	void SetBkColor(COLORREF cr);
-	virtual ~CMyEdit();
+protected:
 
 	// Generated message map functions
-protected:
-	COLORREF m_crBg;
-	COLORREF m_crBgFocus;
-	COLORREF m_crDraw;
-	CBrush m_brBkgnd;
-	//{{AFX_MSG(CMyEdit)
-	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	//{{AFX_MSG(CMessageCfg)
+	virtual BOOL OnInitDialog();
+	afx_msg void OnMsgAddBtn();
+	afx_msg void OnQuickrem();
+	afx_msg void OnQuickup();
+	afx_msg void OnQuickdown();
 	//}}AFX_MSG
-
 	DECLARE_MESSAGE_MAP()
 };
-
-/////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
+#endif // !defined(AFX_MESSAGECFG_H__3A3A53D8_B4E9_468F_816D_55865AC11A75__INCLUDED_)

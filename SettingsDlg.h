@@ -16,60 +16,63 @@
 ** Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 */
 
-#if !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
-#define AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_
+#if !defined(AFX_SETTINGSDLG_H__6AA0ABC2_6436_4465_9C81_3100EBD1FFBA__INCLUDED_)
+#define AFX_SETTINGSDLG_H__6AA0ABC2_6436_4465_9C81_3100EBD1FFBA__INCLUDED_
 
 #if _MSC_VER > 1000
 #pragma once
 #endif // _MSC_VER > 1000
-// MyEdit.h : header file
+// SettingsDlg.h : header file
 //
 
-/////////////////////////////////////////////////////////////////////////////
-// CMyEdit window
+#include "CfgDlg.h"
+#include "GeneralCfg.h"
+#include "ColorCfg.h"
+#include "MessageCfg.h"
+#include "SfxCfg.h"
 
-class CMyEdit : public CEdit
+/////////////////////////////////////////////////////////////////////////////
+// CSettingsDlg dialog
+
+class CSettingsDlg : public CDialog
 {
 // Construction
 public:
-	CMyEdit();
-	static int SearchItem(CString strString);
-// Attributes
-public:
+	void AddCategory(CCfgDlg* pCat, int nICon, LPCTSTR lpszName);
+	CSettingsDlg(CWnd* pParent = NULL);   // standard constructor
 
-// Operations
-public:
+// Dialog Data
+	//{{AFX_DATA(CSettingsDlg)
+	enum { IDD = IDD_SETTINGS };
+	CListCtrl	m_lcCat;
+	//}}AFX_DATA
 
+	CImageList m_cImageList;
+	CGeneralCfg cfgGen;
+	CColorCfg cfgColor;
+	CMessageCfg cfgMsg;
+	CSfxCfg  cfgSfx;
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMyEdit)
-	public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	//{{AFX_VIRTUAL(CSettingsDlg)
+	protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
-public:
-	void SetBkColor(COLORREF cr);
-	virtual ~CMyEdit();
-
-	// Generated message map functions
 protected:
-	COLORREF m_crBg;
-	COLORREF m_crBgFocus;
-	COLORREF m_crDraw;
-	CBrush m_brBkgnd;
-	//{{AFX_MSG(CMyEdit)
-	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
-	afx_msg void OnKillFocus(CWnd* pNewWnd);
-	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	CPtrArray m_aDlgs;
+	// Generated message map functions
+	//{{AFX_MSG(CSettingsDlg)
+	virtual void OnOK();
+	afx_msg void OnApply();
+	afx_msg void OnItemchangedCat(NMHDR* pNMHDR, LRESULT* pResult);
+	virtual BOOL OnInitDialog();
 	//}}AFX_MSG
-
 	DECLARE_MESSAGE_MAP()
 };
-
-/////////////////////////////////////////////////////////////////////////////
 
 //{{AFX_INSERT_LOCATION}}
 // Microsoft Visual C++ will insert additional declarations immediately before the previous line.
 
-#endif // !defined(AFX_MYEDIT_H__C0CB48EF_BEB1_4FBC_843F_14DAC1C31FEA__INCLUDED_)
+#endif // !defined(AFX_SETTINGSDLG_H__6AA0ABC2_6436_4465_9C81_3100EBD1FFBA__INCLUDED_)

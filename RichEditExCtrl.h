@@ -76,7 +76,7 @@ public:
 	BOOL SetSelectionCharFormat(CHARFORMAT2& cf);
 	void Init();
 	void InsertBitmap(HBITMAP hBitmap);
-	void SetText(LPCSTR lpszText, COLORREF text = RGB(0, 0, 0), COLORREF bg = RGB(255,255,255));
+	void SetText(LPCSTR lpszText, COLORREF text, COLORREF bg);
 	virtual ~CRichEditExCtrl();
 
 	static char* stristr(const char * str1, const char * str2);

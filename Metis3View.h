@@ -32,6 +32,7 @@
 #include "MyEdit.h"
 #include "SplitterControl.h"
 #include "MyListCtrl.h"
+#include "ColorStatusBar.h"
 
 #define LCSB_CLIENTDATA 1
 #define LCSB_NCOVERRIDE 2
@@ -60,6 +61,10 @@ public:
 
 // Operations
 public:
+	LRESULT OnReloadCfg(WPARAM w, LPARAM l);
+	static CString GetMyLocalTime();
+	static void ReplaceVars(CString& strMsg);
+	void InputWelcome();
 	static CString GetMySystemInfo();
 	void Input(CString strText);
 	void UpdateAverageLag(BOOL bStart = TRUE);
@@ -103,7 +108,7 @@ public:
 #endif
 
 protected:
-	CStatusBar*	 m_pStatusBar;
+	CColorStatusBar*	 m_pStatusBar;
 
 	CStringArray m_aRCMSMenu;
 	CString		 m_strWd;

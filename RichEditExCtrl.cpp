@@ -24,6 +24,7 @@
 #include "resource.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
+#include "Settings.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,6 +32,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+extern CSettings g_sSettings;
 
 _AFX_RICHEDITEX_STATE::_AFX_RICHEDITEX_STATE()
 {
@@ -103,7 +105,7 @@ int CRichEditExCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	
 	OleInitialize(NULL);
 	
-
+	
 	return 0;
 }
 
@@ -143,6 +145,8 @@ BOOL CRichEditExCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR l
 void CRichEditExCtrl::Init()
 {
 
+	m_cfDefault = g_sSettings.GetDefaultFormat();
+	SetBackgroundColor(FALSE, m_cfDefault.crBackColor);
 }
 
 void CRichEditExCtrl::SetText(LPCSTR lpszText, COLORREF text, COLORREF bg)
@@ -209,7 +213,7 @@ void CRichEditExCtrl::AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 	int nLines = 0;
 	int nLen = 0;
 
-	while((nLines = GetLineCount()) >= 500){
+	while(g_sSettings.GetLimitChat() && ((nLines = GetLineCount()) >= g_sSettings.GetMaxLines())){
 
 		nLen = SendMessage(EM_LINEINDEX, 1, NULL);
 		SetSel(0, nLen);

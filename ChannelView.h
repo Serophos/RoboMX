@@ -29,6 +29,8 @@
 // CChannelView view
 
 #include "ListClient.h"
+#include "ColorStatusBar.h"
+#include "MyListCtrl.h"
 
 class CChannelView : public CFormView
 {
@@ -38,11 +40,12 @@ protected:
 
 // Attributes
 public:
-	//{{AFX_DATA(CMetis3View)
+	//{{AFX_DATA(CChannelView)
 	enum { IDD = IDD_CHANNELLIST };
-	CListCtrl m_lcList;
+	CMyListCtrl m_lcList;
 	CString   m_strSearch;
 	CString   m_strMsg;
+	BOOL m_bNoScroll;
 	//}}AFX_DATA
 
 // Operations
@@ -53,7 +56,7 @@ public:
 
 	CListClient m_mxClient;
 	int m_nLastItem;
-	CStatusBar*	 m_pStatusBar;
+	CColorStatusBar*	 m_pStatusBar;
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CChannelView)
@@ -75,6 +78,7 @@ protected:
 
 	// Generated message map functions
 protected:
+	LRESULT OnReloadCfg(WPARAM w, LPARAM l);
 	//{{AFX_MSG(CChannelView)
 	afx_msg void OnRefresh();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
@@ -85,6 +89,7 @@ protected:
 	afx_msg void OnItemchangedChannels(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnRclickChannels(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnDblclkChannels(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnSelectionNoscroll();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -21,12 +21,16 @@
 #include "ChannelDoc.h"
 #include "ChannelView.h"
 #include "MainFrm.h"
+#include "Settings.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+extern CSettings g_sSettings;
+extern UINT UWM_LOAD_SETTINGS;
 
 /////////////////////////////////////////////////////////////////////////////
 // CChannelView
@@ -39,6 +43,7 @@ CChannelView::CChannelView()
 	: CFormView(CChannelView::IDD)
 {
 	m_pThis = this;
+	m_bNoScroll = FALSE;
 }
 
 CChannelView::~CChannelView()
@@ -49,10 +54,11 @@ void CChannelView::DoDataExchange(CDataExchange* pDX)
 {
 	
 	CFormView::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CMetis3View)
+	//{{AFX_DATA_MAP(CChannelView)
 	DDX_Control(pDX, IDC_CHANNELS, m_lcList);
 	DDX_Text(pDX, IDC_SEARCH, m_strSearch);
 	DDX_Text(pDX, IDC_STATIC_MESSAGES, m_strMsg);
+	DDX_Check(pDX, IDC_SELECTION_NOSCROLL, m_bNoScroll);
 	//}}AFX_DATA_MAP
 }
 
@@ -67,7 +73,9 @@ BEGIN_MESSAGE_MAP(CChannelView, CFormView)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_CHANNELS, OnItemchangedChannels)
 	ON_NOTIFY(NM_RCLICK, IDC_CHANNELS, OnRclickChannels)
 	ON_NOTIFY(NM_DBLCLK, IDC_CHANNELS, OnDblclkChannels)
+	ON_BN_CLICKED(IDC_SELECTION_NOSCROLL, OnSelectionNoscroll)
 	//}}AFX_MSG_MAP
+	ON_REGISTERED_MESSAGE(UWM_LOAD_SETTINGS, OnReloadCfg)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -104,7 +112,7 @@ void CChannelView::OnInitialUpdate()
 	
     GetParentFrame()->RecalcLayout();
     ResizeParentToFit(FALSE);
-	m_pStatusBar = (CStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
+	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_LIST );
 
 	m_lcList.InsertColumn(0, "Room", LVCFMT_LEFT, 300);
@@ -112,9 +120,22 @@ void CChannelView::OnInitialUpdate()
 	m_lcList.InsertColumn(2, "Limit", LVCFMT_RIGHT, 40);
 	m_lcList.InsertColumn(3, "Topic", LVCFMT_LEFT, 300);
 	ListView_SetExtendedListViewStyle(m_lcList.m_hWnd, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	m_lcList.SetColors(g_sSettings.GetRGBNormalMsg(), RGB(0, 128, 0), RGB(128, 0, 0), RGB(0, 64, 128), RGB(0, 64, 128));
+	m_lcList.SetBkColor(g_sSettings.GetRGBBg());
 
 	m_mxClient.SetCallBackProck(CChannelView::ClientCallback, (DWORD)this);
 	m_mxClient.Connect(NULL, "ROBOMX000", 0, 6699);
+}
+
+LRESULT CChannelView::OnReloadCfg(WPARAM w, LPARAM l)
+{
+
+	m_lcList.SetColors(g_sSettings.GetRGBNormalMsg(), RGB(0, 128, 0), RGB(128, 0, 0), RGB(0, 64, 128), RGB(0, 64, 128));
+	m_lcList.SetBkColor(g_sSettings.GetRGBBg());
+
+	Invalidate();
+
+	return 1;
 }
 
 void CChannelView::OnDestroy() 
@@ -245,6 +266,14 @@ void CChannelView::UpdateRoomItem(LPCTSTR lpszRoomName, WORD wUsers, WORD wLimit
 
 		strTmp.Format("%04d Rooms", m_lcList.GetItemCount());
 		GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strTmp);
+		if(m_bNoScroll){
+
+			int n = m_lcList.GetNextItem(-1, LVNI_SELECTED);
+			if(n >= 0){
+
+				m_lcList.EnsureVisible(n, FALSE);
+			}
+		}
 	}
 
 }
@@ -268,6 +297,7 @@ void CChannelView::OnTimer(UINT nIDEvent)
 				m_pStatusBar->SetPaneText(1, "Channel List");
 				CString strText;
 				strText.Format("%d channels", m_lcList.GetItemCount());
+				m_pStatusBar->SetLagColor(0, strText);
 				m_pStatusBar->SetPaneText(2, strText);
 				m_pStatusBar->SetPaneText(3, "");
 			}
@@ -339,4 +369,10 @@ void CChannelView::OnDblclkChannels(NMHDR* pNMHDR, LRESULT* pResult)
 		((CMainFrame*)GetApp()->m_pMainWnd)->JoinChannel();
 	}
 	*pResult = 0;
+}
+
+void CChannelView::OnSelectionNoscroll() 
+{
+
+	UpdateData(TRUE);
 }

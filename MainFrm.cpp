@@ -26,12 +26,16 @@
 #include "ServerView.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
+#include "SettingsDlg.h"
+#include "Settings.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+extern CSettings g_sSettings;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
@@ -148,6 +152,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
     m_wndStatusBar.SetPaneInfo(1,ID_SEPARATOR,SBPS_NORMAL,240);
 	m_wndStatusBar.SetPaneInfo(2,ID_SEPARATOR,SBPS_NORMAL,200);
 	m_wndStatusBar.SetPaneInfo(3,ID_SEPARATOR,SBPS_NORMAL,100);
+	m_wndStatusBar.GetStatusBarCtrl().SetText("", 2, SBT_OWNERDRAW); 
 
 	m_hIcon = (HICON)LoadImage(GetApp()->m_hInstance, MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR );
 
@@ -204,8 +209,11 @@ void CMainFrame::OnAppExit()
 
 void CMainFrame::OnViewOptions() 
 {
-	// TODO: Add your command handler code here
-	AfxMessageBox("Not implemented yet");
+
+	CSettingsDlg  dlgSet;
+
+	dlgSet.DoModal();
+
 }
 
 // dwIcon may be
@@ -305,7 +313,7 @@ void CMainFrame::OnSysCommand(UINT nID, LPARAM lParam)
 
 	CMDIFrameWnd::OnSysCommand(nID, lParam);
 
- 	if ((nID & 0xFFF0) == SC_MINIMIZE)
+ 	if(((nID & 0xFFF0) == SC_MINIMIZE) && g_sSettings.GetMiniTray())
 	{
 
 		if(m_bFullScreenMode){
@@ -314,11 +322,12 @@ void CMainFrame::OnSysCommand(UINT nID, LPARAM lParam)
 		}
 		this->ShowWindow(SW_HIDE);
 	}
- 	if ((nID & 0xFFF0) == SC_MAXIMIZE)
+ 	if((nID & 0xFFF0) == SC_MAXIMIZE)
 	{
 		
 		if(GetActiveFrame()->GetStyle() & WS_MAXIMIZE){
 
+			MDIRestore(GetActiveFrame());
 			MDIMaximize(GetActiveFrame());
 		}
 	}

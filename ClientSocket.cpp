@@ -2,6 +2,10 @@
 #include ".\clientsocket.h"
 #include "MXSock.h"
 #include "util.h"
+#include "settings.h"
+
+
+extern CSettings g_sSettings;
 
 extern UINT UWM_CLNNOTIFY;
 
@@ -31,6 +35,7 @@ CClientSocket::CClientSocket(SOCKET sSocket) :
 {
 
 	m_strName    = "";
+	m_strSrcHost = "";
 	m_dwSrcIP	 = 0;
 	m_wSrcPort  = 0;
 	m_dwIP       = 0;
@@ -41,10 +46,10 @@ CClientSocket::CClientSocket(SOCKET sSocket) :
 	m_bListen    = FALSE;
 	m_dwUPKey    = 0;
 	m_dwDWKey    = 0;
-	m_wClientID  = 0;
-	m_hMsgTarget = 0;
+	m_hMsgTarget = NULL;
 	m_eDone.SetEvent();
 	m_wClientType = CLIENT_WINMX331;
+	m_pThread = NULL;
 
 	ZeroMemory(m_cBuffer, MAX_BUFFER_SIZE);
 }
@@ -69,6 +74,7 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 	}
 
 	GetPeerAddr(&m_dwSrcIP, &m_wSrcPort);
+	m_strSrcHost = CClientSocket::GetHostName(Util::FormatIP(m_dwSrcIP));
 
 	BYTE btKey[16];
 	CreateCryptKeyID(0x0058, (BYTE*)btKey);
@@ -170,7 +176,18 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 		Close();
 		return FALSE;
 	}
-	
+
+	if(lpszRoom != 0){
+
+		if(strstr(lpszRoom, strRoom) == NULL){
+			
+			TRACE("Invalid room name\n");
+			m_eDone.SetEvent();
+			Close();
+			return FALSE;
+		}
+	}
+
 	m_strName = lpszName;
 
 	ZeroMemory(m_cBuffer, 512);
@@ -185,9 +202,22 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 		return FALSE;
 	}
 
-	if(m_wClientType = CLIENT_WINMX353){
+	if(m_wClientType == CLIENT_WINMX353){
 
-		*(WORD*)m_cBuffer = 0x68;
+		*(WORD*)m_cBuffer = 0x0069;
+		*(WORD*)(m_cBuffer+2) = 1;
+
+		if(SendCrypted(m_cBuffer, 5, 5) != 5){
+
+			TRACE("Error sending login grant 3\n");
+			m_eDone.SetEvent();
+			Close();
+			return FALSE;
+		}
+	}
+	if(m_wClientType == CLIENT_WINMX353){
+
+		*(WORD*)m_cBuffer = 0x0068;
 		*(WORD*)(m_cBuffer+2) = 1;
 
 		if(SendCrypted(m_cBuffer, 5, 5) != 5){
@@ -198,6 +228,7 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 			return FALSE;
 		}
 	}
+
 	return TRUE;
 }
 
@@ -205,9 +236,12 @@ BOOL CClientSocket::HighlevelHandshake(const CString strKey)
 {
 
 	WORD wLen = 0;
+
 	if(!strKey.IsEmpty()){
 
-		wLen = Util::FormatMXMessage(0x00CB, (char*)m_cBuffer, "SS", "Server Notice:", "This channel is password protected. Please enter the keyword now.\nYou have 60 seconds. After that you will get automatically disconnected.");
+		CString strKeyMsg = g_sSettings.GetKeyMsg();
+		strKeyMsg.Replace("\\n", "\n");
+		wLen = Util::FormatMXMessage(0x00CB, (char*)m_cBuffer, "SS", "", strKeyMsg);
 
 		if(SendCrypted(m_cBuffer, wLen, 5) != wLen){
 
@@ -229,13 +263,14 @@ BOOL CClientSocket::HighlevelHandshake(const CString strKey)
 
 		WORD wType = *(WORD*)m_cBuffer;
 		wLen = *(WORD*)(m_cBuffer+2);
-		if(wType != 0x00C8){
+		if((wType != 0x00C8) && (wType != 0x1450)){
 
 			TRACE("Error performing highlevel Handshake\n");
 			Close();
 			m_eDone.SetEvent();
 			return FALSE;
 		}
+
 		ZeroMemory(&m_cBuffer, MAX_BUFFER_SIZE);
 		if(Recv(m_cBuffer, wLen, 60) != wLen){
 
@@ -263,7 +298,9 @@ BOOL CClientSocket::HighlevelHandshake(const CString strKey)
 
 	}		
 	
-	wLen = Util::FormatMXMessage(0x00C9, (char*)m_cBuffer, "SS", "Server Notice", "\nThis room is powered by RoboMX. Note that the software is still Alpha and not all features work properly yet. This message will be removed in the stable version.\nEnjoy your stay! :-)\n\n");
+	CString strNotice;
+	strNotice.Format("\nThis room is powered by %s. Note that the software is still Alpha and not all features work properly yet. This message will be removed in the stable version. Enjoy your stay! :-)", STR_VERSION_DLG);
+	wLen = Util::FormatMXMessage(0x00C9, (char*)m_cBuffer, "SS", "Server Notice", strNotice);
 
 	if(SendCrypted(m_cBuffer, wLen, 5) != wLen){
 
@@ -281,7 +318,7 @@ void CClientSocket::StartUp(void)
 
 	m_bListen = TRUE;
 	m_eDone.ResetEvent();
-	AfxBeginThread(CClientSocket::RecvProc, (LPVOID)this, THREAD_PRIORITY_NORMAL);
+	m_pThread = AfxBeginThread(CClientSocket::RecvProc, (LPVOID)this, THREAD_PRIORITY_NORMAL);
 }
 
 UINT CClientSocket::RecvProc(LPVOID pParam)
@@ -306,7 +343,15 @@ UINT CClientSocket::RecvProc(LPVOID pParam)
 				TRACE("Socket Error\n");
 				pClient->m_bListen  = FALSE;
 				ClientError* pE = new ClientError();
-				pE->wIndex = pClient->m_wClientID;
+				pE->guID = pClient->m_guID;
+				if(pClient->GetLastError() !=  SOCK_NOERROR){
+
+					pE->strCause	= pClient->GetLastErrorStr();
+				}
+				else{
+
+					pE->strCause.LoadString(IDS_CLIENTDISC);
+				}
 				pClient->SendNotify(CC_ERROR, (LPARAM)pE);
 				break;
 			}
@@ -346,7 +391,15 @@ UINT CClientSocket::RecvProc(LPVOID pParam)
 				TRACE(strError);
 				pClient->m_bListen  = FALSE;
 				ClientError* pE = new ClientError();
-				pE->wIndex = pClient->m_wClientID;
+				pE->guID = pClient->m_guID;
+				if(pClient->GetLastError() !=  SOCK_NOERROR){
+
+					pE->strCause	= pClient->GetLastErrorStr();
+				}
+				else{
+
+					pE->strCause.LoadString(IDS_CLIENTDISC);
+				}
 				pClient->SendNotify(CC_ERROR, (LPARAM)pE);
 				break;
 			}
@@ -365,54 +418,148 @@ UINT CClientSocket::RecvProc(LPVOID pParam)
 	return 0;
 }
 
+void CClientSocket::AddMode(UINT uMode)
+{ 
+	m_uMode |= uMode;
+
+	ClientRename* ur = new ClientRename();
+	ur->dwIP		= m_dwSrcIP;
+	ur->wPort		= m_wSrcPort;
+	ur->dwOldFiles  = m_dwFiles;
+	ur->dwOldIP     = m_dwIP;
+	ur->wOldLine    = m_wLineType;
+	ur->wOldPort    = m_wPort;
+	ur->strOldName  = m_strName;
+	ur->dwNewFiles  = m_dwFiles;
+	ur->dwNewIP     = m_dwIP;
+	ur->wNewLine    = m_wLineType;
+	ur->wNewPort    = m_wPort;
+	ur->strNewName  = m_strName;
+	if((m_uMode & UM_OPERATOR) == UM_OPERATOR)
+		ur->wUserLevel =  1;
+	else if((m_uMode & UM_SPEAKPERMIT) == UM_SPEAKPERMIT)
+		ur->wUserLevel  = 2;
+	else
+		ur->wUserLevel = 0;
+
+	SendNotify(CC_RENAME, (LPARAM)ur);
+}
+void CClientSocket::RemoveMode(UINT uMode)
+{ 
+	m_uMode &= ~uMode; 
+
+	ClientRename* ur = new ClientRename();
+	ur->dwIP		= m_dwSrcIP;
+	ur->wPort		= m_wSrcPort;
+	ur->dwOldFiles  = m_dwFiles;
+	ur->dwOldIP     = m_dwIP;
+	ur->wOldLine    = m_wLineType;
+	ur->wOldPort    = m_wPort;
+	ur->strOldName  = m_strName;
+	ur->dwNewFiles  = m_dwFiles;
+	ur->dwNewIP     = m_dwIP;
+	ur->wNewLine    = m_wLineType;
+	ur->wNewPort    = m_wPort;
+	ur->strNewName  = m_strName;
+	if((m_uMode & UM_OPERATOR) == UM_OPERATOR)
+		ur->wUserLevel  = 1;
+	else if((m_uMode & UM_SPEAKPERMIT) == UM_SPEAKPERMIT)
+		ur->wUserLevel =  2;
+	else
+		ur->wUserLevel = 0;
+
+	SendNotify(CC_RENAME, (LPARAM)ur);
+}
+
 void CClientSocket::HandlePacket(WORD wType, WORD wLen, char* buffer)
 {
 
-	if((wType == 0x1450) && ((m_uMode % UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){
+	//if((wType == 0x1450) && ((m_uMode & UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){
+	if(wType == 0x1450){
 
 		// this is the new WinMX 3.53 send method, we have to handle the /me part too -sigh-
-		BOOL bAction = FALSE;
+		int nMsgID = CC_MSG;
+		CString strText = buffer;
 
-		ClientMessage* cm = new ClientMessage();
-		cm->dwIP	= m_dwSrcIP;
-		cm->wPort   = m_wPort;
-		cm->strName = m_strName;
-		cm->strText = buffer;
-		cm->strText.Replace("{\\rtf", "#####");
-		if(cm->strText.Find("/me ", 0) == 0){
+		strText.Replace("{\\rtf", "#####");
 
-			cm->strText = cm->strText.Mid(4);
-			bAction = TRUE;
+		if(strText.Find("/me ", 0) == 0){
+
+			strText = strText.Mid(4);
+			nMsgID = CC_ACTION;
 		}
-		else if(cm->strText.Find("/action ", 0) == 0){
+		else if(strText.Find("/action ", 0) == 0){
 
-			cm->strText = cm->strText.Mid(9);
-			bAction = TRUE;
+			strText = strText.Mid(8);
+			nMsgID = CC_ACTION;
 		}
-		else if(cm->strText.Find("/emote ", 0) == 0){
+		else if(strText.Find("/emote ", 0) == 0){
 
-			cm->strText = cm->strText.Mid(8);
-			bAction = TRUE;
+			strText = strText.Mid(7);
+			nMsgID = CC_ACTION;
+		}
+		else if(strText.Find("/opmsg ", 0) == 0){
+
+			strText = strText.Mid(7);
+			nMsgID = CC_OPMSG;
 		}
 
-		SendNotify(bAction ? CC_ACTION : CC_MSG, (LPARAM)cm);
+		if(nMsgID == CC_ACTION){
+
+			ClientAction* cm = new ClientAction();
+			cm->guid	= m_guID; 
+			cm->dwIP	= m_dwSrcIP;
+			cm->wPort   = m_wPort;
+			cm->uMode	= m_uMode;
+			cm->strName = m_strName;
+			cm->strText = strText;
+			SendNotify(CC_ACTION, (LPARAM)cm);
+		}
+		else if(nMsgID == CC_OPMSG){
+
+			ClientOpMsg* cm = new ClientOpMsg();
+			cm->guid	= m_guID; 
+			cm->dwIP	= m_dwSrcIP;
+			cm->wPort   = m_wPort;
+			cm->uMode	= m_uMode;
+			cm->strName = m_strName;
+			cm->strText = strText;
+			SendNotify(CC_OPMSG, (LPARAM)cm);
+		}
+		else{
+
+			ClientMessage* cm = new ClientMessage();
+			cm->guid	= m_guID; 
+			cm->dwIP	= m_dwSrcIP;
+			cm->wPort   = m_wPort;
+			cm->uMode	= m_uMode;
+			cm->strName = m_strName;
+			cm->strText = strText;
+			SendNotify(CC_MSG, (LPARAM)cm);
+		}
 
 	}
-	if((wType == 0x00C8) && ((m_uMode & UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){ // message
+	//else if((wType == 0x00C8) && ((m_uMode & UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){ // message
+	else if(wType == 0x00C8){ // message
 
 		ClientMessage* cm = new ClientMessage();
+		cm->guid	= m_guID; 
 		cm->dwIP = m_dwSrcIP;
 		cm->wPort = m_wPort;
+		cm->uMode	= m_uMode;
 		cm->strName = m_strName;
 		cm->strText = buffer;
 		cm->strText.Replace("{\\rtf", "#####");
 		SendNotify(CC_MSG, (LPARAM)cm);
 	}
-	else if((wType == 0x00CA) && ((m_uMode & UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){ // action
+	//else if((wType == 0x00CA) && ((m_uMode & UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){ // action
+	else if(wType == 0x00CA){ // action
 
 		ClientAction* cm = new ClientAction();
+		cm->guid	= m_guID; 
 		cm->dwIP = m_dwSrcIP;
 		cm->wPort = m_wPort;
+		cm->uMode	= m_uMode;
 		cm->strName = m_strName;
 		cm->strText = buffer;
 		cm->strText.Replace("{\\rtf", "#####");
@@ -424,13 +571,17 @@ void CClientSocket::HandlePacket(WORD wType, WORD wLen, char* buffer)
 		LPSTR lpName = 0;
 		if(Util::ScanMessage(buffer, MAX_BUFFER_SIZE, "WDWDS", &ur->wNewLine, &ur->dwNewIP, &ur->wNewPort, &ur->dwNewFiles, &lpName) == 5){
 
+			ur->guid		= m_guID; 
 			ur->dwIP		= m_dwSrcIP;
 			ur->wPort		= m_wSrcPort;
+			ur->uMode       = m_uMode;
 			ur->dwOldFiles  = m_dwFiles;
 			ur->dwOldIP     = m_dwIP;
 			ur->wOldLine    = m_wLineType;
 			ur->wOldPort    = m_wPort;
 			ur->strOldName  = m_strName;
+			ur->wUserLevel  = (WORD)(m_uMode & UM_OPERATOR);
+
 			m_dwFiles		= ur->dwNewFiles;
 			m_dwIP			= ur->dwNewIP;
 			m_wPort			= ur->wNewPort;
@@ -444,7 +595,7 @@ void CClientSocket::HandlePacket(WORD wType, WORD wLen, char* buffer)
 BOOL CClientSocket::SendTopic(const CString strTopic)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
 	WORD wLen = Util::FormatMXMessage(0x012C, (char*)buffer, "S", (LPCSTR)strTopic);
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
@@ -453,7 +604,7 @@ BOOL CClientSocket::SendTopic(const CString strTopic)
 BOOL CClientSocket::SendMotd(const CString strMotd)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
 	WORD wLen = Util::FormatMXMessage(0x00078, (char*)buffer, "S", (LPCSTR)strMotd);
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
@@ -462,16 +613,44 @@ BOOL CClientSocket::SendMotd(const CString strMotd)
 BOOL CClientSocket::SendMsg(const CString strUser, const CString strMsg)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
+	
 	WORD wLen = Util::FormatMXMessage(0x00C9, (char*)buffer, "SS", (LPCSTR)strUser, (LPCSTR)strMsg);
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
 }
 
+BOOL CClientSocket::SendOperator(const CString strUser, const CString strMsg, BOOL bEcho)
+{
+
+	if((m_uMode & UM_OPERATOR) != UM_OPERATOR) return FALSE;
+
+	if(m_wClientType == CLIENT_WINMX353){
+
+		char buffer[MAX_SEND_SIZE];
+
+		WORD wLen = 0;
+		if(bEcho){
+			
+			wLen = Util::FormatMXMessage(0x00D3, (char*)buffer, "S", (strUser.IsEmpty() ? strMsg : strUser));
+		}
+		else{
+			
+			wLen = Util::FormatMXMessage(0x00D2, (char*)buffer, "sss", (LPCSTR)strUser, "", (LPCSTR)strMsg);
+		}
+		
+		return SendCrypted(buffer, wLen, 5) == wLen;
+	}
+	else{
+
+		return SendAction(strUser, strMsg);
+	}
+}
+
 BOOL CClientSocket::SendAction(const CString strUser, const CString strMsg)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
 	WORD wLen = Util::FormatMXMessage(0x00CB, (char*)buffer, "SS", (LPCSTR)strUser, (LPCSTR)strMsg);
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
@@ -480,7 +659,7 @@ BOOL CClientSocket::SendAction(const CString strUser, const CString strMsg)
 BOOL CClientSocket::SendUserlist(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
 
 	WORD wLen = 0;
 
@@ -499,18 +678,18 @@ BOOL CClientSocket::SendUserlist(const CString strUser, DWORD dwIP, WORD wPort, 
 BOOL CClientSocket::SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel, DWORD dwRealIP)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
 	WORD wLen = 0;
 
 	if((m_wClientType == CLIENT_WINMX353) && (m_uMode & UM_OPERATOR)){
 
 		// user is admin so send IP too
-		wLen = Util::FormatMXMessage(0x006E, (char*)buffer, "SDWWDBD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel, dwRealIP);
+		wLen = Util::FormatMXMessage(0x0075, (char*)buffer, "SDWWDBD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel, dwRealIP);
 	}
 	else if(m_wClientType == CLIENT_WINMX353){
 
 		// this user is no admin so dont send IP :P
-		wLen = Util::FormatMXMessage(0x006E, (char*)buffer, "SDWWDB", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel);
+		wLen = Util::FormatMXMessage(0x0071, (char*)buffer, "SDWWDB", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel);
 	}
 	else{
 
@@ -523,27 +702,65 @@ BOOL CClientSocket::SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD
 BOOL CClientSocket::SendPart(const CString strUser, DWORD dwIP, WORD wPort)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
+	char buffer[MAX_SEND_SIZE];
 	WORD wLen = Util::FormatMXMessage(0x0073, (char*)buffer, "SDW", (LPCSTR)strUser, dwIP, wPort);
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
 }
 
-BOOL CClientSocket::SendRename(const CString strOldName, DWORD dwOldIP, WORD wOldPort, const CString strNewName, DWORD dwNewIP, WORD wNewPort, WORD wLine, DWORD dwFiles)
+
+BOOL CClientSocket::SendChannelRename(CString strRoom)
 {
 
-	char buffer[MAX_BUFFER_SIZE];
-	WORD wLen = Util::FormatMXMessage(0x0070, (char*)buffer, "SDWSDWWD", 
-									(LPCTSTR)strOldName,
-									dwOldIP,
-									wOldPort,
-									(LPCTSTR)strNewName,
-									dwNewIP,
-									wNewPort,
-									wLine,
-									dwFiles							
-								);
+	char buffer[MAX_SEND_SIZE];
 
+	WORD wLen = 0;
+
+	if(m_wClientType == CLIENT_WINMX353){
+
+		wLen = Util::FormatMXMessage(0x012D, (char*)buffer, "S", (LPCSTR)strRoom);		
+	}
+	else{
+
+		wLen = Util::FormatMXMessage(0x00CB, (char*)buffer, "SS", (LPCSTR)"", (LPCSTR)strRoom);
+	}
+
+    return SendCrypted(buffer, wLen, 5) == wLen;
+}
+
+BOOL CClientSocket::SendRename(const CString strOldName, DWORD dwOldIP, WORD wOldPort, const CString strNewName, DWORD dwNewIP, WORD wNewPort, WORD wLine, DWORD dwFiles, WORD wUserLevel)
+{
+
+	char buffer[MAX_SEND_SIZE];
+	WORD wLen = 0;
+	
+	if(m_wClientType == CLIENT_WINMX353){
+
+		wLen = Util::FormatMXMessage(0x0074, (char*)buffer, "SDWSDWWDW", 
+										(LPCTSTR)strOldName,
+										dwOldIP,
+										wOldPort,
+										(LPCTSTR)strNewName,
+										dwNewIP,
+										wNewPort,
+										wLine,
+										dwFiles,
+										wUserLevel
+									);
+	}
+	else{
+
+		wLen = Util::FormatMXMessage(0x0070, (char*)buffer, "SDWSDWWD", 
+										(LPCTSTR)strOldName,
+										dwOldIP,
+										wOldPort,
+										(LPCTSTR)strNewName,
+										dwNewIP,
+										wNewPort,
+										wLine,
+										dwFiles							
+									);
+	}
 	return SendCrypted(buffer, wLen, 5) == wLen;
 
 }
@@ -554,12 +771,20 @@ void CClientSocket::LogOut(void)
 	m_bListen = FALSE;
 	Close();
 	TRACE("CClientSocket: Waiting for Listen thread to exit\n");
-	WaitForSingleObject(m_eDone, 5000);
+	DWORD n = WaitForSingleObject(m_eDone, 5000);
+	if(n == WAIT_TIMEOUT || n == WAIT_FAILED){
+
+		TerminateThread(m_pThread->m_hThread, 0);
+	}
+	m_pThread = NULL;
 	TRACE("LogOut Complete :-)\n");
 }
 
 BOOL CClientSocket::SendNotify(WPARAM wParam, LPARAM lParam)
 {
+
+	if(m_hMsgTarget == NULL) return FALSE;
+	if(!::IsWindow(m_hMsgTarget)) return FALSE;
 
 	::SendMessage(m_hMsgTarget, UWM_CLNNOTIFY, wParam, lParam);
 	return TRUE;
@@ -570,6 +795,24 @@ int CClientSocket::SendCrypted(char *pBuff, int nLen, int nWait)
 
 	m_dwDWKey = EncryptMXTCP((BYTE*)pBuff, nLen, m_dwDWKey);
 
-	return Send(pBuff, nLen, nWait);
-}
+	int nSend = Send(pBuff, nLen, nWait);
 
+	if(nSend != nLen){
+
+		ClientError* ce = new ClientError();
+		ce->dwIP		= m_dwSrcIP;
+		ce->wPort		= m_wSrcPort;
+		ce->guID		= m_guID;
+		if(GetLastError() !=  SOCK_NOERROR){
+
+			ce->strCause	= GetLastErrorStr();
+		}
+		else{
+
+			ce->strCause.LoadString(IDS_CLIENTDISC);
+		}
+		SendNotify(CC_ERROR, (LPARAM)ce);
+	}
+
+	return nSend;
+}

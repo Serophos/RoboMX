@@ -54,6 +54,8 @@ public:
 
 // Generated message map functions
 protected:
+	CMenu *m_pUse;
+	afx_msg void OnMDIActivate(BOOL bActivate, CWnd*, CWnd*);
 	DECLARE_MESSAGE_MAP()
 };
 

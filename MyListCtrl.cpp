@@ -433,7 +433,7 @@ int CALLBACK CMyListCtrl::CompareFunction(LPARAM lParam1, LPARAM lParam2, LPARAM
 	else{
 
 		// text.
-		return pListCtrl->m_bSortAscending ? lstrcmp(pszText1, pszText2) : lstrcmp(pszText2, pszText1);
+		return pListCtrl->m_bSortAscending ? lstrcmpi(pszText1, pszText2) : lstrcmpi(pszText2, pszText1);
 	}
 }
 
@@ -611,15 +611,40 @@ void CMyListCtrl::SetHiLite(BOOL bHiLite)
 	m_bHiLite = bHiLite;
 }
 
-int CMyListCtrl::SafeFind(LPCTSTR lpszItem)
+int CMyListCtrl::SafeFind(LPCTSTR lpszItem, int nStart)
 {
 
+	if(nStart >= GetItemCount()) nStart = 0;
 
-	for(int i = 0; i < GetItemCount(); i++){
+	for(int i = nStart; i < GetItemCount(); i++){
 
 		if(GetItemText(i, 0).Compare(lpszItem) == 0){
 
 			return i;
+		}
+	}
+
+	return -1;
+}
+
+int CMyListCtrl::SafeSearch(CString strItem, int nStart, BOOL bExactStart)
+{
+
+	if(nStart >= GetItemCount()) nStart = 0;
+
+	strItem.MakeLower();
+	CString strText;
+	for(int i = nStart; i < GetItemCount(); i++){
+
+		strText = GetItemText(i, 0);
+		strText.MakeLower();
+		if(bExactStart){
+			if(strText.Find(strItem, 0) == 0)
+				return i;
+		}
+		else {
+			if(strText.Find(strItem, 0) >= 0)
+            	return i;
 		}
 	}
 

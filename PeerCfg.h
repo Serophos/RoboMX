@@ -14,7 +14,19 @@ public:
 	virtual ~CPeerCfg();
 
 // Dialog Data
-	enum { IDD = IDD_PAGERCFG };
+	enum { IDD = IDD_SERVERCFG };
+	CString m_strTopic;
+	CString m_strMotd;
+	CString m_strKeyMsg;
+	CString m_strGodName;
+	DWORD   m_dwLimit;
+	BOOL    m_bModerated;
+	BOOL    m_bMultiIPOk;
+	BOOL    m_bLocalIsOp;
+	BOOL	m_bBlockNushi;
+	BOOL	m_bGodVisible;
+	DWORD	m_dwGodFiles;
+	int		m_nLine;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support

@@ -52,9 +52,9 @@ void CRenameDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CRenameDlg)
 	DDX_Text(pDX, IDC_NAME, m_strName);
-	DDV_MaxChars(pDX, m_strName, 44);
 	DDX_CBIndex(pDX, IDC_LINE, m_nLine);
 	DDX_Text(pDX, IDC_FILES, m_dwFiles);
+	DDV_MaxChars(pDX, m_strName, 44);
 	DDV_MinMaxDWord(pDX, m_dwFiles, 0, 65535);
 	DDX_Check(pDX, IDC_ALLROOMS, m_bAllRooms);
 	//}}AFX_DATA_MAP

@@ -51,7 +51,7 @@ public:
 
 // Operations
 public:
-	CColorStatusBar*	 m_pStatusBar;
+	CColorStatusBar*	m_pStatusBar;
 
 public:
 	virtual void OnInitialUpdate();

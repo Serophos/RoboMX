@@ -55,9 +55,10 @@
 #include <afxcview.h>
 #include <shlwapi.h>
 #include "resource.h"
+#include <afxpriv.h>
 
 
-#define STR_VERSION_DLG "RoboMX 0.2.2a [Cosmic]" //\n(Build: " __DATE__ ")"
+#define STR_VERSION_DLG "RoboMX 0.3a [Helix]" //\n(Build: " __DATE__ ")"
 
 //#include <olestd.h>
 //{{AFX_INSERT_LOCATION}}

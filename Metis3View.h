@@ -28,11 +28,13 @@
 #pragma comment(lib, "WS2_32")
 
 #include "ChatClient.h"
+#include "RichDocument.h"
 #include "RichEditExCtrl.h"
 #include "MyEdit.h"
 #include "SplitterControl.h"
 #include "MyListCtrl.h"
 #include "ColorStatusBar.h"
+#include "LogFile.h"
 
 #define LCSB_CLIENTDATA 1
 #define LCSB_NCOVERRIDE 2
@@ -41,59 +43,64 @@ class CMetis3View : public CFormView
 {
 protected: // create from serialization only
 	CMetis3View();
+	virtual ~CMetis3View();
 	DECLARE_DYNCREATE(CMetis3View)
 
 public:
-	//{{AFX_DATA(CMetis3View)
 	enum { IDD = IDD_METIS3_FORM };
 	CButton	m_btExit;
 	CMyEdit	m_eInput;
 	CMyListCtrl	m_lcUsers;
 	CString	m_strInput;
-	//}}AFX_DATA
 	CSplitterControl m_sSplitter1;
 	CSplitterControl m_sSplitter2;
-// Attributes
-public:
-	CMetis3Doc* GetDocument();
+	CRichEditExCtrl m_rSys;
+	CRichEditExCtrl m_rChat;
+	CRichDocument   m_rSysDoc;
+	CRichDocument   m_rChatDoc;
 
 // Operations
 public:
+	CMetis3Doc* GetDocument();
 	LRESULT OnReloadCfg(WPARAM w, LPARAM l);
 	void InputWelcome();
 	void Input(CString strText);
 	void UpdateAverageLag(BOOL bStart = TRUE);
 	void LoadRCMSMenu();
 	void ReCalcLayout();
-	afx_msg LRESULT OnSystem(WPARAM wParam, LPARAM lParam);
 	void DoResize2(int delta);
 	void DoResize1(int delta);
 	void RemoveUser(const CString strUser, const CString strIP, WORD wPort);
 	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, CString strHost, WORD wUserLevel);
-	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0));
+	void WriteText(CString strMsg, COLORREF crText = RGB(0, 150, 0), COLORREF crBg = 0, BOOL bUseBg = FALSE, BOOL bNewLine = FALSE, BOOL bName = FALSE);
+	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0), COLORREF crBg = 0, BOOL bUseBg = FALSE);
+	void HandleHiLite(void);
+	CString GetUserInput(CString strReason = "");
+	void Disconnect(void);
+	BOOL HandleCustomCmds(CString& rString);
+	void WriteSystemMsg(UINT nID, COLORREF rColor);
 
-	CChatClient m_mxClient;
-	CArray<MX_USERINFO, MX_USERINFO> m_aUsers;
-	CFont m_fFont;
-	int m_nServerType;
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CMetis3View)
-	public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-	virtual void OnInitialUpdate(); // called first time after construct
+
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX); 
+	virtual void OnInitialUpdate();
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
-	//}}AFX_VIRTUAL
 
-// Implementation
-	virtual ~CMetis3View();
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
+
+// Attributes
+public:
+	CChatClient m_mxClient;
+	CArray<MX_USERINFO, MX_USERINFO> m_aUsers;
+	CFont	m_fFont;
+	int		m_nServerType;
+	BOOL	m_bHideSystem;
+	int		m_nRetries;
 
 protected:
 	CColorStatusBar*	 m_pStatusBar;
@@ -107,8 +114,7 @@ protected:
 	CString		 m_strTarget;
 
 	// logging stuff
-	CStdioFile     m_fLog;
-	BOOL		   m_bFileOpened;
+	CLogFile m_lLog;
 	BOOL Log(CString strName, CString strText);
 
 // Generated message map functions
@@ -117,7 +123,7 @@ protected:
 
 	afx_msg void OnAwayControl(UINT nID);
 	afx_msg void OnAwayControlBack(UINT nID);
-
+	afx_msg LRESULT OnSystem(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnEchoText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnEchoSysText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnInput(WPARAM wParam, LPARAM lParam);
@@ -131,8 +137,9 @@ protected:
 	afx_msg LRESULT OnAddUser(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRedirect(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRenameMsg(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnRclickChat(WPARAM w, LPARAM l);
+	//afx_msg LRESULT OnRclickChat(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnOpMessage(WPARAM wParam, LPARAM lParam);
+	afx_msg void OnRclickChat(RVN_ELEMENTEVENT* pNotify, LRESULT *pResult);
 
 	afx_msg void OnUpdateUserlistMenu(CCmdUI* pCmdUI);
 	afx_msg void OnRename();
@@ -159,10 +166,6 @@ protected:
 	afx_msg void OnReconnect();
 	afx_msg void OnUpdateReconnect(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateWinampsongMenu(CCmdUI* pCmdUI);
-	afx_msg void OnChatroomSelectall();
-	afx_msg void OnChatroomSearchongoogle();
-	afx_msg void OnChatroomQuote();
-	afx_msg void OnChatroomCopy();
 	afx_msg void OnChatroomClearscreen();
 	afx_msg void OnChatroomCopyroomname();
 	afx_msg void OnDisplayWinampsong();
@@ -178,27 +181,18 @@ protected:
 	afx_msg void OnChatTexttricks3dbuttonsaction();
 	afx_msg LRESULT OnRoomRename(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSetServerType(WPARAM wParam, LPARAM lParam);
-	DECLARE_MESSAGE_MAP()
-public:
-	CRichEditExCtrl m_rSys;
-	CRichEditExCtrl m_rChat;
-	afx_msg void OnEnLinkChat(NMHDR *pNMHDR, LRESULT *pResult);
-
-
-	void HandleHiLite(void);
-	afx_msg LRESULT OnRenameCl(WPARAM wParam, LPARAM lParam);
-protected:
-	CString GetUserInput(CString strReason = "");
-public:
 	afx_msg void OnViewLogfile();
-	void Disconnect(void);
 	afx_msg void OnChatroomViewtopic();
 	afx_msg void OnChatroomAddtoautojoin();
 	afx_msg void OnChatroomViewcurrentbans();
-	BOOL HandleCustomCmds(CString& rString);
-	void WriteSystemMsg(UINT nID, COLORREF rColor);
 	afx_msg void OnMute();
 	afx_msg void OnUpdateMute(CCmdUI *pCmdUI);
+	afx_msg void OnDisplayinchannelPing();
+	afx_msg LRESULT OnRenameCl(WPARAM wParam, LPARAM lParam);
+	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnViewSystemconsole();
+	afx_msg void OnUpdateViewSystemconsole(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in Metis3View.cpp

@@ -52,6 +52,8 @@ CAboutCtrl::CAboutCtrl()
 				   "\rAditional Programming:\n"
 				   "Pablo van der Meer\n"
 				   "Dimitri Rochette \n \n"
+				   "Parts of this program are based on\n"
+				   "code from Sharezea (www.shareaza.com)\n \n"
 				   "\rGraphics, Emoticons, Icons:\n"
 				   "Sabine Schwab\n"
 				   "KDE-Artist-Team\n \n"

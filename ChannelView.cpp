@@ -24,7 +24,7 @@
 #include "Settings.h"
 #include "Clipboard.h"
 #include ".\channelview.h"
-
+#include "ping.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -49,6 +49,7 @@ CChannelView::CChannelView()
 	m_bNoScroll = FALSE;
 	m_nPerc = 0;
 	m_bInit = FALSE;
+	m_strSearch = "";
 }
 
 CChannelView::~CChannelView()
@@ -84,6 +85,7 @@ BEGIN_MESSAGE_MAP(CChannelView, CFormView)
 	ON_COMMAND(ID_POPUP_COPYROOMNAME, OnPopupCopyroomname)
 	//}}AFX_MSG_MAP
 	ON_REGISTERED_MESSAGE(UWM_LOAD_SETTINGS, OnReloadCfg)
+	ON_COMMAND(ID_POPUP_PINGROOM, OnPopupPingroom)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -145,6 +147,7 @@ void CChannelView::OnInitialUpdate()
 
 		ResizeParentToFit(FALSE);
 	}
+
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_LIST );
 
@@ -157,8 +160,8 @@ void CChannelView::OnInitialUpdate()
 		g_sSettings.GetRGBNormalMsg(),
 		g_sSettings.GetRGBFiles(),
 		g_sSettings.GetRGBLine(),
-		g_sSettings.GetRGBIP(),
-		g_sSettings.GetRGBPort()
+		RGB(123,123,123),
+		g_sSettings.GetRGBIP()
 		);
 	m_lcList.SetBkColor(g_sSettings.GetRGBBg());
 	m_lcList.SetHiLite();
@@ -167,11 +170,15 @@ void CChannelView::OnInitialUpdate()
 
 	m_mxClient.SetCallBackProck(CChannelView::ClientCallback, (DWORD)this);
 	CString strNick = g_sSettings.GetNickname();
-	if(strNick.ReverseFind('_') == strNick.GetLength() - 6){
+	if((strNick.ReverseFind('_') == strNick.GetLength() - 6) && (strNick.ReverseFind('_') > 0)){
 
 		strNick = strNick.Left(strNick.GetLength() - 6);
 	}
 	m_mxClient.Connect(NULL, strNick, 0, 6699);
+	
+	CString strTmp;
+	strTmp.LoadString(IDS_CONNECTING);
+	GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strTmp);
 }
 
 LRESULT CChannelView::OnReloadCfg(WPARAM w, LPARAM l)
@@ -233,7 +240,7 @@ void CChannelView::OnClearRefresh()
 
 	m_lcList.DeleteAllItems();
 	CString strNick = g_sSettings.GetNickname();
-	if(strNick.ReverseFind('_') == strNick.GetLength() - 6){
+	if((strNick.ReverseFind('_') == strNick.GetLength() - 6) && (strNick.ReverseFind('_') > 0)){
 
 		strNick = strNick.Left(strNick.GetLength() - 6);
 	}
@@ -246,7 +253,7 @@ void CChannelView::OnRefresh()
 {
 
 	CString strNick = g_sSettings.GetNickname();
-	if(strNick.ReverseFind('_') == strNick.GetLength() - 6){
+	if((strNick.ReverseFind('_') == strNick.GetLength() - 6) && (strNick.ReverseFind('_') > 0)){
 
 		strNick = strNick.Left(strNick.GetLength() - 6);
 	}
@@ -260,49 +267,24 @@ BOOL CChannelView::ClientCallback(DWORD dwParam, WPARAM wParam, LPARAM lParam)
 
 	switch(wParam){
 
-		case CLN_ERROR :
-			switch(lParam){
-				case CLNC_WPNCONNECTFAILED :
-					//m_pThis->SetPaneStatus("Could not connect to WPN");
-					return TRUE;
-
-				case CLNC_WPNGETPARENTFAILED :
-					//m_pThis->SetPaneStatus("Connection to Parent Node failed.");
-					return TRUE;
-				}
+		case WPN_ERROR :
+		case WPN_PARENTDISCONNECTED :
+		case WPN_WPNCONNECTSTART :
+			m_pThis->GetDlgItem(IDC_REFRESH)->EnableWindow(TRUE);
+			m_pThis->GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(TRUE);
 			break;		
 
-		case CLN_WPNCONNECTSTART :
-			//m_pThis->SetPaneStatus("Connecting to WPN");
-			return TRUE; 
-
-		case CLN_WPNCONNECTED :
+		case WPN_WPNCONNECTED :
 			//m_pThis->SetPaneStatus("Loading channel list...");
 			m_pThis->m_nLastItem = GetTickCount();
 			m_pThis->m_mxClient.SendQueStatus(1, 1, 0);
-			m_pThis->m_mxClient.SendFormatMessage(WPN_ENUMCHATROOMS, "D", 0);
+			m_pThis->m_mxClient.SendFormatMessage(0x238D, "D", 0);
 			m_pThis->SetTimer(TIMER_LOAD, 500, 0);
 			m_pThis->m_tTime.ReInit();
 			m_pThis->m_pgStatus.SetPos(0);
 			return TRUE;
 
-		case CLN_CHANGEPARENTSTART :
-			//m_pThis->m_pStatusBar->SetPaneText(0, "");
-			return TRUE;
-		
-		case CLN_CHANGEPARENTCOMP :
-			//m_pThis->m_pStatusBar->SetPaneText(0, "");
-			return TRUE;
-
-		case CLN_PARENTDISCONNECTED :
-			//m_pThis->SetPaneStatus("Parent node closed connection");
-			return TRUE;	
-
-		case CLN_WPNDISCONNECTED :
-			//m_pThis->SetPaneStatus("WPN Disconnected");
-			return TRUE;
-		
-		case CLN_CHATROOMINFO : {
+		case WPN_CHATROOMINFO : {
 			CHATROOMINFO *pRoomInfo = (CHATROOMINFO *)lParam;
 			m_pThis->UpdateRoomItem(pRoomInfo->lpszRoomName, (WORD)pRoomInfo->dwUsers, (WORD)pRoomInfo->dwLimit, pRoomInfo->lpszTopic);
 			return TRUE;
@@ -312,31 +294,23 @@ BOOL CChannelView::ClientCallback(DWORD dwParam, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-void CChannelView::UpdateRoomItem(LPCTSTR lpszRoomName, WORD wUsers, WORD wLimit, LPCTSTR lpszTopic)
+void CChannelView::UpdateRoomItem(LPTSTR lpszRoomName, WORD wUsers, WORD wLimit, LPTSTR lpszTopic)
 {
 
 	m_nLastItem = GetTickCount();
-	LVFINDINFO lvi;
+	
+	CHATROOMINFOBUFFER room;
+	room.wLimit = wLimit;
+	room.wUsers = wUsers;
+	room.strRoomName = lpszRoomName;
+	room.strTopic    = lpszTopic;
 
-	lvi.flags = LVFI_STRING;
-	lvi.psz   = lpszRoomName;
-	if(m_lcList.FindItem(&lvi, -1) == -1){
+	m_aRoomBuffer.Add(room);
+	
+	if(m_aRoomBuffer.GetSize() >= 50){
 
-		CString strNum, strMax;
-		strNum.Format("%d", wUsers);
-		strMax.Format("%d", wLimit);
-		m_lcList.AddItem(0, lpszRoomName, (LPCTSTR)strNum, (LPCTSTR)strMax, lpszTopic);
-		m_lcList.Sort();
-		if(m_bNoScroll){
-
-			int n = m_lcList.GetNextItem(-1, LVNI_SELECTED);
-			if(n >= 0){
-
-				m_lcList.EnsureVisible(n, FALSE);
-			}
-		}
+		WriteBufferToList();
 	}
-
 }
 
 void CChannelView::OnTimer(UINT nIDEvent) 
@@ -344,10 +318,17 @@ void CChannelView::OnTimer(UINT nIDEvent)
 
 	if(nIDEvent == TIMER_LOAD){
 
+		if(m_pStatusBar == NULL){
+
+			m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
+		}
+
 		m_bInit = TRUE;
-		if((GetTickCount() - m_nLastItem) >= 10000){
+
+		if((GetTickCount() - m_nLastItem) >= 15000){
 
 			m_mxClient.Disconnect();
+			WriteBufferToList();
 			GetDlgItem(IDC_REFRESH)->EnableWindow(TRUE);
 			GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(TRUE);
 			CString strOut;
@@ -386,7 +367,21 @@ void CChannelView::OnChangeSearch()
 	UpdateData(TRUE);
 
 	m_nLastItem = GetTickCount();
-	LVFINDINFO lvi;
+
+	int nStart = m_lcList.GetSelectionMark();
+
+	int nFound = m_lcList.SafeSearch(m_strSearch, nStart+1);
+	if((nFound == -1) && (nStart != 0)){
+
+		nFound = m_lcList.SafeSearch(m_strSearch, 0);
+	}
+	if(nFound != -1){
+
+		m_lcList.SetItemState(nFound, LVNI_SELECTED, LVNI_SELECTED);
+		m_lcList.EnsureVisible(nFound, FALSE);
+	}
+
+	/*LVFINDINFO lvi;
 
 	lvi.flags = LVFI_STRING|LVFI_PARTIAL|LVFI_WRAP;
 	lvi.psz   = m_strSearch;
@@ -395,7 +390,7 @@ void CChannelView::OnChangeSearch()
 
 		m_lcList.SetItemState(n, LVNI_SELECTED, LVNI_SELECTED);
 		m_lcList.EnsureVisible(n, FALSE);
-	}
+	}	*/
 }
 
 void CChannelView::OnItemchangedChannels(NMHDR* pNMHDR, LRESULT* pResult) 
@@ -437,7 +432,7 @@ void CChannelView::OnDblclkChannels(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if(pNMListView->iItem >= 0){
 
-		((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin = FALSE;
+		((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin = TRUE;
 		((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom = m_lcList.GetItemText(pNMListView->iItem, 0);
 		((CMainFrame*)GetApp()->m_pMainWnd)->JoinChannel();
 	}
@@ -486,8 +481,70 @@ void CChannelView::OnSelectionNoscroll()
 void CChannelView::SetPaneStatus(const CString strText)
 {
 	
-	/*if(m_bInit && m_pStatusBar && ::IsWindow(m_hWnd)){
+	TRACE("%s\n", strText);
+/*	if(m_bInit && m_pStatusBar && ::IsWindow(m_hWnd)){
 
 		m_pStatusBar->SetPaneText(0, strText);
-	}*/
+	}	  */
+}
+
+void CChannelView::WriteBufferToList(void)
+{
+
+	int nSearch = -1;
+	CString strNum, strLimit, strTmp;
+	LVFINDINFO lvi;
+	lvi.flags = LVFI_STRING;
+
+	for(int i = 0; i < m_aRoomBuffer.GetSize(); i++){
+
+		lvi.psz   = m_aRoomBuffer[i].strRoomName;
+		if(m_lcList.FindItem(&lvi, -1) == -1){
+  
+			strNum.Format("%d", m_aRoomBuffer[i].wUsers);
+			strLimit.Format("%d", m_aRoomBuffer[i].wLimit);
+			m_lcList.AddItem(0, (LPCTSTR)m_aRoomBuffer[i].strRoomName, (LPCTSTR)strNum, (LPCTSTR)strLimit, (LPCTSTR)strTmp, (LPCTSTR)m_aRoomBuffer[i].strTopic);
+		}
+	}
+
+	if(m_bNoScroll){
+
+		int n = m_lcList.GetNextItem(-1, LVNI_SELECTED);
+		if(n >= 0){
+
+			m_lcList.EnsureVisible(n, FALSE);
+		}
+	}
+	m_lcList.Sort();
+	m_aRoomBuffer.RemoveAll();
+
+}
+
+CString CChannelView::PingRoom(CString& strRoom, int bInitPing)
+{
+
+	CPing ping;
+	CPingReply pr;
+	CString strPing;
+
+	if(ping.Ping(Util::GetIPFromRoom(strRoom), pr, 50, (bInitPing ? 500 : 2000), 32)){
+
+		strPing.Format("%u", pr.RTT);
+	}
+	else{
+
+		strPing = (bInitPing ? "" : " - ");
+	}
+	return strPing;
+}
+
+void CChannelView::OnPopupPingroom()
+{
+
+	int nSel = m_lcList.GetNextItem(-1, LVNI_SELECTED);
+	if(nSel >= 0){
+
+		CString strRoom = m_lcList.GetItemText(nSel, 0);
+		m_lcList.SetItemText(nSel, 3, PingRoom(strRoom, FALSE));
+	}
 }

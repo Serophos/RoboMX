@@ -54,8 +54,6 @@ public:
 	void	SetPrintTime(BOOL bValue){ m_bTime = bValue; }
 	void    SetHistoryDepth(int nValue){ m_nDepth = nValue; }
 	void    SetSaveHistory(int nValue){ m_bHistory = nValue; }
-	void	SetMaxLines(int nValue){ m_nMaxLines = nValue; }
-	void    SetLimitChat(BOOL bValue){ m_bLimit = bValue; }
 	void    SetJoin(CString strValue){ m_strJoin = strValue; }
 	void    SetPart(CString strValue){ m_strPart = strValue; }
 	void	SetBlockHttp(BOOL bValue){ m_bBlockHttp = bValue; }
@@ -70,8 +68,21 @@ public:
 	void	SetFilterNormal(BOOL bValue){ m_bFilterNormal = bValue; }
 	void	SetEmoticons(BOOL bValue){ m_bEmoticons = bValue; }
 	void	SetHiliteUsers(BOOL bValue){ m_bHiliteUsers = bValue; }
+	void    SetHideSystem(BOOL bValue){ m_bHideSystem = bValue; }
+	void	SetTopic(CString strValue){ m_strTopic = strValue; }
+	void	SetMotd(CString strValue){ m_strMotd = strValue; }
+	void	SetKeyMsg(CString strValue){ m_strKeyMsg = strValue; }
+	void	SetGodName(CString strValue){ m_strGodName = strValue; }
+	void	SetGodFiles(DWORD dwValue){ m_dwGodFiles = dwValue; }
+	void	SetGodLine(WORD wValue){ m_wGodLine = wValue; }
+	void	SetGodVisible(BOOL bValue){ m_bGodVisible = bValue; }
+	void	SetModerated(BOOL bValue){ m_bModerated = bValue; }
+	void	SetLimit(DWORD dwValue){ m_dwLimit = dwValue; }
+	void	SetMultiIPOk(BOOL bValue){ m_bMultiIPOk = bValue; }
+	void	SetBlockNushi(BOOL bValue){ m_bBLockNushi = bValue; }
+	void	SetLocalIsOp(BOOL bValue){ m_bLocalIsOp = bValue; }
 
-	void	SetDefaulFormat(CHARFORMAT2 cfValue){ m_cfDefault = cfValue; }
+	void	SetDefaulStyle(DWORD dwValue){ m_dwTextStyle = dwValue; }
 	void	SetRGBNormalName(COLORREF crValue){ m_crNick = crValue; }
 	void	SetRGBNormalMsg(COLORREF crValue){ m_crMessage = crValue; }
 	void	SetRGBActionMsg(COLORREF crValue){ m_crAction = crValue; }
@@ -122,13 +133,13 @@ public:
 	void	SetUpdate(BOOL bValue){ m_bUpdate = bValue; }
 	void	SetAutoList(BOOL bValue){ m_bAutoList = bValue; }
 	void	SetMaxi(BOOL bValue){ m_bMaxi = bValue; }
+	void	SetBarTop(BOOL bValue){ m_bBarTop = bValue; }
+	void	SetRetry(BOOL bValue){ m_bRetry = bValue; }
+	void	SetRetries(BOOL bValue){ m_nRetries = bValue; }
 
 	// Serve shit
-	void	SetServerIP(DWORD dwValue){  m_dwIP = dwValue; }
-	void	SetServerPort(DWORD dwValue){  m_dwPort = dwValue; }
-	void	SetServerAuto(BOOL bValue){ m_bAutoStart = bValue; }
-	void	SetPMAcceptAll(BOOL bValue){  m_bAcceptAll = bValue; }
-	void	SetSavePath(CString strValue){ m_strSavePath = strValue; }
+	void	SetNodeIP(DWORD dwValue){  m_dwNodeIP = dwValue; }
+	void	SetNodePort(DWORD dwValue){  m_dwNodePort = dwValue; }
 
 	// Sound stuff
 	void    SetSfxJoin(CString strValue){ m_strSfxJoin = strValue; }
@@ -163,7 +174,23 @@ public:
 	DWORD	GetFiles(){ return m_dwFiles; }
 	WORD	GetLine(){ return m_wLine; }
 	BOOL	GetDisplayNode(){ return m_bDisplayNode; }
+	BOOL	GetHideSystem(){ return m_bHideSystem; }
+	BOOL	GetBarTop(){ return m_bBarTop; }
+ 	BOOL	GetRetry(){ return m_bRetry; }
+	int 	GetRetries(){ return m_nRetries; }
 
+	CString    GetTopic(){ return m_strTopic; }
+	CString    GetMotd(){ return m_strMotd; }
+	CString    GetKeyMsg(){ return m_strKeyMsg; }
+	CString    GetGodName(){ return m_strGodName; }
+	DWORD	   GetGodFiles(){ return m_dwGodFiles; }
+	WORD	   GetGodLine(){ return m_wGodLine; }
+	BOOL       GetGodVisible(){ return m_bGodVisible; }
+	BOOL       GetModerated(){ return m_bModerated; }
+	DWORD	   GetLimit(){ return m_dwLimit; }
+	BOOL       GetMultiIPOk(){ return m_bMultiIPOk; }
+	BOOL       GetBlockNushi(){ return m_bBLockNushi; }
+	BOOL       GetLocalIsOp(){ return m_bLocalIsOp; }
 
 	BOOL	GetMessageItalic(){ return m_bMsItalic; }
 	BOOL	GetMessageLine(){ return m_bMsLine; }
@@ -171,8 +198,6 @@ public:
 	BOOL	GetPrintTime(){ return m_bTime; }
 	int     GetHistoryDepth(){ return m_nDepth; }
 	int     GetSaveHistory(){ return m_bHistory; }
-	int		GetMaxLines(){ return m_nMaxLines; }
-	BOOL    GetLimitChat(){ return m_bLimit; }
 	CString GetNickname(){ return m_strNickname; }
 	BOOL	GetFocus(){ return m_bFocus; }
 
@@ -189,8 +214,7 @@ public:
 		return strTmp; 
 	}
 
-
-	CHARFORMAT2& GetDefaultFormat(){ return m_cfDefault; }
+	DWORD		GetDefaultStyle(){return m_dwTextStyle; }
 	COLORREF	GetRGBTime(){ return m_crTime; }
 	COLORREF	GetRGBNormalName(){ return m_crNick; }
 	COLORREF	GetRGBNormalMsg(){ return m_crMessage; }
@@ -245,12 +269,8 @@ public:
 	BOOL		GetSfxChatSfx(){ return m_bChatSfx; }
 	BOOL		GetSoundFX(){ return m_bSoundFX; }
 
-	// Serve shit
-	DWORD      GetServerIP(){ return m_dwIP; }
-	DWORD	   GetServerPort(){ return m_dwPort; }
-	BOOL	   GetServerAuto(){ return m_bAutoStart; }
-	BOOL	   GetPMAcceptAll(){ return m_bAcceptAll; }
-	CString	   GetSavePath(){ return m_strSavePath; }
+	DWORD      GetNodeIP(){ return m_dwNodeIP; }
+	DWORD	   GetNodePort(){ return m_dwNodePort; }
 
 // Loading stuff
 	void LoadRooms(void);
@@ -266,6 +286,7 @@ public: // public attributes
 	CStringArray m_aQuick;
 	CStringArray m_aRCMSCommands;
 	CStringArray m_aWinMXCommands;
+	CStringArray m_aRoboMXCommands;
 	CArray<SOUND, SOUND> m_aSounds;
 
 
@@ -280,13 +301,11 @@ protected:
 	BOOL	m_bTime;
 	BOOL	m_bOnEnter;
 	BOOL    m_bColorAcName;
-	BOOL    m_bLimit;
 	BOOL    m_bPing;
 	int     m_nFontSize;
 	int		m_nCharset;
 	int     m_nDepth;//   = NULL;
 	int     m_bHistory;// = TRUE;
-	int		m_nMaxLines;// = 300;
 	int     m_nTimeFormat;
 	
 	BOOL	m_bBlockHttp;
@@ -309,8 +328,11 @@ protected:
 	BOOL	m_bMaxi;
 	BOOL    m_bScroller;
 	BOOL	m_bDisplayNode;
+	BOOL    m_bHideSystem;
+	BOOL    m_bBarTop;
+	BOOL	m_bRetry;
+	int		m_nRetries;
 
-	CHARFORMAT2	m_cfDefault;
 	COLORREF	m_crFocus;
 	COLORREF	m_crNick;
 	COLORREF	m_crMessage;
@@ -361,12 +383,24 @@ protected:
 	BOOL		m_bChatSfx;
 	BOOL		m_bSoundFX;
 		
-	// Serve shit
-	DWORD      m_dwIP;
-	DWORD	   m_dwPort;
-	BOOL	   m_bAutoStart;
-	BOOL	   m_bAcceptAll;
-	CString	   m_strSavePath;
+	DWORD      m_dwNodeIP;
+	DWORD	   m_dwNodePort;
+	
+	// Server shit
+	CString    m_strTopic;
+	CString    m_strMotd;
+	CString    m_strKeyMsg;
+	CString    m_strGodName;
+	DWORD	   m_dwGodFiles;
+	WORD	   m_wGodLine;
+	BOOL       m_bGodVisible;
+	BOOL       m_bModerated;
+	DWORD	   m_dwLimit;
+	BOOL       m_bMultiIPOk;
+	BOOL       m_bBLockNushi;
+	BOOL       m_bLocalIsOp;
+
+	DWORD	   m_dwTextStyle;
 public:
 	void LoadHiLite(void);
 };

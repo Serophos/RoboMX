@@ -274,6 +274,44 @@ CString Util::GetMyLocalTime()
     return strTime;
 }
 
+CString Util::GetMyDate(void)
+{
+
+	CString strDate;
+	SYSTEMTIME time;
+
+	int n = GetLocaleInfo(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, 0, 0);
+
+	if(n != 0){
+
+		char *szFormat = new char[n];
+		ZeroMemory(szFormat, n);
+
+		n = GetLocaleInfo(LOCALE_SYSTEM_DEFAULT, LOCALE_SSHORTDATE, szFormat, n);
+
+		GetLocalTime(&time);
+		
+		n = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &time, szFormat, 0, 0); 
+		
+		if(n != 0){
+
+			char *szDate = new char[n];
+			ZeroMemory(szDate, n);
+
+			n = GetDateFormat(LOCALE_SYSTEM_DEFAULT, 0, &time, szFormat, szDate, n);
+			
+			strDate = szDate;
+			
+			delete szDate;
+			szDate   = 0;
+		}
+
+		delete szFormat;
+		szFormat = 0;
+	}
+	return strDate;
+}
+
 CString Util::GetDateString(void)
 {
 
@@ -295,7 +333,8 @@ void Util::ReplaceVars(CString &strMsg)
 	CString strArtist, strSong, strVersion, strPlayTime, strTotalTime, strRemTime, strSampleRate, strBitrate, strNumChannels, strStatus = "not running";
 	
 	strMsg.Replace(_T("%TIME%"), Util::GetMyLocalTime());
-	
+	strMsg.Replace(_T("%DATE%"), Util::GetMyDate());
+
 	CString strTmp = Util::GetWinampSong();
 
 
@@ -572,4 +611,58 @@ CString Util::MakeValidFilename(CString strName)
 	strName.Replace(1, '-');
 	
 	return strName;
+}
+
+CString Util::GetIPFromRoom(CString strRoom)
+{
+	
+	int nIndex = strRoom.ReverseFind('_')+1;
+
+	if(nIndex <= 0) return "";
+
+	CString strTmp = strRoom.Mid(nIndex, 8);
+	
+	int nA = 0, nB = 0, nC = 0, nD = 0;
+	
+	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
+	nB = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
+	nC = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
+	nD = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
+
+	strTmp.Format("%d.%d.%d.%d", nD, nC, nB, nA);
+	return strTmp;
+}
+
+LPCTSTR _tcsistr(LPCTSTR pszString, LPCTSTR pszPattern)
+{
+	LPCTSTR pptr, sptr, start;
+	DWORD slen, plen;
+
+	for (	start	= pszString,
+			pptr	= pszPattern,
+			slen	= _tcslen( pszString ),
+			plen	= _tcslen( pszPattern ) ;
+			slen >= plen ; start++, slen-- )
+	{
+		while ( toupper( *start ) != toupper( *pszPattern ) )
+		{
+			start++;
+			slen--;
+
+			if ( slen < plen ) return NULL;
+		}
+
+		sptr = start;
+		pptr = pszPattern;
+
+		while ( toupper( *sptr ) == toupper( *pptr ) )
+		{
+			sptr++;
+			pptr++;
+
+			if ( ! *pptr) return start;
+		}
+	}
+
+	return NULL;
 }

@@ -26,6 +26,7 @@
 #include "Ini.h"
 #include ".\settings.h"
 #include "Tokenizer.h"
+#include "RichElement.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -50,7 +51,6 @@ CSettings::CSettings()
 	m_bTime			= TRUE;
 	m_nDepth		= 50;
 	m_bHistory		= TRUE;
-	m_nMaxLines		= 300;
 	m_nFontSize		= 12;
 	m_bBlockHttp	= FALSE;
 	m_bBlockMotd	= FALSE;
@@ -66,20 +66,23 @@ CSettings::CSettings()
 	m_bAutoList		= TRUE;
 	m_bMaxi			= FALSE;	
 	m_bDisplayNode	= FALSE;
-	m_strFont = "Arial";
+	m_strFont		= "Arial";
+	m_bBarTop		= TRUE;
 
 	m_dwFiles		= 1;
 	m_wLine			= 0;
-	ZeroMemory(&m_cfDefault, sizeof(CHARFORMAT2));
 
-	m_cfDefault.cbSize  = sizeof(CHARFORMAT2);
-	m_cfDefault.dwMask = CFM_BACKCOLOR|CFM_COLOR|CFM_SIZE|CFM_FACE|CFM_BOLD|CFM_ITALIC;
-	m_cfDefault.dwEffects = CFE_BOLD|CFM_LINK;
-	m_cfDefault.crBackColor = RGB(255,255,255);
-	m_cfDefault.crTextColor = RGB(0,0,0);
-	m_cfDefault.yHeight = 10*20;
-	strcpy(m_cfDefault.szFaceName, "Arial");
+	m_dwTextStyle = retfColor|retfBold;
 
+	m_strGodName	= "Master";
+	m_dwGodFiles	= 0;
+	m_wGodLine		= 0;
+	m_bGodVisible	= FALSE;
+	m_bModerated	= FALSE;
+	m_dwLimit		= 40;
+	m_bMultiIPOk	= TRUE;
+	m_bBLockNushi	= FALSE;
+	m_bLocalIsOp	= TRUE;
 	
 	m_crBg = RGB(255,255,255);
 
@@ -87,6 +90,9 @@ CSettings::CSettings()
 	m_FM = "";
 	m_EA = "";
 	m_EM = ":";
+
+	m_bRetry = TRUE;
+	m_nRetries = 3;
 }
 
 CSettings::~CSettings()
@@ -117,12 +123,16 @@ void CSettings::Load()
 	m_bUpdate		= ini.GetValue("General", "CheckUpdate", TRUE);
 	m_strLogDir     = ini.GetValue("General", "LogDir", m_strWd + "\\Logs");
 	m_bLog			= ini.GetValue("General", "Log", 0);
+	m_bRetry		= ini.GetValue("General", "ConnectionRetry", TRUE);
+	m_nRetries		= ini.GetValue("General", "ConnectionRetries", 3);
+
 	m_bAutoList		= ini.GetValue("Look & Feel", "AutoList", TRUE);
 	m_bMaxi			= ini.GetValue("Look & Feel", "AlwaysMaximizeMDI", FALSE);	
+	m_bHideSystem	= ini.GetValue("Look & Feel", "AutoHideSystem", TRUE);
 
-	m_bMiniTray   = ini.GetValue("Look & Feel", "Mini2Tray", FALSE);
-	m_bTime = ini.GetValue("Look & Feel", "Timestamp", TRUE);
-	
+	m_bMiniTray		= ini.GetValue("Look & Feel", "Mini2Tray", FALSE);
+	m_bTime			= ini.GetValue("Look & Feel", "Timestamp", TRUE);
+	m_bBarTop		= ini.GetValue("Look & Feel", "BarTop", TRUE);
 
 	m_FA    = ini.GetValue("Look & Feel", "EnActFront", "* ");
 	m_FM    = ini.GetValue("Look & Feel", "EnMsgFront", "");
@@ -145,10 +155,8 @@ void CSettings::Load()
 	m_bHiliteUsers = ini.GetValue("Look & Feel", "HiliteUsers", FALSE);
 	m_bEmoticons   = ini.GetValue("Look & Feel", "Emoticons", TRUE);
 
-	m_bLimit    = ini.GetValue("History", "LimitChat", TRUE);
 	m_nDepth    = ini.GetValue("History", "Depth", 50);
 	m_bHistory  = ini.GetValue("History", "Enable", TRUE);
-	m_nMaxLines = ini.GetValue("History", "MaxLines", 300);
 
 	m_bScroller = ini.GetValue("Messages", "EnableScroller", TRUE);
 	m_strVideoMsg = ini.GetValue("Messages", "WinampVideo", "/me watches '%WA-ARTIST% - %WA-SONG%'");
@@ -176,7 +184,7 @@ void CSettings::Load()
 	m_bMsItalic = ini.GetValue("Font", "MessageItalic", FALSE);
 	m_bMsLine   = ini.GetValue("Font", "MessageLine", FALSE);
 	m_strFont   = ini.GetValue("Font", "ChatFont",   "Arial");
-	m_nFontSize = ini.GetValue("Font", "ChatFontSize", 10);
+	m_nFontSize = ini.GetValue("Font", "ChatFontSize", 12);
 	
 	switch(ini.GetValue("Font", "Charset", 0)){
 
@@ -227,15 +235,10 @@ void CSettings::Load()
 
 	m_bColorAcName = ini.GetValue("Colors", "ColorActionName", FALSE);
 
-	m_cfDefault.dwMask = CFM_BACKCOLOR|CFM_COLOR|CFM_SIZE|CFM_FACE|CFM_BOLD|CFM_ITALIC;
-
-	m_cfDefault.yHeight = m_nFontSize*20;
-	m_cfDefault.bCharSet  = m_nCharset;
-	strcpy(m_cfDefault.szFaceName, m_strFont);
-	
-	if(m_bMsBold)	m_cfDefault.dwEffects |= CFE_BOLD;
-	if(m_bMsItalic) m_cfDefault.dwEffects |= CFE_ITALIC;
-	if(m_bMsLine)	m_cfDefault.dwEffects |= CFE_UNDERLINE;
+	m_dwTextStyle = retfColor;
+	if(m_bMsBold)	m_dwTextStyle |= retfBold;
+	if(m_bMsItalic) m_dwTextStyle |= retfItalic;
+	if(m_bMsLine)	m_dwTextStyle |= retfUnderline;
 
 	m_crFocus    = ini.GetValue("Colors", "FocusColor", RGB(255, 245, 210));
 	m_bFocus      = ini.GetValue("Colors", "UseFocusColor", 1);
@@ -266,8 +269,6 @@ void CSettings::Load()
 	m_crBg = ini.GetValue("Colors", "Background", RGB(255, 255, 255));
 	m_crOp = ini.GetValue("Colors", "OpMsgs", RGB(55, 170, 100));
 
-	m_cfDefault.crBackColor = m_crBg;
-
 	m_strSfxJoin		= ini.GetValue("SoundFX", "Join", m_strWd + "\\sfx\\Connect.wav");
 	m_strSfxPart		= ini.GetValue("SoundFX", "Part", m_strWd + "\\sfx\\Disconnect.wav");
 	m_strSfxRedirect	= ini.GetValue("SoundFX", "Redirect", m_strWd + "\\sfx\\Redirect.wav");
@@ -279,11 +280,25 @@ void CSettings::Load()
 	m_bSoundFX			= ini.GetValue("SoundFX", "Sfx", TRUE);
 
 
-	m_dwIP			= ini.GetValue("Server", "IP", 2130706433);
-	m_dwPort		= ini.GetValue("Server", "Port", 14223);
-	m_bAutoStart	= ini.GetValue("Server", "Auto", FALSE);
-	m_bAcceptAll	= ini.GetValue("Server", "PM-All", TRUE);
-	m_strSavePath	= ini.GetValue("Server", "File-Path", m_strWd + "\\Incoming");
+	m_dwNodeIP			= ini.GetValue("Node", "IP", 2130706433);
+	m_dwNodePort		= ini.GetValue("Node", "Port", 14223);
+
+	m_strTopic.LoadString(IDS_DEFAULT_TOPIC);
+	m_strMotd.LoadString(IDS_DEFAULT_MOTD);
+	m_strKeyMsg.LoadString(IDS_DEFAULT_KEYMSG);
+
+	m_strTopic		= ini.GetValue("Server", "Topic", m_strTopic);
+	m_strMotd		= ini.GetValue("Server", "Motd", m_strMotd);
+	m_strKeyMsg		= ini.GetValue("Server", "KeyMsg", m_strKeyMsg);
+	m_strGodName	= ini.GetValue("Server", "GodName", m_strGodName);
+	m_dwGodFiles	= ini.GetValue("Server", "GodFiles", 0);
+	m_wGodLine		= ini.GetValue("Server", "GodLine", 0);
+	m_bGodVisible	= ini.GetValue("Server", "GodVisible", 0);
+	m_bModerated	= ini.GetValue("Server", "Moderated", 0);
+	m_dwLimit		= ini.GetValue("Server", "Limit", 40);
+	m_bMultiIPOk	= ini.GetValue("Server", "MultiIPOk", 1);
+	m_bBLockNushi	= ini.GetValue("Server", "BlockNushi", 0);
+	m_bLocalIsOp	= ini.GetValue("Server", "LocalIsOp", 1);
 
 	LoadHiLite();
 	LoadRCMS();
@@ -308,6 +323,11 @@ void CSettings::Save()
 	ini.SetValue("General", "CheckUpdate", m_bUpdate);
 	ini.SetValue("General", "LogDir", m_strLogDir);
 	ini.SetValue("General", "Log", m_bLog);
+	ini.SetValue("General", "ConnectionRetry", m_bRetry);
+	
+	if((m_nRetries < 0) || (m_nRetries > 5)) m_nRetries = 3;
+	ini.SetValue("General", "ConnectionRetries", m_nRetries);
+
 
 	ini.SetValue("Look & Feel", "AutoList", m_bAutoList);
 	ini.SetValue("Look & Feel", "AlwaysMaximizeMDI", m_bMaxi);	
@@ -330,11 +350,10 @@ void CSettings::Save()
 	ini.SetValue("Look & Feel", "HiliteUsers", m_bHiliteUsers);
 	ini.SetValue("Look & Feel", "Emoticons", m_bEmoticons);
 	ini.SetValue("Look & Feel", "DisplayNode", m_bDisplayNode);
-
-	ini.SetValue("History", "LimitChat", m_bLimit);
+	ini.SetValue("Look & Feel", "AutoHideSystem", m_bHideSystem);
+	ini.SetValue("Look & Feel", "BarTop", m_bBarTop);
 	ini.SetValue("History", "Depth", m_nDepth);
 	ini.SetValue("History", "Enable", m_bHistory);
-	ini.SetValue("History", "MaxLines", m_nMaxLines);
 
 
 	ini.SetValue("Messages", "EnableScroller", m_bScroller);
@@ -450,11 +469,21 @@ void CSettings::Save()
 	ini.SetValue("SoundFX", "ChatSfx", m_bChatSfx);
 	ini.SetValue("SoundFX", "Sfx", m_bSoundFX);
 	
-	ini.SetValue("Server", "IP", m_dwIP);
-	ini.SetValue("Server", "Port", m_dwPort);
-	ini.SetValue("Server", "Auto", m_bAutoStart);
-	ini.SetValue("Server", "PM-All", m_bAcceptAll);
-	ini.SetValue("Server", "File-Path", m_strSavePath);
+	ini.SetValue("Node", "IP", m_dwNodeIP);
+	ini.SetValue("Node", "Port", m_dwNodePort);
+
+	ini.SetValue("Server", "Topic", m_strTopic);
+	ini.SetValue("Server", "Motd", m_strMotd);
+	ini.SetValue("Server", "KeyMsg", m_strKeyMsg);
+	ini.SetValue("Server", "GodName", m_strGodName);
+	ini.SetValue("Server", "GodFiles", m_dwGodFiles);
+	ini.SetValue("Server", "GodLine", m_wGodLine);
+	ini.SetValue("Server", "GodVisible", m_bGodVisible);
+	ini.SetValue("Server", "Moderated", m_bModerated);
+	ini.SetValue("Server", "Limit", m_dwLimit);
+	ini.SetValue("Server", "MultiIPOk", m_bMultiIPOk);
+	ini.SetValue("Server", "BlockNushi", m_bBLockNushi);
+	ini.SetValue("Server", "LocalIsOp", m_bLocalIsOp);
 }
 
 
@@ -709,6 +738,28 @@ void CSettings::LoadRCMS()
 
 	}END_CATCH;
 
+	///////////////////////////
+	// Load WinMX 3.52 commands
+	strIniFile = GetWorkingDir() + "\\RMX.ini";
+	m_aRoboMXCommands.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aRoboMXCommands.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
 	///////////////////////
 	// Load quick commands
 	strIniFile = GetWorkingDir() + "\\quick.ini";

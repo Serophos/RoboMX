@@ -33,6 +33,7 @@
 #define MXCHAT_LOGIN		0x0064
 #define MXCHAT_LOGINGRANTED 0x0066
 
+#define SERVER_UNKNOWN      0x0000
 #define SERVER_RCMS         0x0001
 #define SERVER_WINMX353		0x0002
 #define SERVER_ROBOMX		0x0003
@@ -43,20 +44,40 @@
 
 class CMetis3View;
 
+class ClientJoin
+{
+public:
+	ClientJoin(){ dwNodeIP = 0; wNodePort = 0; wLine = 0; dwSrcIP = 0; dwFiles = 0; wLevel = 0;}
+
+	CString strName;
+	CString strHost;
+	DWORD	dwFiles;
+	DWORD	dwNodeIP;
+	DWORD	dwSrcIP;
+	WORD	wLevel;
+	WORD	wLine;
+	WORD	wNodePort;
+};
+
 class CChatClient  
 {
 public:
+	CChatClient();
+	virtual ~CChatClient();
+
+public:
 	void WriteMessage(LPCTSTR lpszMsg, COLORREF rColor);
 	BOOL SendRename(CString strUser, DWORD dwFiles, WORD wLine);
-	void Ping();
 	void SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction = FALSE);
+	int DecodeJoin(WORD wType, WORD wLen, char* buffer);
 	void DecodeCommand(WORD wType, WORD wLen, char* buffer);
 	static UINT RecvProc(PVOID pParam);
 	BOOL SetRoom(CString strRoom);
 	BOOL Disconnect();
 	BOOL Connect();
-	CChatClient();
-	virtual ~CChatClient();
+	BOOL SendNew(LPCTSTR lpszKey);
+	void Ping();
+	void WriteMessage(UINT nID, COLORREF rColor);
 
 	// Room  info
 	CString m_strRoom;
@@ -74,7 +95,8 @@ public:
 	WORD    m_wClientUDPPort;
 	DWORD   m_dwClientIP;
 	DWORD   m_dwFiles;
-	
+	WORD	m_wServerType;
+
 	BOOL    m_bOldJoin;
 
 	// Crypt Shit
@@ -84,16 +106,14 @@ public:
 	// Network stuff
 	CMySocket m_mSocket;
 	volatile BOOL    m_bListen;
+	volatile BOOL	 m_bAbort;
 
-	// View
-	CMetis3View* m_pView;
-	CEvent m_eClose;
+public:
+	HWND		m_hView;
+	CEvent		m_eClose;
 	CWinThread *m_pThread;
-	
-	// RCMS warning
-	BOOL m_bWarned;
-	BOOL SendNew(LPCTSTR lpszKey);
-	void WriteMessage(UINT nID, COLORREF rColor);
+	BOOL ConnectInternal(void);
+	BOOL ListenInternal(void);
 };
 
 #endif // !defined(AFX_CHATCLIENT_H__E77F22CE_3865_4876_944C_DDDE8A6555F0__INCLUDED_)

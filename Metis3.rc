@@ -160,7 +160,7 @@ BEGIN
         MENUITEM "&Channellist\tCtrl+L",        ID_CHANNEL_CHANNELLIST
         MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
         MENUITEM SEPARATOR
-        MENUITEM "&Reconnect",                  32806
+        MENUITEM "&Reconnect\tCtrl+N",          32806
         MENUITEM "Reconnect All",               32866
         MENUITEM "&Close this Channel",         ID_FILE_CLOSE
         MENUITEM SEPARATOR
@@ -170,8 +170,12 @@ BEGIN
     END
     POPUP "&Chat"
     BEGIN
-        MENUITEM "&Select All",                 ID_CHATROOM_SELECTALL
-        MENUITEM "&Copy",                       ID_CHATROOM_COPY
+        MENUITEM "View Channel &Log",           ID_VIEW_LOGFILE
+        MENUITEM SEPARATOR
+        MENUITEM "Add to Auto-&Join",           32864
+        MENUITEM SEPARATOR
+        MENUITEM "View To&pic",                 32862
+        MENUITEM "View current &bans",          32863
         MENUITEM SEPARATOR
         POPUP "&Display in Channel"
         BEGIN
@@ -183,6 +187,7 @@ BEGIN
 
             MENUITEM "Average Lag\tF4",             ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG
 
+            MENUITEM "&Ping\tF5",                   32868
         END
         POPUP "&Text Tricks"
         BEGIN
@@ -200,9 +205,6 @@ BEGIN
             MENUITEM "ASCII Art Designer",          ID_CHATROOM_ASCIIARTDESIGN
 
         END
-        MENUITEM SEPARATOR
-        MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
-        MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
         MENUITEM SEPARATOR
         MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
         MENUITEM SEPARATOR
@@ -237,7 +239,8 @@ BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
-        MENUITEM "&Logfile",                    ID_VIEW_LOGFILE
+        MENUITEM "System &console",             ID_VIEW_SYSTEMCONSOLE
+        MENUITEM SEPARATOR
         MENUITEM "&Options",                    ID_VIEW_OPTIONS
     END
     POPUP "&Window"
@@ -300,6 +303,8 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Copy &Roomname",              ID_POPUP_COPYROOMNAME
         MENUITEM "Copy &Topic",                 ID_POPUP_COPYTOPIC
+        MENUITEM SEPARATOR
+        MENUITEM "&Ping Room",                  ID_POPUP_PINGROOM
     END
 END
 
@@ -338,9 +343,6 @@ BEGIN
     BEGIN
         MENUITEM "View Channel &Log",           32860
         MENUITEM SEPARATOR
-        MENUITEM "&Select All",                 ID_CHATROOM_SELECTALL
-        MENUITEM "&Copy",                       ID_CHATROOM_COPY
-        MENUITEM SEPARATOR
         MENUITEM "R&ejoin",                     ID_CHATROOM_REJOIN
         MENUITEM "Add to Auto-&Join",           ID_CHATROOM_ADDTOAUTOJOIN
         MENUITEM SEPARATOR
@@ -357,6 +359,7 @@ BEGIN
 
             MENUITEM "Average Lag",                 ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG
 
+            MENUITEM "&Ping",                       ID_DISPLAYINCHANNEL_PING
         END
         POPUP "&Text Tricks"
         BEGIN
@@ -375,9 +378,6 @@ BEGIN
 
         END
         MENUITEM "&Away Control",               32859
-        MENUITEM SEPARATOR
-        MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
-        MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
         MENUITEM SEPARATOR
         MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
         MENUITEM SEPARATOR
@@ -490,28 +490,6 @@ BEGIN
     END
 END
 
-IDM_DOCMAN MENU 
-BEGIN
-    POPUP "Context Menu"
-    BEGIN
-        POPUP "&Transparency"
-        BEGIN
-            MENUITEM "&0%",                         32845
-            MENUITEM "&10%",                        ID_TRANSPARENCY_10
-            MENUITEM "&20%",                        ID_TRANSPARENCY_20
-            MENUITEM "&30%",                        ID_TRANSPARENCY_30
-            MENUITEM "&40%",                        ID_TRANSPARENCY_40
-            MENUITEM "&50%",                        ID_TRANSPARENCY_50
-            MENUITEM "&60%",                        ID_TRANSPARENCY_60
-            MENUITEM "&70%",                        ID_TRANSPARENCY_70
-            MENUITEM "&80%",                        ID_TRANSPARENCY_80
-            MENUITEM "&90%",                        ID_TRANSPARENCY_90
-            MENUITEM "100&%",                       ID_TRANSPARENCY_100
-        END
-        MENUITEM "&Close",                      ID_CONTEXTMENU_CLOSE
-    END
-END
-
 IDR_BACK MENU 
 BEGIN
     POPUP "BACK"
@@ -519,28 +497,6 @@ BEGIN
         MENUITEM "Set &Back",                   ID_BACK_SETBACK
         MENUITEM "Set &Silent Back",            ID_BACK_SETSI8LENTBACK
     END
-END
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Accelerator
-//
-
-IDR_MAINFRAME ACCELERATORS 
-BEGIN
-    "L",            ID_CHANNEL_CHANNELLIST, VIRTKEY, CONTROL, NOINVERT
-    "N",            ID_MYFILE_NEW,          VIRTKEY, CONTROL, NOINVERT
-    VK_F2,          ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME, VIRTKEY, 
-                                                    NOINVERT
-    VK_F3,          ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO, VIRTKEY, 
-                                                    NOINVERT
-    VK_F4,          ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG, VIRTKEY, 
-                                                    NOINVERT
-    VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
-    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
-    VK_F8,          ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, VIRTKEY, 
-                                                    NOINVERT
 END
 
 
@@ -574,16 +530,14 @@ BEGIN
     CONTROL         "List1",IDC_USERLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
                     WS_TABSTOP,296,2,161,215,WS_EX_CLIENTEDGE
-    CONTROL         "",IDC_SYS,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
-                    2,293,52
     CONTROL         "",IDC_SPLITTER_1,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,294,2,2,215
     CONTROL         "",IDC_SPLITTER_2,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,1,54,293,3
-    CONTROL         "",IDC_CHAT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
-                    57,293,160
+    CONTROL         "",IDC_SYS,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,1,2,
+                    295,52
+    CONTROL         "",IDC_CHAT,"Static",SS_BLACKFRAME | NOT WS_VISIBLE,1,57,
+                    293,160
 END
 
 IDD_CONNECT DIALOGEX 0, 0, 339, 134
@@ -673,26 +627,23 @@ BEGIN
     CONTROL         "Enable &History",IDC_ENABLE_HISTORY,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,8,85,10
     EDITTEXT        IDC_HISTORDEPTH,100,7,40,12,ES_AUTOHSCROLL
-    CONTROL         "L&imit Chatwindow to ",IDC_LINES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,184,9,81,9
-    EDITTEXT        IDC_LINESNUM,269,7,40,12,ES_AUTOHSCROLL
     CONTROL         "Enable Command-Scroller",IDC_SCROLLER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,19,171,10
     CONTROL         "Check for &Updates",IDC_UPDATE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,184,19,170,10
+                    WS_TABSTOP,184,60,170,10
     CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,7,29,171,10
     CONTROL         "Print &PING notification",IDC_PING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,184,29,170,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,184,19,170,10
     CONTROL         "Ma&ximize Clientwindows",IDC_MDIMAXI,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,39,171,10
     CONTROL         "Minimize to &tray",IDC_MINITRAY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,184,39,170,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,184,29,170,10
     CONTROL         "Auto&load Channellist",IDC_LISTCHANNEL,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,49,171,10
     CONTROL         "Use &Keyword Higlightning for Userlist too",
                     IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,184,
-                    49,171,10
+                    39,171,10
     CONTROL         "Enable logging and store logs in this folder:",IDC_LOG,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,60,171,10
     EDITTEXT        IDC_LOGDIR,7,71,146,14,ES_AUTOHSCROLL | ES_READONLY
@@ -717,6 +668,14 @@ BEGIN
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "Remove",IDC_REMOVECHANNEL2,304,151,50,14
     GROUPBOX        "",IDC_STATIC,1,1,359,106
+    CONTROL         "Auto-hide system console after join",IDC_HIDESYSTEM,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,184,49,170,10
+    COMBOBOX        IDC_BARTOP,184,72,170,39,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    CONTROL         "&Retry failed joins",IDC_RETRY_JOINS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,184,8,85,10
+    EDITTEXT        IDC_JOINRETRIES,277,7,40,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "times",IDC_STATIC,319,9,35,8
 END
 
 IDD_COLORS DIALOGEX 0, 0, 363, 242
@@ -763,7 +722,7 @@ BEGIN
     LTEXT           "",IDC_STATIC_NODEIP,330,22,22,12,0,WS_EX_STATICEDGE
     PUSHBUTTON      "Port",IDC_PORT,304,39,24,14
     LTEXT           "",IDC_STATIC_NODEPORT,330,40,22,12,0,WS_EX_STATICEDGE
-    GROUPBOX        "Channel",IDC_STATIC_MISCCOLOR,1,78,116,92
+    GROUPBOX        "Channel",IDC_STATIC_MISCCOLOR,1,78,116,106
     PUSHBUTTON      "Topic",IDC_TOPIC,5,90,24,14
     LTEXT           "",IDC_STATIC_TOPIC,31,91,22,12,0,WS_EX_STATICEDGE
     PUSHBUTTON      "Motd",IDC_MOTD,5,106,24,14
@@ -775,7 +734,7 @@ BEGIN
     PUSHBUTTON      "Background",IDC_BACKG,31,122,50,14
     LTEXT           "",IDC_STATIC_BG,83,123,22,13,0,WS_EX_STATICEDGE
     CONTROL         "Color Name in Actions",IDC_COLORACTIONNAME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,8,155,85,10
+                    BS_AUTOCHECKBOX | BS_MULTILINE | WS_TABSTOP,183,21,50,18
     GROUPBOX        "System / Misc",IDC_STATIC_SYSTEM,123,78,117,92
     PUSHBUTTON      "Pending",IDC_PENDING,131,90,50,14
     LTEXT           "",IDC_STATIC_PENDING,183,91,22,13,0,WS_EX_STATICEDGE
@@ -796,11 +755,10 @@ BEGIN
                     WS_TABSTOP,299,140,60,10
     CONTROL         "Underline",IDC_UNDERLINE,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,251,155,108,10
-    GROUPBOX        "Input Focus Color",IDC_STATIC_HILIGHT,1,173,116,68
-    CONTROL         "Change color if focus",IDC_FOCUSCLR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,9,190,83,10
-    PUSHBUTTON      "Focus Color",IDC_COLORFOCUS,9,204,58,14
-    LTEXT           "",IDC_STATIC_FOCUS,84,205,22,12,0,WS_EX_STATICEDGE
+    CONTROL         "Change color if focused",IDC_FOCUSCLR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,5,155,100,10
+    PUSHBUTTON      "Focus Color",IDC_COLORFOCUS,31,166,49,14
+    LTEXT           "",IDC_STATIC_FOCUS,83,167,22,12,0,WS_EX_STATICEDGE
     GROUPBOX        "Background Image",IDC_STATIC_BGIMAGE,123,173,238,68
     CONTROL         "Enable Background Image",IDC_USE_BGIMAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,131,188,100,10
@@ -827,7 +785,7 @@ BEGIN
     EDITTEXT        IDC_JOIN,54,16,297,12,ES_AUTOHSCROLL
     LTEXT           "&Part:",IDC_STATIC_PART,8,33,40,8
     EDITTEXT        IDC_PART,54,31,297,12,ES_AUTOHSCROLL
-    LTEXT           "Variables:\n%NAME%  %FILES%  %LINE%  %IP%  %HOSTNAME%  %NUMUSERS%  %TIME%  %ROOMNAME%\nAnd in the Part message: %STAYTIME%\nPlus all Winamp variables of course",
+    LTEXT           "Variables:\n%NAME%  %FILES%  %LINE%  %IP%  %HOSTNAME%  %TIME%  %DATE%  %ROOMNAME%\nAnd in the Part message: %STAYTIME%\nPlus all Winamp variables of course",
                     IDC_STATIC,8,47,343,32,SS_SUNKEN
     GROUPBOX        "MP3 / Video Announcement (F8) [Requires Winamp 2.x or 5.x]",
                     IDC_STATIC_WINAMP,1,85,354,71
@@ -969,11 +927,43 @@ BEGIN
     LTEXT           "Preview:",IDC_STATIC,288,190,50,8
 END
 
-IDD_PAGERCFG DIALOGEX 0, 0, 333, 237
+IDD_SERVERCFG DIALOGEX 0, 0, 333, 237
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
-    LTEXT           "Placeholder",IDC_STATIC,148,102,36,8
+    GROUPBOX        "Room Startup Defaults",IDC_STATIC,2,58,327,82
+    LTEXT           "Default &Topic *",IDC_STATIC,8,70,70,8
+    EDITTEXT        IDC_DEFTOPIC,85,67,237,14,ES_AUTOHSCROLL
+    LTEXT           "Dfault M&otd *",IDC_STATIC,8,87,70,8
+    EDITTEXT        IDC_DEFMOTD,85,84,237,14,ES_AUTOHSCROLL
+    LTEXT           "Default &User-Limit *",IDC_STATIC,8,103,70,8
+    EDITTEXT        IDC_LIMIT,85,100,79,14,ES_AUTOHSCROLL | ES_NUMBER
+    CONTROL         "Room is moderated (+&m) *",IDC_MODERATED,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,168,102,154,10
+    LTEXT           "&Key Message (+k)",IDC_STATIC,7,119,71,8
+    EDITTEXT        IDC_KEYMSG,85,116,237,14,ES_AUTOHSCROLL
+    GROUPBOX        "Security",IDC_STATIC,2,141,327,39
+    CONTROL         "Allow multiple connections from the same &IP",
+                    IDC_SINGLEUSER_PER_IP,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,8,154,160,10
+    CONTROL         "&Block NushiChat and WinMX 3.31",IDC_BLOCK_MX331,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,172,154,150,10
+    CONTROL         "&Localhost is always operator (+o)",
+                    IDC_AUTO_OP_LOCALHOST,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,8,165,160,10
+    GROUPBOX        "God-User",IDC_STATIC,2,185,327,48
+    LTEXT           "Name **",IDC_STATIC,8,198,70,8
+    EDITTEXT        IDC_GOD_NAME,85,195,237,14,ES_AUTOHSCROLL
+    CONTROL         "God-User is &visible in channel **",IDC_VISIBLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,8,215,160,10
+    LTEXT           "&Files **",IDC_STATIC,168,216,25,8
+    EDITTEXT        IDC_GOD_FILES,195,213,40,14,ES_AUTOHSCROLL
+    LTEXT           "&Line **",IDC_STATIC,237,216,24,8
+    COMBOBOX        IDC_GOD_LINE,262,214,60,30,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    LTEXT           "Options marked with * are per room settings and can be adjusted once the room is hosted .\nAll other settings are global settings for all rooms.\nOptions marked with ** need the room-server to be restarted to take effect.\nTopic and Motd may contain all of the usual Variables (See Message Tab)",
+                    IDC_STATIC,8,16,314,36
+    GROUPBOX        "Notice:",IDC_STATIC,2,2,327,54
 END
 
 IDD_EXTENSIONS DIALOGEX 0, 0, 363, 237
@@ -989,6 +979,15 @@ BEGIN
     PUSHBUTTON      "&Rescan",IDC_RESCAN,8,210,50,14
     LTEXT           "This dialog displays all Add-Ons currently loaded into RoboMX.\nYou can configure, add or remove Add-Ons here.\nIf you want to add new Add-Ons, put them them into the Add-Ons folder of your RoboMX installation.\nThen click on 'Rescan'.",
                     IDC_STATIC,8,18,344,38
+END
+
+IDD_SERVER_VIEW DIALOGEX 0, 0, 345, 211
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    EDITTEXT        IDC_SERVER_INPUT,2,195,341,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_STATIC_OUT,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,2,2,341,192
 END
 
 
@@ -1145,7 +1144,11 @@ BEGIN
     BEGIN
         LEFTMARGIN, 1
         RIGHTMARGIN, 362
+        VERTGUIDE, 5
+        VERTGUIDE, 31
         VERTGUIDE, 56
+        VERTGUIDE, 80
+        VERTGUIDE, 105
         VERTGUIDE, 117
         VERTGUIDE, 123
         VERTGUIDE, 131
@@ -1247,15 +1250,19 @@ BEGIN
         HORZGUIDE, 164
     END
 
-    IDD_PAGERCFG, DIALOG
+    IDD_SERVERCFG, DIALOG
     BEGIN
         LEFTMARGIN, 2
         RIGHTMARGIN, 329
         VERTGUIDE, 8
+        VERTGUIDE, 78
+        VERTGUIDE, 85
+        VERTGUIDE, 168
+        VERTGUIDE, 172
         VERTGUIDE, 322
         TOPMARGIN, 2
         BOTTOMMARGIN, 233
-        HORZGUIDE, 32
+        HORZGUIDE, 220
     END
 
     IDD_EXTENSIONS, DIALOG
@@ -1267,6 +1274,14 @@ BEGIN
         TOPMARGIN, 2
         BOTTOMMARGIN, 233
         HORZGUIDE, 217
+    END
+
+    IDD_SERVER_VIEW, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 343
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 209
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1375,6 +1390,39 @@ BEGIN
 0x6665, 0x7561, 0x746c, 0x0029, 
     IDC_TIME, 0x403, 16, 0
 0x3231, 0x6820, 0x756f, 0x7372, 0x6620, 0x726f, 0x616d, 0x0074, 
+    IDC_BARTOP, 0x403, 34, 0
+0x6843, 0x6e61, 0x656e, 0x626c, 0x7261, 0x6920, 0x2073, 0x6e6f, 0x6220, 
+0x746f, 0x6f74, 0x206d, 0x666f, 0x7720, 0x6e69, 0x6f64, 0x0077, 
+    IDC_BARTOP, 0x403, 31, 0
+0x6843, 0x6e61, 0x656e, 0x626c, 0x7261, 0x6920, 0x2073, 0x6e6f, 0x7420, 
+0x706f, 0x6f20, 0x2066, 0x6977, 0x646e, 0x776f, "\000" 
+    0
+END
+
+IDD_SERVERCFG DLGINIT
+BEGIN
+    IDC_GOD_LINE, 0x403, 8, 0
+0x6e55, 0x6e6b, 0x776f, 0x006e, 
+    IDC_GOD_LINE, 0x403, 6, 0
+0x3431, 0x342e, 0x004b, 
+    IDC_GOD_LINE, 0x403, 6, 0
+0x3832, 0x382e, 0x004b, 
+    IDC_GOD_LINE, 0x403, 6, 0
+0x3333, 0x362e, 0x004b, 
+    IDC_GOD_LINE, 0x403, 4, 0
+0x3635, 0x004b, 
+    IDC_GOD_LINE, 0x403, 9, 0
+0x3436, 0x204b, 0x5349, 0x4e44, "\000" 
+    IDC_GOD_LINE, 0x403, 10, 0
+0x3231, 0x4b38, 0x4920, 0x4453, 0x004e, 
+    IDC_GOD_LINE, 0x403, 6, 0
+0x6143, 0x6c62, 0x0065, 
+    IDC_GOD_LINE, 0x403, 4, 0
+0x5344, 0x004c, 
+    IDC_GOD_LINE, 0x403, 3, 0
+0x3154, "\000" 
+    IDC_GOD_LINE, 0x403, 3, 0
+0x3354, "\000" 
     0
 END
 
@@ -1392,6 +1440,30 @@ END
 //
 
 IDC_HAND                CURSOR                  "res\\hand.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS 
+BEGIN
+    "L",            ID_CHANNEL_CHANNELLIST, VIRTKEY, CONTROL, NOINVERT
+    VK_F4,          ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG, VIRTKEY, 
+                                                    NOINVERT
+    VK_F3,          ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO, VIRTKEY, 
+                                                    NOINVERT
+    VK_F2,          ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME, VIRTKEY, 
+                                                    NOINVERT
+    VK_F8,          ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, VIRTKEY, 
+                                                    NOINVERT
+    "N",            ID_MYFILE_NEW,          VIRTKEY, CONTROL, NOINVERT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+    VK_F5,          32868,                  VIRTKEY, NOINVERT
+    "R",            32806,                  VIRTKEY, CONTROL, NOINVERT
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -1446,21 +1518,6 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_EDIT_CLEAR           "Erase the selection\nErase"
-    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
-    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
-    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
-    ID_EDIT_FIND            "Find the specified text\nFind"
-    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
-    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
-    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
-    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
-    ID_EDIT_UNDO            "Undo the last action\nUndo"
-    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
-END
-
-STRINGTABLE 
-BEGIN
     ID_VIEW_TOOLBAR         "Show or hide the toolbar\nToggle ToolBar"
     ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle StatusBar"
 END
@@ -1508,14 +1565,10 @@ BEGIN
     ID_USERLIST_UNIGNORE    "Unignore user"
     ID_USERLIST_CUSTOMIZETHISMENU "Customize the menu commands for this room"
     ID_USERLIST_READUSERMESSAGE "Read user message"
-    ID_CHATROOM_SELECTALL   "Select all text"
-    ID_CHATROOM_COPY        "Copy selected text to clipboard"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_CHATROOM_SEARCHONGOOGLE "Search selected text on Google.com"
-    ID_CHATROOM_QUOTE       "Quote selected text"
     ID_CHATROOM_CLEARSCREEN "Clear all text"
     ID_CHATROOM_COPYROOMNAME "Copy the roomname to clipboard"
     ID_NEXT                 "Next Window\nNext Window"
@@ -1554,7 +1607,7 @@ STRINGTABLE
 BEGIN
     IDS_ERROR_CONNECTING    "Error. RoboMX was unable to establish a connection to %s. [%s]"
     IDS_HANDSHAKE_START     "Starting handshake"
-    IDS_ERROR_LOGIN_UNKNOWN "Error. Login failed because the remote host answered in an unexpected way."
+    IDS_ERROR_LOGIN_UNKNOWN "Crucial Halt - Hang on, WHAT was that?"
     IDS_ERROR_LOGIN_KEY     "Error during key-exchange"
     IDS_ERROR_NO_CHATSERVER "Error. No chat server is running on the address specified."
     IDS_ERROR_NETWORK       "A network operation failed. %s"
@@ -1580,7 +1633,7 @@ BEGIN
     IDS_RTF_BLOCK           "Sorry, I made a futile attemp to send an RTF exploit to the room. RoboMX outsmarted me though and blocked it. Please kick my butt!"
     IDS_EDIT_MENU           "RoboMX will now open the a configuration file in notepad. Please adjust the RCMS commands to the one used in this room, save the document and re-join the channel. Do not change the order of the commands in the file."
     IDS_IGNORED_MX353       "/me ignored user '%s'"
-    IDS_IGNORED             "ignored user '%s'"
+    IDS_IGNORED             "/me ignored user '%s'"
     IDS_UNIGNORE_MX353      "/me un-ignored user '%s'"
     IDS_UNIGNORE            "un-ignored user '%s'"
     IDS_AVERAGE_LAG         "Average Lag: %u ms"
@@ -1605,7 +1658,7 @@ BEGIN
     IDS_NOTYOURBUISNESS     "Wont tell you :-P"
     IDS_AWAYCTRL            "/me is AFK, %s"
     IDS_AWAY_BACK           "/me is now back from »%s«. %s was away for %s"
-    IDS_AWAY_SILENTBACK     "You are now back from »%s«. You have been away for %s\n"
+    IDS_AWAY_SILENTBACK     "You are now back from »%s«. You have been away for %s"
     IDS_ERROR_LOGFILE_WRITE "Error: Could not write data to logfile."
     IDS_ERROR_MX353ONLY     "This feature only works with WinMX 3.53 rooms."
     IDS_AUTOJOIN_REMOVE     "Channel %s was removed from Auto-Join list."
@@ -1618,10 +1671,9 @@ BEGIN
     IDS_ERROR_TIMEOUT       "The connection timed out."
     IDS_ERROR_INVALID_SOCKET "Invalid Socket."
     IDS_ERROR_UNKNOWN_ID    "Sorry, the error number 0x%08x is unknown (%d)"
-    IDS_ERROR_RICHEDIT      "Your RICHED32.DLL is too old to run RoboMX. You need at least version 5.0 to run it.\nDo you want to download the necessary files now?"
-    IDS_ERROR_OLE           "Could not initialize Ole-Interface."
+    IDS_TOPIC2              "Topic"
+    IDS_CONNECTION_RETRY    "Trying to reconnect. (Retry #%02d/%02d)."
     IDS_ERROR_COMCTRL       "Could not initialzie Common Controls."
-    IDS_ERROR_RICHEDIT_INIT "Could not initialize Richedit 2.0 Interface."
     IDS_ERROR_WINSOCK       "Could not initialize Winsock."
     IDS_ERROR_BG_LOAD       "Error. Could not load Background image."
     IDS_SETTINGS            "Settings"
@@ -1638,7 +1690,7 @@ BEGIN
     IDS_CFG_MSG             "Messages"
     IDS_CFG_SND             "Sound FX"
     IDS_CFG_FUN             "Fun :-)"
-    IDS_CFG_SERVER          "Server"
+    IDS_CFG_SERVER          "Chatserver"
     IDS_CFG_EXT             "Add-Ons"
     IDS_TRIGGER             "Trigger"
     IDS_SOUND               "Sound"
@@ -1676,17 +1728,74 @@ BEGIN
     IDS_USERLIST_NODE       "User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150;Node-IP,120;Node-Port,80"
     IDS_USERLIST_SHORT      "User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150"
     IDS_LOG_START           "\n----- Started Logging ----\n\n"
-    IDS_TOPIC               " Topic: %s\n"
-    IDS_ROOMLIST            "Room,300;Users,50;Limit,50;Topic,300"
+    IDS_TOPIC               " Topic: %s"
+    IDS_ROOMLIST            "Room,300;Users,50;Limit,50;Ping,50;Topic,450"
     IDS_FINISHED            "Finished."
     IDS_ROOMS_ETA           "%04d Rooms (ETA: %s, %s, %s)"
     IDS_CHANNELLIST         "Channel List"
     IDS_NUMCHANNELS         "%d channels"
+    IDS_PING                "Ping server: bytes=%d time %sms TTL=%d"
+    IDS_CLIENTDISC          "Client closed."
+    IDS_SERVER_ROBOMX       "Info: Room is powered by RoboMX."
+    IDS_ROBOMX_ROOMSERVER   "RoboMX Roomserver\nType help for available commands...\n"
+    IDS_ERROR_SERVER_ONEROOMPERCONSOLE 
+                            "You can only host one room per console.\n"
+    IDS_ERROR_SERVER_SYNTAXERROR 
+                            "Syntax Error or one Parameter is invalid. Correct call is:\nhost <IP> <PORT> <ROOM>\n"
+    IDS_SERVER_SUCCESS      "Room '%s' was successfully hosted\n"
 END
 
 STRINGTABLE 
 BEGIN
     ID_MUTE                 "Mute/Activate sound effects.\nMute"
+    ID_DISPLAYINCHANNEL_PING "Display Ping to server in chat"
+    ID_VIEW_SYSTEMCONSOLE   "Display the System-console fo the current channel"
+END
+
+STRINGTABLE 
+BEGIN
+    IDR_MAINFRAME           "RoboMX"
+    IDS_BANLISTING          "%s [%s/%s]"
+    IDR_SETTINGS            "\nRoboMX\nRoboMX\n\n\nRoboMX.Document\nRoboMX.Document"
+    IDS_BANLISTINGEND       "Ban-listing complete."
+    IDS_SERVER_ROOMRENAME   "Channelname changed from '%s' to '%s' [Full name is '%s']\n"
+    IDS_COMMAND_EXECUTED    "Command '%s' was executed.\n"
+    IDS_COMMAND_NOTUNDERSTOOD 
+                            "Command '%s' not understood. Type Help for available commands\n\n"
+    IDS_MODES               "> Channel Modes:"
+    IDS_ERROR_SERVER_KEYEXISTS "Key already set for this channel."
+    IDS_ERROR_SERVER_NOKEY  "No Key set for this channel."
+    IDR_CHANNEL             "\nRoboMX\nRoboMX\n\n\nRoboMX.Document\nRoboMX.Document"
+    IDS_ERROR_SERVER_WRONGKEY "Invalid Key"
+    IDS_USERMODES           "Modes for %s: %s"
+    IDS_NOVOICE             "You don't have a voice."
+END
+
+STRINGTABLE 
+BEGIN
+    IDR_LIST                "\nRoboMX\nRoboMX\n\n\nRoboMX.Document\nRoboMX.Document"
+    IDR_SERVER              "\nRoboMX\nRoboMX\n\n\nRoboMX.Document\nRoboMX.Document"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_ERROR_SERVER_HOST   "Error: Could not host room'%s'\n"
+    IDS_SERVER_TERMINATED   "Room '%s' was terminated\n"
+    IDS_ERROR_SERVER_NOROOM "No room to stop.\n"
+    IDS_ERROR_CMDEMPTY      "Empty command string. Type Help for available commands\n"
+    IDS_ERROR_NOTUNDERSTOOD " Command '%s' not understood. Type Help for available commands\n"
+    IDS_SERVER_HELP         "\nAvailable Commands:\nhost <IP> <PORT> <ROOM> - Host a new room\nstop   - Stop currently hosted room\n/mode {#channel|nickname} [[+|-]modechars [parameters]] - Sets channel or user modes.\n/topic [topic] - Set channel topic\n/motd [motd] - Set channel motd\n/kick [user] [reason] - Kick a user\n/listbans -list all banned users/IP's/hostnames\n/say [/me] <msg> - Send a message to the room with the name of the God-User\n/impose <name> [/me] <message> - Send a message to the room using any name"
+    IDS_ERROR_SERVER_HANDSHAKE 
+                            "\nHandshake with incoming client [%s %s/%s] failed"
+    IDS_WARN_USERNAMEHIJACK "Username HiJack blocked [%s %s]"
+    IDS_SERVER_SETMODE      "sets mode: %s"
+    IDS_SERVER_KICKED       "has been kicked by %s (%s)"
+    IDS_DEFAULT_TOPIC       "RoboMX hosted room"
+    IDS_DEFAULT_MOTD        "This room is hosted by RoboMX\\nhttp://mxcontrol.sf.net"
+    IDS_DEFAULT_KEYMSG      "\n\nPlease login.\\nOnly perfect spellers\\nMay enter this room.\n\n"
+    IDS_NOSUCHBAN           "'%s' not not found in ban-list."
+    IDS_SERVER_UNBAN        "sets mode -b %s [%s/%s]"
+    IDS_BANLISTINGSTART     "Banned users in this channel:"
 END
 
 #endif    // English (U.S.) resources

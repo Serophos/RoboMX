@@ -28,11 +28,21 @@
 /////////////////////////////////////////////////////////////////////////////
 // CChannelView view
 
-#include "ListClient.h"
+//#include "ListClient.h"
+#include "WPNPClient.h"
 #include "ColorStatusBar.h"
 #include "MyListCtrl.h"
 #include "afxcmn.h"
 #include "TimeStatus.h"
+
+
+typedef struct TAG_CHATROOMINFOBUFFER {
+
+	WORD	wUsers;
+	WORD	wLimit;
+	CString strRoomName;
+	CString strTopic;
+} CHATROOMINFOBUFFER, *PCHATROOMINFOBUFFER;
 
 class CChannelView : public CFormView
 {
@@ -52,13 +62,14 @@ public:
 
 // Operations
 public:
-	void UpdateRoomItem(LPCTSTR lpszRoomName, WORD wUsers, WORD wLimit, LPCTSTR lpszTopic);
+	void UpdateRoomItem(LPTSTR lpszRoomName, WORD wUsers, WORD wLimit, LPTSTR lpszTopic);
 	static BOOL ClientCallback(DWORD dwParam, WPARAM wParam, LPARAM lParam);
 	static CChannelView* m_pThis;
 
-	CListClient m_mxClient;
-	int m_nLastItem;
-	CColorStatusBar*	 m_pStatusBar;
+	CWPNPClient			m_mxClient;
+	int					m_nLastItem;
+	CColorStatusBar*	m_pStatusBar;
+	CArray<CHATROOMINFOBUFFER, CHATROOMINFOBUFFER> m_aRoomBuffer;
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CChannelView)
@@ -103,6 +114,12 @@ public:
 	CTimeStatus   m_tTime;
 	BOOL          m_bInit;
 	void SetPaneStatus(const CString strText);
+	void WriteBufferToList(void);
+	CString PingRoom(CString& strRoom, BOOL bInitPing = TRUE);
+	//static UINT PingThread(LPVOID pParam);
+	//BOOL	m_bRunPing;
+	//CEvent  m_eDone;
+	afx_msg void OnPopupPingroom();
 };
 
 

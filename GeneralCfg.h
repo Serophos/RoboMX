@@ -28,6 +28,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // CGeneralCfg dialog
 #include "CfgDlg.h"
+#include "afxwin.h"
 
 class CGeneralCfg : public CCfgDlg
 {
@@ -43,21 +44,27 @@ public:
 	enum { IDD = IDD_GENERAL };
 	CListBox	m_lbChannels;
 	CListBox	m_lbGreetings;
-
+	BOOL	m_bEmoticons;
+	BOOL	m_bHiliteUsers;
+	BOOL	m_bMaxi;
+	BOOL	m_bUpdate;
+	BOOL	m_bScroller;
+	int		m_nBarTop;
 	BOOL	m_bHistory;
 	BOOL	m_bAllChannels;
-	BOOL	m_bLimit;
 	BOOL    m_bAutoList;
 	BOOL	m_bTimeStamp;
 	int		m_nHistory;
 	CString	m_strChannel;
 	CString	m_strGreeting;
-	int		m_nLimit;
 	int		m_nTime;
 	BOOL	m_bPing;
 	BOOL	m_bMiniTray;
 	CString m_strPath;
 	BOOL    m_bLog;
+	BOOL    m_bHideSystem;
+	BOOL	m_bRetry;
+	int		m_nRetries;
 	//}}AFX_DATA
 
 
@@ -77,17 +84,14 @@ protected:
 	afx_msg void OnAllchannels();
 	afx_msg void OnAddchannel();
 	afx_msg void OnRemovechannel();
+	afx_msg void OnBnClickedAddchannel2();
+	afx_msg void OnBnClickedRemovechannel2();
+	afx_msg void OnBnClickedSelectLogDir();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
-	BOOL m_bEmoticons;
-	BOOL m_bHiliteUsers;
-	BOOL m_bMaxi;
-	BOOL m_bUpdate;
-	afx_msg void OnBnClickedAddchannel2();
-	afx_msg void OnBnClickedRemovechannel2();
-	BOOL m_bScroller;
-	afx_msg void OnBnClickedSelectLogDir();
+	afx_msg void OnBnClickedRetryJoins();
+	afx_msg void OnBnClickedEnableHistory();
 };
 
 //{{AFX_INSERT_LOCATION}}

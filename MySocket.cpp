@@ -103,7 +103,7 @@ int CMySocket::Listen(u_short uPort)
 	local.sin_addr.s_addr = INADDR_ANY;
 	local.sin_port		  = htons(uPort);
 
-	m_sSocket = socket(AF_INET,SOCK_STREAM,0);
+	m_sSocket = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
 
 	if(m_sSocket == INVALID_SOCKET){
 

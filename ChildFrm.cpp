@@ -35,6 +35,7 @@ extern CSettings g_sSettings;
 IMPLEMENT_DYNCREATE(CChildFrame, CMDIChildWnd)
 
 BEGIN_MESSAGE_MAP(CChildFrame, CMDIChildWnd)
+	ON_WM_MDIACTIVATE()
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -43,7 +44,7 @@ END_MESSAGE_MAP()
 CChildFrame::CChildFrame()
 {
 	// TODO: add member initialization code here
-	
+	m_pUse = NULL;	
 }
 
 CChildFrame::~CChildFrame()
@@ -114,4 +115,11 @@ void CChildFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
 		lstrcat(szText, (char *)((LPCTSTR) strTitle));
 		AfxGetMainWnd()->SetWindowText(szText);
 	}
+}
+
+void CChildFrame::OnMDIActivate(BOOL bActivate, CWnd* pActivateWnd, CWnd* pDeact)
+{
+
+	CMDIChildWnd::OnMDIActivate(bActivate, pActivateWnd, pDeact);
+
 }

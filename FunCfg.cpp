@@ -8,7 +8,7 @@
 #include "Settings.h"
 #include ".\funcfg.h"
 #include "MainFrm.h"
-#include "RichEditExCtrl.h"
+#include "EmoticonManager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -20,6 +20,7 @@ static char THIS_FILE[] = __FILE__;
 // CFunCfg dialog
 
 extern CSettings g_sSettings;
+extern CEmoticonManager g_eEmoticons;
 
 CFunCfg::CFunCfg(CWnd* pParent /*=NULL*/)
 	: CCfgDlg(CFunCfg::IDD, pParent)
@@ -105,17 +106,11 @@ BOOL CFunCfg::OnInitDialog()
 	m_lcNames.SetColumnWidth(0, LVSCW_AUTOSIZE);
 	m_lcVendors.SetColumnWidth(0, LVSCW_AUTOSIZE);
 
-	POSITION pos;
-	CList<Emoticon *, Emoticon*> &lEmoticons = ((CMainFrame*)GetApp()->m_pMainWnd)->m_lEmoticons;
-	pos = lEmoticons.GetHeadPosition();
 	int nIn = 0;
+	for(int i = 0; i < g_eEmoticons.m_aEmoticons.GetSize(); i++){
 
-	while (pos)
-	{
-		Emoticon *eEmoticon = lEmoticons.GetNext(pos);
-	
-		nIn = m_lcEmo.InsertItem(m_lcEmo.GetItemCount(), eEmoticon->szActivationText);
-		m_lcEmo.SetItemText(nIn, 1, eEmoticon->szFileName);
+		nIn = m_lcEmo.InsertItem(m_lcEmo.GetItemCount(), g_eEmoticons.m_aEmoticons[i]->szActivationText);
+		m_lcEmo.SetItemText(nIn, 1, g_eEmoticons.m_aEmoticons[i]->szFileName);
 	}
 	return TRUE;
 }
@@ -130,6 +125,8 @@ void CFunCfg::Apply()
 	}
 	Save();
 	WriteEmoticons();
+	g_eEmoticons.Free();
+	g_eEmoticons.Load();
 }
 
 void CFunCfg::OnBtnVendorAdd() 
@@ -357,9 +354,6 @@ void CFunCfg::WriteEmoticons(void)
 		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 
 	}END_CATCH;
-
-	((CMainFrame*)GetApp()->m_pMainWnd)->DeleteEmoticons();
-	((CMainFrame*)GetApp()->m_pMainWnd)->LoadEmoticons();
 }
 
 void CFunCfg::OnLvnItemchangedEmoticonlist(NMHDR *pNMHDR, LRESULT *pResult)

@@ -4,7 +4,7 @@
 
 #pragma once
 
-class CServerDoc : public CRichEditDoc
+class CServerDoc : public CDocument
 {
 protected: // create from serialization only
 	CServerDoc();
@@ -19,8 +19,8 @@ public:
 // Overrides
 	public:
 	virtual BOOL OnNewDocument();
+	virtual BOOL SaveModified();
 	virtual void Serialize(CArchive& ar);
-	virtual CRichEditCntrItem* CreateClientItem(REOBJECT* preo) const;
 
 // Implementation
 public:

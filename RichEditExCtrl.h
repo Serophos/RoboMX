@@ -24,173 +24,124 @@
 #endif // _MSC_VER > 1000
 // RichEditExCtrl.h : header file
 //
-#include "ImageDataObject.h"
+//#include "ImageDataObject.h"
 
-#define COLORREF2RGB(Color) (Color & 0xff00) | ((Color >> 16) & 0xff) \
-                                 | ((Color << 16) & 0xff0000)
+#define NEWLINE_FORMAT	_T("2")
 
-class Emoticon
-{
-public:
-	Emoticon(){ hBitmap = 0;}
-	~Emoticon(){ if(hBitmap) DeleteObject(hBitmap);}
-
-	HBITMAP hBitmap;
-	char szFileName[1024];
-	char szActivationText[64];
-
-
-	static HBITMAP ReplaceColor(HBITMAP hBmp,COLORREF cOldColor,COLORREF cNewColor,HDC hBmpDC)
-	{
-
-		HBITMAP hRetBmp = NULL;
-
-		if(hBmp){	
-
-			HDC hBufferDC = CreateCompatibleDC(NULL);	// The DC for Sourcebitmap
-
-			if(hBufferDC){
-
-				HBITMAP hTmpBitmap = (HBITMAP) NULL;
-
-				if(hBmpDC){ // only if hbitmap is selected in a dc
-
-					if(hBmp == (HBITMAP)GetCurrentObject(hBmpDC, OBJ_BITMAP)){
-
-						hTmpBitmap = CreateBitmap(1, 1, 1, 1, NULL);
-						SelectObject(hBmpDC, hTmpBitmap);
-					}
-				}
-			    
-				HGDIOBJ hPreviousBufferObject = SelectObject(hBufferDC, hBmp);
-				// here BufferDC contains the bitmap
-					
-				HDC hDirectDC = CreateCompatibleDC(NULL); // Temporary DC
-
-				if(hDirectDC){
-
-					// size
-					BITMAP hBm;
-					GetObject(hBmp, sizeof(hBm), &hBm);
-							
-					// create a BITMAPINFO for the CreateDIBSection
-					BITMAPINFO RGB32BitsBITMAPINFO; 
-					ZeroMemory(&RGB32BitsBITMAPINFO, sizeof(BITMAPINFO)); // clean it first ;)
-
-					RGB32BitsBITMAPINFO.bmiHeader.biSize	 = sizeof(BITMAPINFOHEADER);
-					RGB32BitsBITMAPINFO.bmiHeader.biWidth	 = hBm.bmWidth;
-					RGB32BitsBITMAPINFO.bmiHeader.biHeight	 = hBm.bmHeight;
-					RGB32BitsBITMAPINFO.bmiHeader.biPlanes	 = 1;
-					RGB32BitsBITMAPINFO.bmiHeader.biBitCount = 32;
-
-					UINT * ptPixels;	
-
-					HBITMAP hDirectBitmap = CreateDIBSection(
-															 hDirectDC, 
-												             (BITMAPINFO*)&RGB32BitsBITMAPINFO, 
-												             DIB_RGB_COLORS,
-												             (void**)&ptPixels, 
-												             NULL, 0
-															);
-
-
-					if(hDirectBitmap){
-
-						// here DirectBitmap != NULL so ptPixels != NULL no need to test
-
-						HGDIOBJ hPreviousObject = SelectObject(hDirectDC, hDirectBitmap);
-
-						BitBlt(hDirectDC, 0, 0, hBm.bmWidth, hBm.bmHeight, hBufferDC, 0, 0, SRCCOPY);
-				
-						// here the hDirectDC contains the bitmap
-
-						// Convert COLORREF to RGB (Invert RED and BLUE)
-						cOldColor = COLORREF2RGB(cOldColor);
-						cNewColor = COLORREF2RGB(cNewColor);
-
-						// After all the inits we can do the job : Replace Color
-						for(int i = ((hBm.bmWidth *hBm.bmHeight)-1); i >= 0; i--){
-
-							if(ptPixels[i] == cOldColor){
-								
-								ptPixels[i] = cNewColor;
-							}
-						}
-
-						// little clean up
-						// Don't delete the result of SelectObject because it's 
-						// our modified bitmap (hDirectBitmap) ;)
-						SelectObject(hDirectDC, hPreviousObject);
-								
-						// finish
-						hRetBmp = hDirectBitmap;
-					}
-
-					// clean up some more... :P
-					DeleteDC(hDirectDC);
-				}			
-				if(hTmpBitmap){
-
-					SelectObject(hBmpDC, hBmp);
-					DeleteObject(hTmpBitmap);
-				}
-				
-				SelectObject(hBufferDC, hPreviousBufferObject);
-				// BufferDC is now useless
-				DeleteDC(hBufferDC);
-			}
-		}
-		return hRetBmp;
-	}
-};
 
 ///////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl window
+class CRichDocument;
+class CRichElement;
+class CRichFragment;
 
-class CRichEditExCtrl : public CRichEditCtrl
+typedef struct
+{
+	int		nFragment;
+	int		nOffset;
+} RICHPOSITION;
+
+class CRichEditExCtrl : public CWnd
 {
 // Construction
 public:
 	CRichEditExCtrl();
+	virtual ~CRichEditExCtrl();
 
-	CHARFORMAT2 m_cfDefault;
-	CHARFORMAT2 m_cfUse;
-// Attributes
-public:
+	virtual BOOL Create(DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID);
+
+	void Init(UINT m_nID);
+	void SetText(LPCSTR lpszText, COLORREF text, COLORREF bg);
 
 // Operations
 public:
+	void			SetSyncObject(CSyncObject* pSyncRoot);
+	void			SetSelectable(BOOL bSelectable);
+	void			SetFollowBottom(BOOL bFollowBottom);
+	void			SetDefaultLink(BOOL bDefaultLink);
+	void			SetDocument(CRichDocument* pDocument);
+	BOOL			IsModified() const;
+	void			InvalidateIfModified();
+	int				FullHeightMove(int nX, int nY, int nWidth, BOOL bShow = FALSE);
+	BOOL			GetElementRect(CRichElement* pElement, RECT* prc);
+	CRichFragment*	PointToFrag(CPoint& pt);
 
-// Overrides
-	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(CRichEditExCtrl)
-	public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	//}}AFX_VIRTUAL
-
-// Implementation
-public:
-	BOOL SetSelectionCharFormat(CHARFORMAT2& cf);
-	void Init(UINT m_nID);
-	BOOL InsertBitmap(HBITMAP hBitmap);
-	void SetText(LPCSTR lpszText, COLORREF text, COLORREF bg);
-	virtual ~CRichEditExCtrl();
-
-	static char* stristr(const char * str1, const char * str2);
-	static void strstp(const char *in, char *before, const char *txt, char *after);
-	// Generated message map functions
 protected:
-	//{{AFX_MSG(CRichEditExCtrl)
-	//}}AFX_MSG
+	void			ClearFragments();
+	void			Layout(CDC* pDC, CRect* pRect);
+	void			WrapLineHelper(CPtrList& pLine, CPoint& pt, int& nLineHeight, int nWidth, int nAlign);
+	RICHPOSITION	PointToPosition(CPoint& pt);
+	CPoint			PositionToPoint(RICHPOSITION& pt);
+	void			UpdateSelection();
+	void			CopySelection();
+
+protected:
+	virtual void	OnLayoutComplete() {};
+	virtual void	OnPaintBegin(CDC* pDC) {};
+	virtual void	OnPaintComplete(CDC* pDC) {};
+	virtual void	OnVScrolled() {};
+	virtual BOOL	PreTranslateMessage(MSG *pMsg);
+
+protected:
+	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnDestroy();
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnPaint();
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg BOOL OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnTimer(UINT nIDEvent);
 
 	DECLARE_MESSAGE_MAP()
 
+	friend class CRichFragment;
+
 protected:
 	UINT m_nID;
+	CSyncObject*	m_pSyncRoot;
+	BOOL			m_bSelectable;
+	BOOL			m_bFollowBottom;
+	BOOL			m_bDefaultLink;
 
-	void AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg);
-	// datamembers for bitmap storage
+	CRichDocument*	m_pDocument;
+	DWORD			m_nCookie;
+	CPtrArray		m_pFragments;
+	int				m_nLength;
+
+	CRichElement*	m_pHover;
+	BOOL			m_bSelecting;
+	RICHPOSITION	m_pSelStart;
+	RICHPOSITION	m_pSelEnd;
+	RICHPOSITION	m_pSelAbsStart;
+	RICHPOSITION	m_pSelAbsEnd;
+
+	HCURSOR			m_hcHand;
+	HCURSOR			m_hcText;
+	CBrush			m_pBrush;
+
+public:
+	void UpdateEmoticons(void);
 };
+
+typedef struct
+{
+	NMHDR			hdr;
+	CRichElement*	pElement;
+} RVN_ELEMENTEVENT;
+
+#define RVN_CLICK		100
+#define RVN_RCLICK		101
+
+#define ON_RICH_NOTIFY(wNotifyCode, id, memberFxn) \
+	{ WM_NOTIFY, (WORD)(int)wNotifyCode, (WORD)id, (WORD)id, AfxSigNotify_v, \
+		(AFX_PMSG) \
+		(reinterpret_cast< void (AFX_MSG_CALL CCmdTarget::*)(NMHDR*, LRESULT*) > \
+		(memberFxn)) },
 
 ///////////////////////////////////////////////////////////////////////////
 

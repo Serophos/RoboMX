@@ -25,6 +25,7 @@
 #include "Settings.h"
 #include "util.h"
 #include ".\chatclient.h"
+//#include "ClientSocket.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -37,6 +38,7 @@ extern CSettings g_sSettings;
 #ifdef _DEBUG
 extern Hex_Trace(PVOID pBuffer, int nLen);
 #endif
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -72,8 +74,10 @@ CChatClient::CChatClient()
 	m_strRoomIP      = "127.0.0.1";
 	m_pThread        = 0;
 	m_bListen        = FALSE;
-	m_bWarned		 = FALSE;
+	m_wServerType	 = SERVER_UNKNOWN;
 	m_bOldJoin		 = FALSE;
+	m_bAbort		 = FALSE;
+	m_bListen		 = FALSE;
 }
 
 CChatClient::~CChatClient()
@@ -85,241 +89,28 @@ BOOL CChatClient::Connect()
 {
 
 	m_eClose.ResetEvent();
-	m_bWarned		 = FALSE;
+	m_wServerType = SERVER_UNKNOWN;
+	m_bAbort  = FALSE;
+	m_bListen = FALSE;
 	m_pThread = AfxBeginThread(RecvProc, (PVOID)this, THREAD_PRIORITY_NORMAL);
+
 	return TRUE;
-}
-
-//#define _MXCHATD_COMPATIBLE
-
-UINT CChatClient::RecvProc(PVOID pParam)
-{
-
-	CChatClient* pClient = (CChatClient*)pParam;
-	ASSERT(pClient);
-
-	pClient->m_eClose.ResetEvent();
-
-	int nRecv = 0;
-	int nLen  = 0;
-	char command[4] = {'\0'};
-	char buffer[1024] = {'\0'};
-	int nValue  = 0, nSize = sizeof(int);
-	int nWait  = 15;
-	WORD wType = 0;
-
-	if(!pClient->m_mSocket.Connect(pClient->m_strRoomIP, pClient->m_wRoomTCPPort, 5)){
-
-		CString strError;
-		strError.Format(IDS_ERROR_CONNECTING, pClient->m_strRoomIP, pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-	// recv protocoll version
-	//recv(m_sSocket, (char*)&buffer, 1, 0);
-	pClient->WriteMessage(IDS_HANDSHAKE_START, g_sSettings.GetRGBPend());
-	pClient->m_mSocket.Recv(buffer, 1, 5);
-	
-	if(buffer[0] != 0x31){
-		
-		pClient->WriteMessage(IDS_ERROR_LOGIN_UNKNOWN,  g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-
-	CreateCryptKeyID(0x57, (BYTE *)buffer);
-
-	// Send UP Key Block
-	if(pClient->m_mSocket.Send(buffer, 16, 5) != 16){
-		
-		pClient->WriteMessage(IDS_ERROR_LOGIN_KEY,  g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-
-	// Recv DW Key Block
-	if(pClient->m_mSocket.Recv(buffer, 16, 5) != 16){
-		
-		pClient->WriteMessage(IDS_ERROR_LOGIN_KEY,  g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-
-	// Check Cryptkey
-	if(GetCryptKeyID((BYTE *)buffer) != 0x58){
-	
-		// this was not crypt key from Chatserver :-(
-		pClient->WriteMessage(IDS_ERROR_NO_CHATSERVER,  g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-
-	// Get the keys
-	GetCryptKey((BYTE *)buffer, &pClient->m_dwUPKey, &pClient->m_dwDWKey);
-
-	// Prepare login buffer...
-	ZeroMemory(buffer, sizeof(buffer));
-
-	// Send new pre-login packet
-	// ED 13 01 00 31	nLen = 5;
-	
-	if(!pClient->m_bOldJoin){
-
-		*(WORD*)buffer = 0xED;
-		*(WORD*)(buffer+1) = 0x13;
-		*(WORD*)(buffer+2) = 0x01;
-		*(WORD*)(buffer+3) = 0x00;
-		*(WORD*)(buffer+4) = 0x31;
-		nLen = 5;
-
-		pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
-		
-		if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
-
-			CString strError;
-			strError.Format(IDS_ERROR_NETWORK, pClient->m_mSocket.GetLastErrorStr());
-			pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-			pClient->m_bListen  = FALSE;
-			pClient->m_eClose.SetEvent();
-			return FALSE;
-		}
-	}
-
-	//Login-Request: (Client)
-	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
-	nLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
-					(LPCTSTR)pClient->m_strRoom, 
-					pClient->m_wLineType,
-					pClient->m_dwClientIP,
-					pClient->m_wClientUDPPort,
-					pClient->m_dwFiles, 
-					(LPCTSTR)pClient->m_strUser);
-
-	pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
-
-	if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
-
-		CString strError;
-		strError.Format(IDS_ERROR_NETWORK, pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-
-	ZeroMemory(buffer, sizeof(buffer));
-	if(pClient->m_mSocket.Recv(buffer, 5, 0) != 5){
-
-		CString strError;
-		strError.Format(IDS_ERROR_NETWORK, pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-	
-	pClient->m_dwDWKey = DecryptMXTCP((BYTE *)buffer, 5, pClient->m_dwDWKey);
-
-	if((*(WORD*)buffer) != 0x0066){
-
-		pClient->WriteMessage(IDS_ERROR_LOGIN_REJECTED, RGB(150,0,0));
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
-	}
-	pClient->m_wNumUsers = *(WORD*)(buffer+2);
-	pClient->WriteMessage(IDS_LOGIN_OK, RGB(0, 120, 0));
-	
-	pClient->m_bListen = TRUE;
-	
-
-	// main recv loop
-	while(pClient->m_bListen) {
-
-
-		nRecv = pClient->m_mSocket.Recv(buffer, 4, 1);
-		if(nRecv == SOCKET_ERROR){
-
-			if((pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT) && pClient->m_bListen){
-
-				CString strError;
-				strError.Format(IDS_ERROR_NETWORK, pClient->m_mSocket.GetLastErrorStr());
-				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-				pClient->m_bListen  = FALSE;
-				break;
-			}
-			else continue;
-		}
-		
-
-		if(nRecv != 4){
-			
-			Sleep(100);
-			CString strError;
-			strError.Format(IDS_ERROR_FIXME, buffer);
-			pClient->WriteMessage(strError, RGB(150, 150, 150));
-			continue;
-		}
-		
-		pClient->m_dwDWKey = DecryptMXTCP((BYTE*)(buffer), 4, pClient->m_dwDWKey);
-
-		memcpy(&wType, buffer, 2);
-		if(wType == 0xFDE8){
-
-			if(g_sSettings.GetPing())
-				pClient->WriteMessage("PONG", RGB(150,150,150));
-			continue;
-		}
-
-		nLen = *(WORD*)(buffer+2);
-		
-		if(nLen == 0) continue;
-
-		if(!pClient->m_bListen) break;
-
-		nRecv = pClient->m_mSocket.Recv(buffer+4, nLen, 0);
-
-		if(nRecv == SOCKET_ERROR){
-
-			if(pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT){
-
-				CString strError;
-				strError.Format(IDS_ERROR_NETWORK, pClient->m_mSocket.GetLastErrorStr());
-				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-				pClient->m_bListen  = FALSE;
-				break;
-			}
-		}
-		if(nRecv != nLen) continue;
-
-		pClient->m_dwDWKey = DecryptMXTCP((BYTE*)(buffer+4), nLen, pClient->m_dwDWKey);
-
-		pClient->DecodeCommand(*(WORD*)buffer, nLen, buffer+4);
-		ZeroMemory(buffer,1024);
-
-	}
-	
-	TRACE("Setting Event and exiting thread\n");
-	pClient->m_eClose.SetEvent();
-	TRACE("Bye\n");
-	return 0;
 }
 
 BOOL CChatClient::Disconnect()
 {
 
+	m_bAbort = TRUE;
 	if(m_bListen){
 
 		m_bListen = FALSE;
-		Sleep(200);
-		WaitForSingleObject(m_eClose.m_hObject, 10000);
 		m_mSocket.Close();
+		DWORD n = WaitForSingleObject(m_eClose.m_hObject, 1000);
+		if(n == WAIT_TIMEOUT || n == WAIT_FAILED){
+
+			TerminateThread(m_pThread->m_hThread, 0);
+		}
+		m_pThread = NULL;
 	}
 
 	return TRUE;
@@ -350,10 +141,10 @@ BOOL CChatClient::SendRename(CString strUser, DWORD dwFiles, WORD wLine)
 
 		if(nSend == SOCKET_ERROR){
 
+			m_bListen  = FALSE;
 			CString strError;
 			strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
-			m_bListen  = FALSE;
 			return FALSE;
 		}
 	}
@@ -381,10 +172,10 @@ void CChatClient::SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction)
 
 		if(nSend == SOCKET_ERROR){
 
+			m_bListen  = FALSE;
 			CString strError;
 			strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
-			m_bListen  = FALSE;
 		}
 	}
 }
@@ -407,10 +198,10 @@ BOOL CChatClient::SendNew(LPCTSTR lpszKey)
 
 		if(nSend == SOCKET_ERROR){
 
+			m_bListen  = FALSE;
 			CString strError;
 			strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
-			m_bListen  = FALSE;
 		}
 	}
 	return 0;
@@ -438,10 +229,10 @@ void CChatClient::Ping()
 
 		if(nSend == SOCKET_ERROR){
 
+			m_bListen  = FALSE;
 			CString strError;
 			strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
-			m_bListen  = FALSE;
 		}
 	}
 }
@@ -472,7 +263,7 @@ BOOL CChatClient::SetRoom(CString strRoom)
 
 	m_wRoomTCPPort = Util::axtoi((LPSTR)(LPCSTR)strRoom.Mid(m_strRoom.GetLength()-4), 4);
 
-	m_dwClientIP = g_sSettings.GetServerIP();
+	m_dwClientIP = g_sSettings.GetNodeIP();
 
 	nA = ((m_dwClientIP >> 24) & 0xff);
 	nB = ((m_dwClientIP >> 16) & 0xff);
@@ -481,7 +272,7 @@ BOOL CChatClient::SetRoom(CString strRoom)
 
 	m_dwClientIP = MAKEIPADDRESS(nA, nB, nC, nD);
 
-	m_wClientUDPPort = (WORD)g_sSettings.GetServerPort();
+	m_wClientUDPPort = (WORD)g_sSettings.GetNodePort();
 	
 	if(m_wRoomTCPPort < 1024) return FALSE;
 	return TRUE;
@@ -494,71 +285,123 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 	switch(wType){
 
 	case 0x012C: // topic
-		::SendMessage(m_pView->m_hWnd, UWM_TOPIC, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_TOPIC, wLen, (LPARAM)cmd);
 		break;
 	case 0x0078: // motd
-		::SendMessage(m_pView->m_hWnd, UWM_MOTD, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_MOTD, wLen, (LPARAM)cmd);
 		break;
 	case 0x006F: // userlist
 	case 0x0072: // new userlist
-		::SendMessage(m_pView->m_hWnd, UWM_ADDUSER, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_ADDUSER, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x006E: // user join
 	case 0x0071: // new join
 	case 0x0075: // new user join with IP
-		::SendMessage(m_pView->m_hWnd, UWM_JOIN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
+		DecodeJoin(wType, wLen, cmd);
 		break;
 	case 0x0073: // user part
-		::SendMessage(m_pView->m_hWnd, UWM_PART, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_PART, wLen, (LPARAM)cmd);
 		break;
 	case 0x0070: // user rename
 	case 0x0074: // new user rename
-		::SendMessage(m_pView->m_hWnd, UWM_RENAME, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_RENAME, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x00D2: //  admin messages (xy is now know as ab)
 	case 0x00D3:  // command echo
-		::SendMessage(m_pView->m_hWnd, UWM_OPMESSAGE, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_OPMESSAGE, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x00C9: // normal message
-		::SendMessage(m_pView->m_hWnd, UWM_MESSAGE, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_MESSAGE, wLen, (LPARAM)cmd);
 		break;
 	case 0x00CB: // Action
-		::SendMessage(m_pView->m_hWnd, UWM_ACTION, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_ACTION, wLen, (LPARAM)cmd);
 		break;
 	case 0x00C8: // rcms garbage
-		if(!m_bWarned){
+		if(m_wServerType != SERVER_RCMS){
 
 			WriteMessage(IDS_SERVER_RCMS, g_sSettings.GetRGBOp());
-			::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_RCMS, 0);
-			m_bWarned = TRUE;
+			::SendMessage(m_hView, UWM_SERVERTYPE, SERVER_RCMS, 0);
+			m_wServerType = SERVER_RCMS;
 		}
 		break;
-	case 0x0068: // ?
-		WriteMessage(IDS_SERVER_WINMX353, g_sSettings.GetRGBOp());
-		if(m_bOldJoin){
+	case 0x0068: // winmx server id
+		if(m_wServerType != SERVER_ROBOMX){
 
-			WriteMessage(IDS_WINMX353_WRONGJOIN_WARNING, RGB(150,0,0));
+			WriteMessage(IDS_SERVER_WINMX353, g_sSettings.GetRGBOp());
+			if(m_bOldJoin){
+
+				WriteMessage(IDS_WINMX353_WRONGJOIN_WARNING, RGB(150,0,0));
+			}
+			m_wServerType = SERVER_WINMX353;
+			::SendMessage(m_hView, UWM_SERVERTYPE, SERVER_WINMX353, 0);
 		}
-		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX353, 0);
+		break;
+	case 0x0069: // robomx join id
+		WriteMessage(IDS_SERVER_ROBOMX, g_sSettings.GetRGBOp());
+		::SendMessage(m_hView, UWM_SERVERTYPE, SERVER_ROBOMX, 0);
+		m_wServerType = SERVER_ROBOMX;
 		break;
 	case 0x012D: // room name changed
-		::SendMessage(m_pView->m_hWnd, UWM_ROOMRENAME, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_ROOMRENAME, wLen, (LPARAM)cmd);
 		break;
 	case 0x0190: // redirect
-		::SendMessage(m_pView->m_hWnd, UWM_REDIRECT, wLen, (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_REDIRECT, wLen, (LPARAM)cmd);
 		break;
 	default: // unknown
-		::SendMessage(m_pView->m_hWnd, UWM_UNKNOWN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
+		::SendMessage(m_hView, UWM_UNKNOWN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 	}
+}
+    
+int CChatClient::DecodeJoin(WORD wType, WORD wLen, char* buffer)
+{
+
+	ClientJoin* pJoin = new ClientJoin();
+	
+	LPSTR lpUser  = 0;
+	BYTE  btDummy = 0;
+
+	if(wType == 0x071){ // winmx 3.52 and later (no-ip display)
+
+		if(Util::ScanMessage(buffer, wLen, "SDWWDB", &lpUser, &pJoin->dwNodeIP, &pJoin->wNodePort, &pJoin->wLine, &pJoin->dwFiles, &btDummy) < 6){
+
+			return 0;
+		}
+	}
+	else if(wType == 0x075){ // winmx 3.52 and later (ip display)
+
+		if(Util::ScanMessage(buffer, wLen, "SDWWDBD", &lpUser, &pJoin->dwNodeIP, &pJoin->wNodePort, &pJoin->wLine, &pJoin->dwFiles, &btDummy, &pJoin->dwSrcIP) < 6){
+
+			return 0;
+		}
+		pJoin->strHost = CMySocket::GetHostName(Util::FormatIP(pJoin->dwSrcIP));
+	}
+	else{  // old winmx
+
+		if(Util::ScanMessage(buffer, wLen, "SDWWD", &lpUser, &pJoin->dwNodeIP, &pJoin->wNodePort, &pJoin->wLine, &pJoin->dwFiles) != 5){
+
+			return 0;
+		}
+	}
+
+	pJoin->strName = lpUser;
+	if((btDummy >= 0) && (btDummy <= 2))
+		pJoin->wLevel  = (WORD)btDummy;
+	else
+		pJoin->wLevel  = 0;
+
+	::SendMessage(m_hView, UWM_JOIN, 0, (LPARAM)pJoin);
+	delete pJoin; 
+
+	return 1;
 }
 
 void CChatClient::WriteMessage(LPCTSTR lpszMsg, COLORREF rColor)
 {
 
-	if(!m_pView) return;
-	if(!::IsWindow(m_pView->m_hWnd)) return;
+	if(!m_hView) return;
+	if(!::IsWindow(m_hView)) return;
 
-	::SendMessage(m_pView->m_hWnd, UWM_SYSTEM, (WPARAM)rColor, (LPARAM)lpszMsg);
+	::SendMessage(m_hView, UWM_SYSTEM, (WPARAM)rColor, (LPARAM)lpszMsg);
 }
 
 void CChatClient::WriteMessage(UINT nID, COLORREF rColor)
@@ -567,4 +410,250 @@ void CChatClient::WriteMessage(UINT nID, COLORREF rColor)
 	CString strText;
 	strText.LoadString(nID);
 	WriteMessage(strText, rColor);
+}
+
+#define BUFFER_SIZE 10000
+
+UINT CChatClient::RecvProc(PVOID pParam)
+{
+
+	CChatClient* pClient = (CChatClient*)pParam;
+	ASSERT(pClient);
+
+	pClient->m_eClose.ResetEvent();
+
+	int nTries = g_sSettings.GetRetry() ? g_sSettings.GetRetries() : 1;
+
+	for(int nTry = 0; (nTry <= nTries) && !pClient->m_bAbort;  nTry++){
+
+		if(nTry > 0){
+
+			CString strOut;
+			strOut.Format(IDS_CONNECTION_RETRY, nTry, nTries);
+			pClient->WriteMessage(strOut, g_sSettings.GetRGBPend());
+		}
+		if(pClient->ConnectInternal()){
+
+			pClient->ListenInternal();
+		}
+	}
+	
+	TRACE("Setting Event and exiting thread\n");
+	pClient->m_bListen = FALSE;
+	pClient->m_eClose.SetEvent();
+	TRACE("Bye\n");
+	return 0;
+}
+
+BOOL CChatClient::ConnectInternal(void)
+{
+
+	int nRecv = 0;
+	char buffer[BUFFER_SIZE] = {'\0'};
+	WORD	wType = 0;
+	WORD	wLen  = 0;
+
+	if(!m_mSocket.Connect(m_strRoomIP, m_wRoomTCPPort, IPPROTO_TCP)){
+
+		CString strError;
+		strError.Format(IDS_ERROR_CONNECTING, m_strRoomIP, m_mSocket.GetLastErrorStr());
+		WriteMessage(strError, g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+
+	if(m_bAbort) return FALSE;
+
+	WriteMessage(IDS_HANDSHAKE_START, g_sSettings.GetRGBPend());
+	m_mSocket.Recv(buffer, 1, 5);
+	
+	if(buffer[0] != 0x31){
+		
+		WriteMessage(IDS_ERROR_LOGIN_UNKNOWN,  g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+
+	if(m_bAbort) return FALSE;
+	CreateCryptKeyID(0x57, (BYTE *)buffer);
+
+	// Send UP Key Block
+	if(m_mSocket.Send(buffer, 16, 5) != 16){
+		
+		WriteMessage(IDS_ERROR_LOGIN_KEY,  g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+
+	// Recv DW Key Block
+	if(m_bAbort) return FALSE;
+	if(m_mSocket.Recv(buffer, 16, 5) != 16){
+		
+		WriteMessage(IDS_ERROR_LOGIN_KEY,  g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+
+	// Check Cryptkey
+	if(m_bAbort) return FALSE;
+	if(GetCryptKeyID((BYTE *)buffer) != 0x58){
+	
+		// this was not crypt key from Chatserver :-(
+		WriteMessage(IDS_ERROR_NO_CHATSERVER,  g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+
+	// Get the keys
+	GetCryptKey((BYTE *)buffer, &m_dwUPKey, &m_dwDWKey);
+
+	// Prepare login buffer...
+	ZeroMemory(buffer, BUFFER_SIZE);
+
+	// Send new pre-login packet
+	// ED 13 01 00 31	wLen = 5;
+	
+	if(m_bAbort) return FALSE;
+
+	if(!m_bOldJoin){
+
+		*(WORD*)buffer = 0xED;
+		*(WORD*)(buffer+1) = 0x13;
+		*(WORD*)(buffer+2) = 0x01;
+		*(WORD*)(buffer+3) = 0x00;
+		*(WORD*)(buffer+4) = 0x31;
+		wLen = 5;
+
+		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, wLen, m_dwUPKey);
+		
+		if(m_mSocket.Send(buffer, wLen, 5) != wLen){
+
+			CString strError;
+			strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
+			WriteMessage(strError, g_sSettings.GetRGBErr());
+			return FALSE;
+		}
+	}
+
+	if(m_bAbort) return FALSE;
+	//Login-Request: (Client)
+	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
+	wLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
+					(LPCTSTR)m_strRoom, 
+					m_wLineType,
+					m_dwClientIP,
+					m_wClientUDPPort,
+					m_dwFiles, 
+					(LPCTSTR)m_strUser);
+
+	m_dwUPKey = EncryptMXTCP((BYTE*)buffer, wLen, m_dwUPKey);
+
+	if(m_bAbort) return FALSE;
+	if(m_mSocket.Send(buffer, wLen, 5) != wLen){
+
+		CString strError;
+		strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
+		WriteMessage(strError, g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+
+	if(m_bAbort) return FALSE;
+	ZeroMemory(buffer, BUFFER_SIZE);
+	if(m_mSocket.Recv(buffer, 5, 5) != 5){
+
+		CString strError;
+		strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
+		WriteMessage(strError, g_sSettings.GetRGBErr());
+		return FALSE;
+	}
+	
+	if(m_bAbort) return FALSE;
+	m_dwDWKey = DecryptMXTCP((BYTE *)buffer, 5, m_dwDWKey);
+
+	if((*(WORD*)buffer) != 0x0066){
+
+		WriteMessage(IDS_ERROR_LOGIN_REJECTED, RGB(150,0,0));
+		return FALSE;
+	}
+
+ 	m_wNumUsers = *(WORD*)(buffer+2);
+	WriteMessage(IDS_LOGIN_OK, RGB(0, 120, 0));
+	m_bListen = TRUE;
+	return TRUE;
+}
+
+BOOL CChatClient::ListenInternal(void)
+{
+
+	int nRecv = 0;
+	char buffer[BUFFER_SIZE] = {'\0'};
+	WORD	wType = 0;
+	WORD	wLen  = 0;
+
+	m_bListen = TRUE;
+
+	ZeroMemory(buffer, BUFFER_SIZE);
+	
+	// main recv loop
+	while(m_bListen) {
+
+
+		nRecv = m_mSocket.Recv(buffer, 4, 15);
+		if(nRecv == SOCKET_ERROR){
+
+			if((m_mSocket.GetLastError() != SOCK_TIMEOUT) && m_bListen){
+
+				m_bListen  = FALSE;
+				CString strError;
+				strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
+				WriteMessage(strError, g_sSettings.GetRGBErr());
+				break;
+			}
+			else continue;
+		}
+		
+
+		if(nRecv != 4){
+			
+			Sleep(100);
+			CString strError;
+			strError.Format(IDS_ERROR_FIXME, buffer);
+			WriteMessage(strError, RGB(150, 150, 150));
+			continue;
+		}
+		
+		m_dwDWKey = DecryptMXTCP((BYTE*)(buffer), 4, m_dwDWKey);
+
+		memcpy(&wType, buffer, 2);
+		if(wType == 0xFDE8){
+
+			if(g_sSettings.GetPing())
+				WriteMessage("PONG", RGB(150,150,150));
+			continue;
+		}
+
+		wLen = *(WORD*)(buffer+2);
+		
+		if(wLen == 0) continue;
+
+		if(!m_bListen) break;
+
+		nRecv = m_mSocket.Recv(buffer, wLen, 20);
+
+		if(nRecv == SOCKET_ERROR){
+
+			if(m_mSocket.GetLastError() != SOCK_TIMEOUT){
+
+				m_bListen  = FALSE;
+				CString strError;
+				strError.Format(IDS_ERROR_NETWORK, m_mSocket.GetLastErrorStr());
+				WriteMessage(strError, g_sSettings.GetRGBErr());
+				break;
+			}
+		}
+		if(nRecv != wLen) continue;
+
+		m_dwDWKey = DecryptMXTCP((BYTE*)(buffer), wLen, m_dwDWKey);
+
+		DecodeCommand(wType, wLen, buffer);
+		ZeroMemory(buffer,1024);
+
+	}
+
+	return m_bListen;
 }

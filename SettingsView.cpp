@@ -108,10 +108,10 @@ void CSettingsView::OnInitialUpdate()
 	cBmp.DeleteObject();
 	
 	m_lcCat.SetImageList(&m_cImageList, LVSIL_NORMAL);
-	m_lcCat.SetIconSpacing(48,32);
 
-	m_lcCat.InsertColumn(0, "Categories", LVCFMT_CENTER, 52, 0);
-	m_lcCat.SetIconSpacing(48,32);
+	m_lcCat.InsertColumn(0, "", LVCFMT_CENTER, 64, 0);
+	m_lcCat.SetIconSpacing(64,32);
+
 	
 	CRect rcClient;
 	GetDlgItem(IDC_STATIC_CLIENT)->GetWindowRect(&rcClient);

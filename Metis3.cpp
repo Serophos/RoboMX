@@ -124,42 +124,8 @@ BOOL CMetis3App::InitInstance()
 
 	CWinApp::InitInstance();
 
-
-	// First thing of buisness: check richedit dll
-	_TCHAR lpszModuleName[MAX_PATH + 1] = {'\0',};
-	
-	if(Util::FileExists(g_sSettings.GetWorkingDir(FALSE) + "\\RICHED32.DLL")){
-
-		strcpy(lpszModuleName, g_sSettings.GetWorkingDir(FALSE));
-	}
-	else{
-
-		GetSystemDirectory(lpszModuleName, MAX_PATH);
-	}
-
-	_tcscat(lpszModuleName, _T("\\RICHED32.DLL"));
-
-	if(!Util::CheckRichEdit((_TCHAR*)lpszModuleName)){
-
-		if(AfxMessageBox(IDS_ERROR_RICHEDIT, MB_YESNO+MB_ICONQUESTION) == IDYES){
-
-			ShellExecute(0, "open", "http://mxcontrol.sourceforge.net/modules.php?name=Downloads&d_op=viewdownload&cid=12", 0, 0, SW_SHOW);
-			return FALSE;
-		}
-		else{
-
-			return FALSE;
-		}
-	}
 	// check ok we may continue :-)
 	
-	// Initialize OLE libraries
-	if (!AfxOleInit())
-	{
-		AfxMessageBox(IDS_ERROR_OLE, MB_ICONSTOP);
-		return FALSE;
-	}
-
 	AfxEnableControlContainer();
 
 	INITCOMMONCONTROLSEX icc;
@@ -172,24 +138,21 @@ BOOL CMetis3App::InitInstance()
 		return FALSE;
 	}
 
-	if(!AfxInitRichEdit2()){
-
-		AfxMessageBox(IDS_ERROR_RICHEDIT_INIT, MB_ICONSTOP);
-		return FALSE;
-	}
-
-
 	SetRegistryKey(_T("RoboMX"));
 	LoadStdProfileSettings(0);  // Load standard INI file options (including MRU)
 
-
-
 	WSADATA wsaData;
 
-	m_nWSA = WSAStartup(0x101, &wsaData);
+	m_nWSA = WSAStartup(MAKEWORD(1, 1), &wsaData);
 	
 	if(m_nWSA){
 
+		AfxMessageBox(IDS_ERROR_WINSOCK, MB_OK+MB_ICONSTOP);
+		return FALSE;
+	}
+
+	if(	LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1){
+		
 		AfxMessageBox(IDS_ERROR_WINSOCK, MB_OK+MB_ICONSTOP);
 		return FALSE;
 	}
@@ -200,6 +163,10 @@ BOOL CMetis3App::InitInstance()
 	//  serve as the connection between documents, frame windows and views.
 	g_sSettings.Load();
 	SetRandomAppTitle();
+
+	m_gdiFont.CreateFont( -11, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE,
+		DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY,
+		DEFAULT_PITCH|FF_DONTCARE, _T("Tahoma") );
 
 	CMultiDocTemplate* pListTemplate;
 	pListTemplate = new CMultiDocTemplate(
@@ -231,7 +198,7 @@ BOOL CMetis3App::InitInstance()
 		return FALSE;
 	AddDocTemplate(pSettingsTemplate);
 
-	/*CMultiDocTemplate* pServerTemplate;
+	CMultiDocTemplate* pServerTemplate;
 	pServerTemplate = new CMultiDocTemplate(
 		IDR_SERVER,
 		RUNTIME_CLASS(CServerDoc),
@@ -239,8 +206,7 @@ BOOL CMetis3App::InitInstance()
 		RUNTIME_CLASS(CServerView));
 	if (!pServerTemplate)
 		return FALSE;
-	pServerTemplate->SetContainerInfo(IDR_SERVER);
-	AddDocTemplate(pServerTemplate);	 */
+	AddDocTemplate(pServerTemplate);	 
 
 
 	// create main MDI Frame window
@@ -249,6 +215,7 @@ BOOL CMetis3App::InitInstance()
 		return FALSE;
 	m_pMainWnd = pMainFrame;
 
+	((CMainFrame*)pMainFrame)->SetLanguage();
 	((CMainFrame*)pMainFrame)->LoadPlugins();
 
 #ifndef _DEBUG
@@ -259,12 +226,12 @@ BOOL CMetis3App::InitInstance()
 #endif
 
 	// Parse command line for standard shell commands, DDE, file open
-	CCommandLineInfo cmdInfo;
-	ParseCommandLine(cmdInfo);
+	//CCommandLineInfo cmdInfo;
+	//ParseCommandLine(cmdInfo);
 
 	// Dispatch commands specified on the command line
-	if (!ProcessShellCommand(cmdInfo))
-		return FALSE;
+	//if (!ProcessShellCommand(cmdInfo))
+	//	return FALSE;
 
 	// Background Image :-)
 	ApplyPic();

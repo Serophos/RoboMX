@@ -56,16 +56,13 @@ public:
 // Implementation
 public:
 	afx_msg void OnChannelChannellist();
+	virtual BOOL CreateClient(LPCREATESTRUCT lpCreateStruct, CMenu* pWindowMenu);
 	void JoinChannel();
 	
 	CString m_strRoom;
 	//CImage  m_iBgImage;
 	BOOL    m_bChannelList;
 	BOOL    m_bSettings;
-
-	CList<Emoticon*, Emoticon*> m_lEmoticons;
-
-	afx_msg LRESULT OnTrayNotify(WPARAM wParam, LPARAM lParam);
 
 	virtual ~CMainFrame();
 
@@ -80,6 +77,11 @@ public:
 	CString			m_strAway;
 	UINT			m_uAwayStart;
 	BOOL			m_bQuickJoin;
+	CMenu			*m_pMenuNew;
+
+	HINSTANCE		m_hInstDefault;
+	HINSTANCE		m_hInstUse;
+
 protected:  // control bar embedded members
 
 	CColorStatusBar  m_wndStatusBar;
@@ -103,8 +105,10 @@ protected:
 	HICON m_hIcon;
 	HICON m_hIcon2;
 	int   m_nIcon;
+	int   m_nMaxAni;
 	NOTIFYICONDATA m_nIconData;
 
+	afx_msg LRESULT OnTrayNotify(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnClose();
 	afx_msg int  OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewOptions();
@@ -124,9 +128,6 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
-	void LoadEmoticons(void);
-	void AddEmoticon(char* szFileName, char* szActivationText);
-	void DeleteEmoticons(void);
 	void LoadPlugins(void);
 	void UnloadPlugins(void);
 	afx_msg void OnStartNodeserver();
@@ -139,6 +140,7 @@ public:
 	void StopAni(void);
 	void StartAni(void);
 	afx_msg void OnReconnectAll();
+	void SetLanguage(void);
 };
 
 /////////////////////////////////////////////////////////////////////////////

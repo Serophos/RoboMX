@@ -55,7 +55,9 @@
 #define IDS_ERROR_INVALID_SOCKET        51
 #define IDS_ERROR_UNKNOWN_ID            52
 #define IDS_ERROR_RICHEDIT              53
+#define IDS_TOPIC2                      53
 #define IDS_ERROR_OLE                   54
+#define IDS_CONNECTION_RETRY            54
 #define IDS_ERROR_COMCTRL               55
 #define IDS_ERROR_RICHEDIT_INIT         56
 #define IDS_ERROR_WINSOCK               57
@@ -108,17 +110,50 @@
 #define IDS_ROOMS_ETA                   102
 #define IDS_CHANNELLIST                 103
 #define IDS_NUMCHANNELS                 104
+#define IDS_PING                        105
+#define IDS_CLIENTDISC                  106
+#define IDS_SERVER_ROBOMX               107
+#define IDS_ROBOMX_ROOMSERVER           108
+#define IDS_ERROR_SERVER_ONEROOMPERCONSOLE 109
+#define IDS_ERROR_SERVER_SYNTAXERROR    110
+#define IDS_SERVER_SUCCESS              111
+#define IDS_ERROR_SERVER_HOST           112
+#define IDS_SERVER_TERMINATED           113
+#define IDS_ERROR_SERVER_NOROOM         114
+#define IDS_ERROR_CMDEMPTY              115
+#define IDS_ERROR_NOTUNDERSTOOD         116
+#define IDS_SERVER_HELP                 117
+#define IDS_ERROR_SERVER_HANDSHAKE      118
+#define IDS_WARN_USERNAMEHIJACK         119
+#define IDS_SERVER_SETMODE              120
+#define IDS_SERVER_KICKED               121
+#define IDS_DEFAULT_TOPIC               122
+#define IDS_DEFAULT_MOTD                123
+#define IDS_DEFAULT_KEYMSG              124
+#define IDS_NOSUCHBAN                   125
+#define IDS_SERVER_UNBAN                126
+#define IDS_BANLISTINGSTART             127
 #define IDR_MAINFRAME                   128
 #define IDR_METIS3TYPE                  129
-#define IDM_DOCMAN                      129
+#define IDS_BANLISTING                  129
 #define IDR_SETTINGS                    130
 #define IDD_CONNECT                     131
+#define IDS_BANLISTINGEND               131
+#define IDS_SERVER_ROOMRENAME           132
+#define IDS_COMMAND_EXECUTED            133
 #define IDD_RENAME                      134
+#define IDS_COMMAND_NOTUNDERSTOOD       134
 #define IDD_CHANNELLIST                 135
+#define IDS_MODES                       135
 #define IDB_ROBOMX                      136
+#define IDS_ERROR_SERVER_KEYEXISTS      136
 #define IDB_SMILEYS                     137
+#define IDS_ERROR_SERVER_NOKEY          137
 #define IDR_CHANNEL                     138
+#define IDS_ERROR_SERVER_WRONGKEY       139
 #define IDB_BG                          140
+#define IDS_USERMODES                   140
+#define IDS_NOVOICE                     141
 #define IDR_LIST                        144
 #define IDR_LISTRMENU                   146
 #define IDR_USER                        147
@@ -138,6 +173,7 @@
 #define IDD_INPUT_REQUEST               164
 #define IDD_FUN                         165
 #define IDD_PAGERCFG                    166
+#define IDD_SERVERCFG                   166
 #define IDR_PRIVATECHAT_TMPL            168
 #define IDB_BITMAP1                     171
 #define IDB_BITMAP2                     172
@@ -149,11 +185,13 @@
 #define IDR_BACK                        181
 #define IDD_EXTENSIONS                  182
 #define IDB_PREVIEW                     183
+#define IDD_SERVER_VIEW                 183
 #define IDI_ICON1                       184
 #define IDI_ANI                         184
 #define IDB_HDRDOWN                     185
 #define IDB_BITMAP4                     186
 #define IDB_HDRUP                       186
+#define IDC_HAND                        190
 #define IDC_CONNECT                     1000
 #define IDC_ROOM                        1001
 #define IDC_STATIC_ROOM                 1002
@@ -240,6 +278,8 @@
 #define IDC_BTN_VENDOR_ADD              1085
 #define IDC_VENDORS                     1086
 #define IDC_SYS                         1088
+#define IDC_SYS_WND                     1089
+#define IDC_CHAT_WND                    1090
 #define IDC_STATIC_PEERSERVER           1091
 #define IDC_ACTPEER                     1092
 #define IDC_SERVER_IP                   1093
@@ -300,6 +340,22 @@
 #define IDC_LOG                         1132
 #define IDC_LOGDIR                      1133
 #define IDC_PREVIEW                     1134
+#define IDC_MODERATED                   1136
+#define IDC_DEFTOPIC                    1139
+#define IDC_DEFMOTD                     1140
+#define IDC_LIMIT                       1141
+#define IDC_SINGLEUSER_PER_IP           1143
+#define IDC_BLOCK_MX331                 1145
+#define IDC_GOD_NAME                    1148
+#define IDC_VISIBLE                     1149
+#define IDC_GOD_FILES                   1150
+#define IDC_GOD_LINE                    1152
+#define IDC_KEYMSG                      1153
+#define IDC_AUTO_OP_LOCALHOST           1154
+#define IDC_HIDESYSTEM                  1156
+#define IDC_SERVER_INPUT                1157
+#define IDC_STATIC_OUT                  1158
+#define IDC_BARTOP                      1160
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -317,9 +373,11 @@
 #define IDC_ENABLE_HISTORY              5019
 #define IDC_REMOVECHANNEL2              5020
 #define IDC_LINES                       5021
+#define IDC_RETRY_JOINS                 5021
 #define IDC_WELCOMES                    5022
 #define IDC_LINESNUM                    5023
 #define IDC_HISTORDEPTH                 5024
+#define IDC_JOINRETRIES                 5025
 #define IDC_STATIC_MESSAGE              5047
 #define IDC_STATIC_NICKENC_MSG          5048
 #define IDC_MSG_FRONT                   5049
@@ -487,15 +545,18 @@
 #define ID_CHATROOM_ADDTOAUTOJOIN       32864
 #define ID_MUTE                         32865
 #define ID_RECONNECT_ALL                32866
+#define ID_POPUP_PINGROOM               32867
+#define ID_DISPLAYINCHANNEL_PING        32868
+#define ID_VIEW_SYSTEMCONSOLE           32869
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        188
-#define _APS_NEXT_COMMAND_VALUE         32867
-#define _APS_NEXT_CONTROL_VALUE         1135
+#define _APS_NEXT_RESOURCE_VALUE        192
+#define _APS_NEXT_COMMAND_VALUE         32873
+#define _APS_NEXT_CONTROL_VALUE         1161
 #define _APS_NEXT_SYMED_VALUE           32920
 #endif
 #endif

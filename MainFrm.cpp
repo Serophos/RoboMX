@@ -33,6 +33,7 @@
 #include "ini.h"
 #include "RoboEx.h"
 #include ".\mainfrm.h"
+#include "EmoticonManager.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -52,6 +53,7 @@ extern UINT UWM_INPUT;
 extern CSystemInfo  g_sSystem;
 extern CSettings    g_sSettings;
 
+CEmoticonManager    g_eEmoticons;
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
@@ -111,17 +113,28 @@ CMainFrame::CMainFrame()
 	m_hIcon			  = NULL;
 	m_hIcon2		  = NULL;
 	m_nIcon			  = 0;
+	m_pMenuNew		  = NULL;
+	m_hInstDefault	  = NULL;
+	m_hInstUse		  = NULL;
+	m_nMaxAni		  = 0;
 }
 
 CMainFrame::~CMainFrame()
 {
 
 	UnloadPlugins();
-	DeleteEmoticons();
+	//DeleteEmoticons();
+	g_eEmoticons.Free();
 	if(m_hIcon)
 		DeleteObject(m_hIcon);
 	if(m_hIcon2)
 		DeleteObject(m_hIcon2);
+	if(m_pMenuNew){
+
+		m_pMenuNew->DestroyMenu();
+		delete m_pMenuNew;
+		m_pMenuNew = NULL;
+	}
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -192,10 +205,15 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockControlBar(&m_wndToolBarStd);
 
-	m_wndDocSelector.Create(NULL, NULL, WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | CBRS_TOP,
+	m_wndDocSelector.Create(NULL, NULL, WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | CBRS_BOTTOM | CBRS_TOP,
 		         CRect(0,0,0,0), this, AFX_IDW_STATUS_BAR);
 
-	m_wndDocSelector.SetBarStyle(CBRS_ALIGN_ANY);
+	m_wndDocSelector.SetBarStyle(CBRS_ALIGN_BOTTOM|CBRS_ALIGN_TOP);
+	if(!g_sSettings.GetBarTop()){
+
+		m_wndDocSelector.EnableDocking(CBRS_ALIGN_BOTTOM|CBRS_ALIGN_TOP);
+		DockControlBar(&m_wndDocSelector, AFX_IDW_DOCKBAR_BOTTOM);
+	}
 
 	m_wndStatusBar.SetPaneInfo(0,ID_SEPARATOR,SBPS_STRETCH,120);
     m_wndStatusBar.SetPaneInfo(1,ID_SEPARATOR,SBPS_NORMAL,240);
@@ -212,7 +230,9 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		PlaySound(g_sSettings.GetSfxStart(), 0, SND_FILENAME|SND_ASYNC);
 	}
 
-	LoadEmoticons();
+	//LoadEmoticons();
+	g_eEmoticons.Load();
+
 	return 0;
 }
 
@@ -279,6 +299,7 @@ void CMainFrame::OnTimer(UINT nIDEvent)
 
 	if(nIDEvent == TIMER_ANIMATE){
 
+		m_nMaxAni++;
 		if(m_nIcon == 0){
 
 			m_nIcon = 1;
@@ -289,6 +310,7 @@ void CMainFrame::OnTimer(UINT nIDEvent)
             m_nIcon = 0;
 			ModifyTrayIcon(m_hIcon2);
 		}
+		if(m_nMaxAni >= 50) StopAni();
 	}
 	else{
 
@@ -307,8 +329,6 @@ void CMainFrame::DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon)
 
 	Shell_NotifyIcon(NIM_MODIFY, &m_nIconData); // add to the taskbar's status area
 }
-
-
 
 void CMainFrame::ModifyTrayIcon(HICON hIcon)
 {
@@ -476,13 +496,13 @@ void CMainFrame::OnStartNodeserver()
 {
 
 	// Create a new ChatServerDocument
-/*	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
+	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
 	CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
-	pTemplate->OpenDocumentFile(NULL);	  */
-	AfxMessageBox("Sorry, the roomserver is disabled in this release.", MB_ICONINFORMATION);
+	pTemplate->OpenDocumentFile(NULL);	  
+	//AfxMessageBox("Sorry, the roomserver is disabled in this release.", MB_ICONINFORMATION);
 }
 
 
@@ -679,76 +699,7 @@ void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
 		AfxGetMainWnd()->SetWindowText(szText);
 	}
 }
-void CMainFrame::LoadEmoticons(void)
-{
 
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\emoticons.ini";
-	BOOL bReturn = TRUE;
-	CStdioFile ini;
-	CString strActivationText, strFilename;
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while((ini.ReadString(strActivationText) != NULL) && (ini.ReadString(strFilename) != NULL)){
-		
-			AddEmoticon((LPTSTR)(LPCTSTR)strFilename, (LPTSTR)(LPCTSTR)strActivationText);
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-		char error[512];
-		e->GetErrorMessage((char*)&error, 512, 0);
-		AfxMessageBox(error, MB_OK+MB_ICONSTOP);
-		return;
-	}END_CATCH;
-}
-
-void CMainFrame::AddEmoticon(char* szFileName, char* szActivationText)
-{
-
-	Emoticon *eEmoticon = new Emoticon;
-
-	strcpy(eEmoticon->szActivationText, szActivationText);
-	strcpy(eEmoticon->szFileName, szFileName);
-
-	HBITMAP hTmp = (HBITMAP)::LoadImage(NULL, szFileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_DEFAULTCOLOR);
-
-	if(!hTmp){
-
-		delete eEmoticon;
-		return;
-	}
-
-	eEmoticon->hBitmap = Emoticon::ReplaceColor(hTmp, RGB(255,0,255), g_sSettings.GetRGBBg(), 0);
-	DeleteObject(hTmp);
-
-	if (!eEmoticon->hBitmap){
-
-		delete eEmoticon;
-		return;
-	}
-
-
-	m_lEmoticons.AddTail(eEmoticon);
-}
-
-void CMainFrame::DeleteEmoticons(void)
-{
-
-	POSITION pos;
-	pos = m_lEmoticons.GetHeadPosition();
-	while(pos){
-
-		Emoticon *eEmoticon = m_lEmoticons.GetNext(pos);
-		DeleteObject(eEmoticon->hBitmap);
-		m_lEmoticons.RemoveAt(m_lEmoticons.Find(eEmoticon));
-		delete eEmoticon;
-	}
-}
 
 void CMainFrame::LoadPlugins(void)
 {
@@ -985,3 +936,127 @@ void CMainFrame::OnReconnectAll()
 
 	m_wndDocSelector.BroadcastMessage(WM_COMMAND, MAKEWPARAM(ID_RECONNECT, 0), 0);
 }
+
+void CMainFrame::SetLanguage(void)
+{
+
+	CString strBuffer, strLanguage = g_sSettings.GetLanguage();
+
+	LCID		lcid			= NULL;
+
+	if(!m_hInstDefault){
+
+		m_hInstDefault = AfxGetInstanceHandle();
+	}
+
+	if(strLanguage.CompareNoCase("English") != 0){
+
+		CString strDLL;
+		strDLL.Format("%s\\lang_%s.dll", g_sSettings.GetWorkingDir(), strLanguage);
+
+		m_hInstUse = ::LoadLibrary(strDLL);
+	}
+
+	if(!m_hInstUse){
+
+		// there has been an error or english is selected
+		m_hInstUse = m_hInstDefault;
+	}
+	
+	AfxSetResourceHandle(m_hInstUse);
+
+	CMenu *pMenuCurrent = GetMenu();
+	m_pMenuNew = new CMenu;
+
+		// has the menu changed?
+		// m_hMenuDefault is the default menu resource for this frame see AFXWIN.H
+	if(pMenuCurrent->m_hMenu != m_hMenuDefault)
+		{
+			// Destroy the "New" menu and delete the resource
+			// We, after all created it!
+		pMenuCurrent->DestroyMenu();
+		delete pMenuCurrent;
+		}
+
+		// Load our new resource menu
+	m_pMenuNew->LoadMenu(IDR_MAINFRAME);
+		// Display the new menu
+	SetMenu(m_pMenuNew);
+
+		// Update any other text strings that are displayed
+		// e.g. The Status bar
+	strBuffer.LoadString(AFX_IDS_IDLEMESSAGE);
+	m_wndStatusBar.SetPaneText(0, strBuffer);
+
+		// We need to change the accelerators
+		// m_hAccelTable is used in Winfrm.cpp as the accelerator handle,
+		// only one accelerator can be loaded at a time so we MUST clear it
+	m_hAccelTable = NULL;		
+
+	if(!LoadAccelTable(MAKEINTRESOURCE(IDR_MAINFRAME))){
+
+		CString strError;
+		strError.Format("LoadAccelTable(MAKEINTRESOURCE(IDR_MAINFRAME) %d", GetLastError());
+		AfxMessageBox(strError, MB_ICONEXCLAMATION);
+	}
+
+	// Our view, force a repaint to update the text
+	//m_wndView.Invalidate();
+}
+
+BOOL CMainFrame::CreateClient(LPCREATESTRUCT lpCreateStruct, CMenu* pWindowMenu)
+{
+
+	if(m_hInstUse == NULL){
+
+		return CMDIFrameWnd::CreateClient(lpCreateStruct, pWindowMenu);
+	}
+
+	ASSERT(m_hWnd != NULL);
+	ASSERT(m_hWndMDIClient == NULL);
+	DWORD dwStyle = WS_VISIBLE | WS_CHILD | WS_BORDER |
+		WS_CLIPCHILDREN | WS_CLIPSIBLINGS |
+		MDIS_ALLCHILDSTYLES;    // allow children to be created invisible
+	DWORD dwExStyle = 0;
+	// will be inset by the frame
+
+	// special styles for 3d effect on Win4
+	dwStyle &= ~WS_BORDER;
+	dwExStyle = WS_EX_CLIENTEDGE;
+
+	AfxSetResourceHandle(m_hInstUse);
+
+	pWindowMenu->DestroyMenu();
+	pWindowMenu->LoadMenu(IDR_CHANNEL);
+	lpCreateStruct->hInstance = m_hInstUse;
+
+	CLIENTCREATESTRUCT ccs;
+	ccs.hWindowMenu = pWindowMenu->GetSafeHmenu();
+		// set hWindowMenu for MFC V1 backward compatibility
+		// for MFC V2, window menu will be set in OnMDIActivate
+	ccs.idFirstChild = AFX_IDM_FIRST_MDICHILD;
+
+	if (lpCreateStruct->style & (WS_HSCROLL|WS_VSCROLL))
+	{
+		// parent MDIFrame's scroll styles move to the MDICLIENT
+		dwStyle |= (lpCreateStruct->style & (WS_HSCROLL|WS_VSCROLL));
+
+		// fast way to turn off the scrollbar bits (without a resize)
+		ModifyStyle(WS_HSCROLL|WS_VSCROLL, 0, SWP_NOREDRAW|SWP_FRAMECHANGED);
+	}
+
+	// Create MDICLIENT control with special IDC
+	if ((m_hWndMDIClient = ::CreateWindowEx(dwExStyle, _T("mdiclient"), NULL,
+		dwStyle, 0, 0, 0, 0, m_hWnd, (HMENU)AFX_IDW_PANE_FIRST,
+		m_hInstUse, (LPVOID)&ccs)) == NULL)
+	{
+		TRACE(traceAppMsg, 0, _T("Warning: CMDIFrameWnd::OnCreateClient: failed to create MDICLIENT.")
+			_T(" GetLastError returns 0x%8.8X\n"), ::GetLastError());
+		return FALSE;
+	}
+	// Move it to the top of z-order
+	::BringWindowToTop(m_hWndMDIClient);
+
+	return TRUE;
+}
+

@@ -282,9 +282,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\CntrItem.cpp">
-			</File>
-			<File
 				RelativePath="ColorCfg.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -380,6 +377,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\EmoticonManager.cpp">
+			</File>
+			<File
 				RelativePath=".\ExtCfg.cpp">
 			</File>
 			<File
@@ -406,25 +406,6 @@
 			</File>
 			<File
 				RelativePath="GeneralCfg.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="ImageDataObject.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
@@ -481,26 +462,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="ListClient.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="2"
-						PreprocessorDefinitions=""/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						Optimization="0"
-						PreprocessorDefinitions=""
-						BasicRuntimeChecks="3"
-						BrowseInformation="1"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ListViewCtrlEx.cpp">
+				RelativePath=".\LogFile.cpp">
 			</File>
 			<File
 				RelativePath="MainFrm.cpp">
@@ -683,6 +645,9 @@
 				RelativePath=".\PeerCfg.cpp">
 			</File>
 			<File
+				RelativePath=".\ping.cpp">
+			</File>
+			<File
 				RelativePath="RenameDlg.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -702,6 +667,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\RichDocument.cpp">
+			</File>
+			<File
 				RelativePath="RichEditExCtrl.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -719,6 +687,12 @@
 						BasicRuntimeChecks="3"
 						BrowseInformation="1"/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\RichElement.cpp">
+			</File>
+			<File
+				RelativePath=".\RichFragment.cpp">
 			</File>
 			<File
 				RelativePath=".\ServerDoc.cpp">
@@ -892,6 +866,9 @@
 			<File
 				RelativePath=".\Util.cpp">
 			</File>
+			<File
+				RelativePath=".\WPNPClient.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -921,9 +898,6 @@
 				RelativePath="Clipboard.h">
 			</File>
 			<File
-				RelativePath=".\CntrItem.h">
-			</File>
-			<File
 				RelativePath="ColorCfg.h">
 			</File>
 			<File
@@ -939,6 +913,9 @@
 				RelativePath="DocSelect.h">
 			</File>
 			<File
+				RelativePath=".\EmoticonManager.h">
+			</File>
+			<File
 				RelativePath=".\ExtCfg.h">
 			</File>
 			<File
@@ -951,19 +928,13 @@
 				RelativePath="GeneralCfg.h">
 			</File>
 			<File
-				RelativePath="ImageDataObject.h">
-			</File>
-			<File
 				RelativePath="Ini.h">
 			</File>
 			<File
 				RelativePath="InputRequest.h">
 			</File>
 			<File
-				RelativePath="ListClient.h">
-			</File>
-			<File
-				RelativePath=".\ListViewCtrlEx.h">
+				RelativePath=".\LogFile.h">
 			</File>
 			<File
 				RelativePath="MainFrm.h">
@@ -1002,13 +973,25 @@
 				RelativePath=".\PeerCfg.h">
 			</File>
 			<File
+				RelativePath=".\ping.h">
+			</File>
+			<File
 				RelativePath="RenameDlg.h">
 			</File>
 			<File
 				RelativePath="Resource.h">
 			</File>
 			<File
+				RelativePath=".\RichDocument.h">
+			</File>
+			<File
 				RelativePath="RichEditExCtrl.h">
+			</File>
+			<File
+				RelativePath=".\RichElement.h">
+			</File>
+			<File
+				RelativePath=".\RichFragment.h">
 			</File>
 			<File
 				RelativePath=".\RoboEx.h">
@@ -1057,6 +1040,9 @@
 			</File>
 			<File
 				RelativePath="winamp.h">
+			</File>
+			<File
+				RelativePath=".\WPNPClient.h">
 			</File>
 		</Filter>
 		<Filter

@@ -25,4 +25,8 @@ public:
 	static BOOL FileExists(LPCTSTR lpszFile);
 	static CString MakeValidFilename(CString strName);
 	static CString GetDateString(void);
+	static CString GetIPFromRoom(CString strRoom);
+	static CString GetMyDate(void);
 };
+
+LPCTSTR _tcsistr(LPCTSTR pszString, LPCTSTR pszPattern);

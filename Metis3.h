@@ -60,6 +60,7 @@ public:
 	int    m_nWSA;
 	BOOL   m_bPicLoaded;
 	CImage m_iBgImage;
+	CFont				m_gdiFont;
 	WNDPROC m_pOldWndProc;
 	static LRESULT CALLBACK NewWndProc(HWND hwnd, UINT uMsg, WPARAM wParam,LPARAM lParam);
 

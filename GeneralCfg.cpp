@@ -44,18 +44,20 @@ CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 	, m_bUpdate(FALSE)
 	, m_bAutoList(FALSE)
 	, m_bScroller(FALSE)
+	, m_nBarTop(0)
 {
 	m_nHistory = 0;
 	m_bHistory = FALSE;
 	m_bAllChannels = FALSE;
 	m_strChannel = _T("");
 	m_strGreeting = _T("");
-	m_bLimit = FALSE;
-	m_nLimit = 0;
 	m_bTimeStamp = FALSE;
 	m_nTime = -1;
 	m_bPing = FALSE;
 	m_bMiniTray = FALSE;
+	m_bHideSystem = TRUE;
+	m_bRetry = TRUE;
+	m_nRetries = 3;
 }
 
 
@@ -69,8 +71,6 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_ALLCHANNELS, m_bAllChannels);
 	DDX_Text(pDX, IDC_CHANNELNAME, m_strChannel);
 	DDX_Text(pDX, IDC_GREETING, m_strGreeting);
-	DDX_Check(pDX, IDC_LINES, m_bLimit);
-	DDX_Text(pDX, IDC_LINESNUM, m_nLimit);
 	DDX_Check(pDX, IDC_TIMESTAMP, m_bTimeStamp);
 	DDX_CBIndex(pDX, IDC_TIME, m_nTime);
 	DDX_Check(pDX, IDC_PING, m_bPing);
@@ -82,7 +82,12 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_LISTCHANNEL, m_bAutoList);
 	DDX_Check(pDX, IDC_SCROLLER, m_bScroller);
 	DDX_Check(pDX, IDC_LOG, m_bLog);
+	DDX_Check(pDX, IDC_HIDESYSTEM, m_bHideSystem);
 	DDX_Text(pDX, IDC_LOGDIR, m_strPath);
+	DDX_CBIndex(pDX, IDC_BARTOP, m_nBarTop);
+	DDX_Text(pDX, IDC_JOINRETRIES, m_nRetries);
+	DDX_Check(pDX, IDC_RETRY_JOINS, m_bRetry);
+	DDV_MinMaxInt(pDX, m_nRetries, 0, 5);
 }
 
 
@@ -95,6 +100,8 @@ BEGIN_MESSAGE_MAP(CGeneralCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_ADDCHANNEL2, OnBnClickedAddchannel2)
 	ON_BN_CLICKED(IDC_REMOVECHANNEL2, OnBnClickedRemovechannel2)
 	ON_BN_CLICKED(IDC_SELECT_LOG_DIR, OnBnClickedSelectLogDir)
+	ON_BN_CLICKED(IDC_RETRY_JOINS, OnBnClickedRetryJoins)
+	ON_BN_CLICKED(IDC_ENABLE_HISTORY, OnBnClickedEnableHistory)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -105,10 +112,9 @@ BOOL CGeneralCfg::OnInitDialog()
 
 	CCfgDlg::OnInitDialog();
 	
+	m_nBarTop	   = g_sSettings.GetBarTop();
 	m_bHistory     = g_sSettings.GetSaveHistory();
 	m_nHistory     = g_sSettings.GetHistoryDepth();
-	m_bLimit       = g_sSettings.GetLimitChat();
-	m_nLimit       = g_sSettings.GetMaxLines();
 	m_bAllChannels = g_sSettings.GetDoEnterMsg();
 	m_bTimeStamp   = g_sSettings.GetPrintTime();
 	m_nTime		   = g_sSettings.GetTimeFmt();
@@ -122,6 +128,9 @@ BOOL CGeneralCfg::OnInitDialog()
 	m_bScroller    = g_sSettings.GetEnableScroller();
 	m_bLog		   = g_sSettings.GetLog();
 	m_strPath	   = g_sSettings.GetLogDir();
+	m_bHideSystem  = g_sSettings.GetHideSystem();
+	m_bRetry	   = g_sSettings.GetRetry();
+	m_nRetries	   = g_sSettings.GetRetries();
 
 	UpdateData(FALSE);
 	LoadRooms();
@@ -215,8 +224,6 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetDoEnterMsg(m_bAllChannels);	
 	g_sSettings.SetSaveHistory(m_bHistory);
 	g_sSettings.SetHistoryDepth(m_nHistory);
-	g_sSettings.SetLimitChat(m_bLimit);
-	g_sSettings.SetMaxLines(m_nLimit);
 	g_sSettings.SetPrintTime(m_bTimeStamp);
 	g_sSettings.SetPing(m_bPing);
 	g_sSettings.SetTimeFmt(m_nTime);
@@ -229,6 +236,9 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetEnableScroller(m_bScroller);
 	g_sSettings.SetLog(m_bLog);
 	g_sSettings.SetLogDir(m_strPath);
+	g_sSettings.SetHideSystem(m_bHideSystem);
+	g_sSettings.SetBarTop(m_nBarTop);
+
 	SaveRooms();
 	LoadRooms();
 }
@@ -284,4 +294,20 @@ void CGeneralCfg::OnBnClickedSelectLogDir()
 		m_strPath = dlg.GetPathName();
 		UpdateData(FALSE);
 	}
+}
+
+void CGeneralCfg::OnBnClickedRetryJoins()
+{
+
+	BOOL bCheck = ((CButton*)GetDlgItem(IDC_RETRY_JOINS))->GetCheck();
+
+	GetDlgItem(IDC_JOINRETRIES)->EnableWindow(bCheck);
+}
+
+void CGeneralCfg::OnBnClickedEnableHistory()
+{ 
+
+	BOOL bCheck = ((CButton*)GetDlgItem(IDC_ENABLE_HISTORY))->GetCheck();
+
+	GetDlgItem(IDC_HISTORDEPTH)->EnableWindow(bCheck);
 }

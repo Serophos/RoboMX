@@ -5,7 +5,7 @@
 #include "Metis3.h"
 
 #include "ServerDoc.h"
-#include "CntrItem.h"
+#include "ServerView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -14,13 +14,9 @@
 
 // CRichEditTestDoc
 
-IMPLEMENT_DYNCREATE(CServerDoc, CRichEditDoc)
+IMPLEMENT_DYNCREATE(CServerDoc, CDocument)
 
-BEGIN_MESSAGE_MAP(CServerDoc, CRichEditDoc)
-	// Enable default OLE container implementation
-	ON_UPDATE_COMMAND_UI(ID_OLE_EDIT_LINKS, CRichEditDoc::OnUpdateEditLinksMenu)
-	ON_COMMAND(ID_OLE_EDIT_LINKS, CRichEditDoc::OnEditLinks)
-	ON_UPDATE_COMMAND_UI_RANGE(ID_OLE_VERB_FIRST, ID_OLE_VERB_LAST, CRichEditDoc::OnUpdateObjectVerbMenu)
+BEGIN_MESSAGE_MAP(CServerDoc, CDocument)
 END_MESSAGE_MAP()
 
 
@@ -38,7 +34,7 @@ CServerDoc::~CServerDoc()
 
 BOOL CServerDoc::OnNewDocument()
 {
-	if (!CRichEditDoc::OnNewDocument())
+	if (!CDocument::OnNewDocument())
 		return FALSE;
 
 	// TODO: add reinitialization code here
@@ -46,12 +42,21 @@ BOOL CServerDoc::OnNewDocument()
 	SetTitle("Unnamed Roomserver");
 	return TRUE;
 }
-CRichEditCntrItem* CServerDoc::CreateClientItem(REOBJECT* preo) const
+
+BOOL CServerDoc::SaveModified()
 {
-	return new CServerCntrItem(preo, const_cast<CServerDoc*>(this));
+
+	// we dont want that dammned save document message :P
+	// but we need to stop the server before the view is destroyed :P
+
+	POSITION pos = GetFirstViewPosition();
+	CServerView* pView = (CServerView*)GetNextView(pos);
+	if(pView != NULL){
+
+		pView->OnCloseDocument();
+	}
+	return TRUE;
 }
-
-
 
 
 // CRichEditTestDoc serialization
@@ -67,10 +72,7 @@ void CServerDoc::Serialize(CArchive& ar)
 		// TODO: add loading code here
 	}
 
-	// Calling the base class CRichEditDoc enables serialization
-	//  of the container document's COleClientItem objects.
-	// TODO: set CRichEditDoc::m_bRTF = FALSE if you are serializing as text
-	CRichEditDoc::Serialize(ar);
+	CDocument::Serialize(ar);
 }
 
 
@@ -79,12 +81,12 @@ void CServerDoc::Serialize(CArchive& ar)
 #ifdef _DEBUG
 void CServerDoc::AssertValid() const
 {
-	CRichEditDoc::AssertValid();
+	CDocument::AssertValid();
 }
 
 void CServerDoc::Dump(CDumpContext& dc) const
 {
-	CRichEditDoc::Dump(dc);
+	CDocument::Dump(dc);
 }
 #endif //_DEBUG
 

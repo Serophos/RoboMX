@@ -69,6 +69,7 @@ public:
 	public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, void *lpExtra);
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -91,6 +92,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 protected:
+	UINT m_nID;
 	void AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg);
 	CMetis3View* m_pView;
 	// datamembers for bitmap storage

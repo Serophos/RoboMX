@@ -58,3 +58,17 @@ void CColorStatusBar::SetLagColor(COLORREF cr, CString strLag)
 	m_strLag = strLag;
 	m_crLag  = cr;
 }
+
+void CColorStatusBar::SetPaneText(DWORD dwIndex, CString strText, COLORREF cr)
+{
+
+	CStatusBar::SetPaneText(dwIndex, strText, TRUE);
+
+	if(dwIndex == 2){
+
+		GetStatusBarCtrl().SetText(strText, 2, SBT_OWNERDRAW); 
+		m_crLag = cr;
+		m_strLag = strText;
+	}
+	Invalidate();
+}

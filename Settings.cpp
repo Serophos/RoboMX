@@ -66,7 +66,7 @@ CSettings::CSettings()
 
 	m_cfDefault.cbSize  = sizeof(CHARFORMAT2);
 	m_cfDefault.dwMask = CFM_BACKCOLOR|CFM_COLOR|CFM_SIZE|CFM_FACE|CFM_BOLD|CFM_ITALIC;
-	m_cfDefault.dwEffects = CFE_BOLD;
+	m_cfDefault.dwEffects = CFE_BOLD|CFM_LINK;
 	m_cfDefault.crBackColor = RGB(255,255,255);
 	m_cfDefault.crTextColor = RGB(0,0,0);
 	m_cfDefault.yHeight = 10*20;

@@ -53,6 +53,7 @@ public:
 	void JoinChannel();
 	CString m_strRoom;
 	BOOL  m_bChannelList;
+	BOOL  m_bPager;
 	afx_msg LRESULT OnTrayNotify(WPARAM wParam, LPARAM lParam);
 	virtual ~CMainFrame();
 #ifdef _DEBUG
@@ -86,7 +87,6 @@ protected:
 	//{{AFX_MSG(CMainFrame)
 	afx_msg void OnClose();
 	afx_msg int  OnCreate(LPCREATESTRUCT lpCreateStruct);
-	afx_msg void OnAppExit();
 	afx_msg void OnViewOptions();
 	afx_msg void OnDestroy();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);

@@ -49,6 +49,8 @@ public:
 
 // Implementation
 public:
+	void SetExtended();
+	BOOL m_bEx;
 	void SetBkColor(COLORREF cr);
 	virtual ~CMyEdit();
 

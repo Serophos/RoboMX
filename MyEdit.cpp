@@ -48,7 +48,9 @@ CMyEdit::CMyEdit()
 
 	m_crBg = ::GetSysColor(COLOR_WINDOW); // Initializing the Background Color to the system face color.
 	m_crBgFocus = g_sSettings.GetRGBFocus();
-	m_brBkgnd.CreateSolidBrush(m_crBgFocus); // Create the Brush Color for the Background.
+	m_brBkgnd.CreateSolidBrush(m_crBg); // Create the Brush Color for the Background.
+	m_crDraw = m_crBg;
+	m_bEx = FALSE;
 }
 
 CMyEdit::~CMyEdit()
@@ -89,11 +91,23 @@ int CMyEdit::SearchItem(CString strString)
 BOOL CMyEdit::PreTranslateMessage(MSG* pMsg) 
 {
 
-	if(pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_RETURN){
+	if((pMsg->message == WM_KEYDOWN) && (pMsg->wParam == VK_RETURN)
+			&& (GetKeyState(VK_SHIFT) >= 0)){
 
 		::SendMessage(GetParent()->m_hWnd, UWM_INPUT, 0, 0);
 	}
-	else if(pMsg->message == WM_MOUSEWHEEL || pMsg->message == WM_KEYDOWN){
+	else if((pMsg->message == WM_KEYDOWN) && (pMsg->wParam == VK_RETURN)
+				&& (GetKeyState(VK_SHIFT) < 0)){
+
+		CString strText;
+		GetWindowText(strText);
+		strText+="\r\n";
+		SetWindowText(strText);
+		SetSel(0, -1, FALSE);
+		SetSel(-1, 0, FALSE);
+		return TRUE;
+	}
+	else if((pMsg->message == WM_MOUSEWHEEL || pMsg->message == WM_KEYDOWN) && !m_bEx){
 
 
 		///////////////////////////////////////////////////////
@@ -136,8 +150,8 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		// RCMS Down (PAGE DOWN)
 		///////////////////////////////////////////////////////
-		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_NEXT) || 
-			(pMsg->message == WM_MOUSEWHEEL && ((short)HIWORD(pMsg->wParam)) <= 0)){
+		else if(((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_NEXT) || 
+			(pMsg->message == WM_MOUSEWHEEL && ((short)HIWORD(pMsg->wParam)) <= 0)) && !m_bEx){
 		
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
@@ -167,7 +181,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		// Commands UP UPARROW or MOUSEHWEL UP
 		///////////////////////////////////////////////////////
-		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_UP) && (g_aRCMSCommandsNUM != 0)){
+		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_UP) && (g_aQuickNUM != 0) && !m_bEx){
 		
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
@@ -210,7 +224,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		// Commands down DOWNARROW or MOUSEWHEEL DOWN
 		///////////////////////////////////////////////////////
-		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DOWN) && (g_aRCMSCommandsNUM != 0)){
+		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DOWN) && (g_aQuickNUM != 0) && !m_bEx){
 		
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
@@ -252,7 +266,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 HBRUSH CMyEdit::CtlColor(CDC* pDC, UINT nCtlColor) 
 {
 
-
+	
 	HBRUSH hbr;
 	hbr = (HBRUSH)m_brBkgnd;
 	pDC->SetBkColor(m_crDraw);
@@ -266,21 +280,26 @@ void CMyEdit::OnKillFocus(CWnd* pNewWnd)
 
 	CEdit::OnKillFocus(pNewWnd);
 
-	m_crDraw = m_crBg;
-	m_brBkgnd.DeleteObject(); 
-	m_brBkgnd.CreateSolidBrush(m_crDraw);
-	RedrawWindow();
+	if(g_sSettings.GetFocus() && !m_bEx){
+
+		m_crDraw = m_crBg;
+		m_brBkgnd.DeleteObject(); 
+		m_brBkgnd.CreateSolidBrush(m_crDraw);
+		RedrawWindow();
+	}
 }
 
 void CMyEdit::OnSetFocus(CWnd* pOldWnd) 
 {
 
 	CEdit::OnSetFocus(pOldWnd);
-	
-	m_crDraw = m_crBgFocus;
-	m_brBkgnd.DeleteObject();
-	m_brBkgnd.CreateSolidBrush(m_crDraw);
-	RedrawWindow();
+	if(g_sSettings.GetFocus() && !m_bEx){
+
+		m_crDraw = m_crBgFocus;
+		m_brBkgnd.DeleteObject();
+		m_brBkgnd.CreateSolidBrush(m_crDraw);
+		RedrawWindow();
+	}
 }
 
 void CMyEdit::SetBkColor(COLORREF cr)
@@ -289,4 +308,10 @@ void CMyEdit::SetBkColor(COLORREF cr)
 	m_crBg = cr;
 	m_crBgFocus = g_sSettings.GetRGBFocus();
 	Invalidate();
+}
+
+void CMyEdit::SetExtended()
+{
+
+	m_bEx = TRUE;
 }

@@ -76,14 +76,24 @@ UINT CServerView::ServerThread(PVOID pParam)
 	CMySocket m_mServer(IPPROTO_UDP, 6257);
 
 	SOCKET sClient = INVALID_SOCKET;
-
+	char buffer[6000];
+	int nLen = 0;
 	do{
 
-		TRACE("Accept\n");
-		sClient = m_mServer.Accept();
-		AfxBeginThread(ClientThread, (PVOID)sClient, THREAD_PRIORITY_NORMAL);
+		int nLen = m_mServer.RecvFrom(buffer, 6000, 0);
 
-	}while(pServer->m_bListen && (sClient != INVALID_SOCKET));
+		if(nLen){
+
+			TRACE("RecvFrom %d\n", nLen);
+			//DecryptMXUDP(BYTE*)buffer, nLen
+		}
+		else{
+
+			TRACE("Z\n");
+			Sleep(100);
+		}
+
+	}while(pServer->m_bListen);
 	
 
 	TRACE("Leaving Server thread\n");

@@ -68,12 +68,13 @@ BOOL PASCAL AfxInitRichEditEx()
 
 /////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl
+UINT UWM_RCLICK = ::RegisterWindowMessage("UWM_RCLICK_F20B5623-6391-4396-8A7E-3C48F6194F10");
 
 CRichEditExCtrl::CRichEditExCtrl()
 {
 
 	m_cfDefault.cbSize  = sizeof(CHARFORMAT2);
-	m_cfDefault.dwMask = CFM_BACKCOLOR|CFM_COLOR|CFM_SIZE|CFM_FACE|CFM_BOLD|CFM_ITALIC;
+	m_cfDefault.dwMask = CFM_BACKCOLOR|CFM_COLOR|CFM_SIZE|CFM_FACE|CFM_BOLD|CFM_ITALIC|CFM_LINK;
 	m_cfDefault.dwEffects = CFE_BOLD;
 	m_cfDefault.crBackColor = RGB(255,255,255);
 	m_cfDefault.crTextColor = RGB(0,0,0);
@@ -120,7 +121,7 @@ BOOL CRichEditExCtrl::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName,
 	
 	CWnd* pWnd = this;
 	BOOL bReturn =  pWnd->Create(_T("RichEdit20A"), NULL, dwStyle, rect, pParentWnd, nID);
-
+	m_nID = nID;
 
 	return bReturn;
 
@@ -138,6 +139,7 @@ BOOL CRichEditExCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR l
 	VERIFY(pParentWnd != NULL);
 
 	m_pView = (CMetis3View*)pParentWnd;
+	m_nID = nID;
 
 	return CWnd::CreateEx(dwExStyle, "RichEdit20A", lpszWindowName, dwStyle, rect, pParentWnd, nID, lpExtra);
 }
@@ -312,3 +314,15 @@ void CRichEditExCtrl::OnLink(NMHDR *pNotifyHeader, LRESULT *pResult)
 		break;
 	}
 }
+
+BOOL CRichEditExCtrl::PreTranslateMessage(MSG* pMsg) 
+{
+
+	if(pMsg->message == WM_RBUTTONDOWN){
+
+		::SendMessage(GetParent()->m_hWnd, UWM_RCLICK, m_nID, 0);
+	}
+	return CRichEditCtrl::PreTranslateMessage(pMsg);
+}
+
+

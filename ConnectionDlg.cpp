@@ -62,7 +62,7 @@ void CConnectionDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CConnectionDlg, CDialog)
 	//{{AFX_MSG_MAP(CConnectionDlg)
-	ON_BN_CLICKED(IDC_USENODE, OnUsenode)
+	ON_BN_CLICKED(IDC_CLEAR, OnClear)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -159,9 +159,20 @@ void CConnectionDlg::OnOK()
 	CDialog::OnOK();
 }
 
-void CConnectionDlg::OnUsenode() 
+
+void CConnectionDlg::OnClear() 
 {
 
-	AfxMessageBox("Sorry, this features is not implemented yet");
-}
+	CIni ini;
+	ini.SetIniFileName(m_strWd + "\\RoboMX.ini");
+	m_cbRoom.ResetContent();
 
+	CString strTmp;
+
+	for(int i = 0; i < 10 ; i++){
+
+		strTmp.Format("Room_%d", i);
+
+		ini.SetValue("RoomList", strTmp, "");
+	}
+}

@@ -98,7 +98,7 @@ UINT UWM_SYSTEM     = ::RegisterWindowMessage("UWM_SYSTEM-229F871A-7B27-44C5-887
 CChatClient::CChatClient()
 {
 
-	m_dwClientIP	 = 0;
+	m_dwClientIP	 = 16777343;
 	m_wClientUDPPort = 6257;
 	m_dwDWKey		 = 0;
 	m_dwUPKey		 = 0;
@@ -477,7 +477,7 @@ BOOL CChatClient::SetRoom(CString strRoom)
 
 	CString strTmp = m_strRoom.Mid(nIndex, 8);
 	
-	m_dwClientIP = axtoi((LPSTR)(LPCSTR)strTmp, 8);
+	//m_dwClientIP = axtoi((LPSTR)(LPCSTR)strTmp, 8);
 
 	int nA = 0, nB = 0, nC = 0, nD = 0;
 	
@@ -542,7 +542,6 @@ void CChatClient::WriteMessage(LPCTSTR lpszMsg, COLORREF rColor)
 {
 
 	if(!m_pView) return;
-	if(!m_pView->m_hWnd) return;
 	
 	::SendMessage(m_pView->m_hWnd, UWM_SYSTEM, (WPARAM)rColor, (LPARAM)lpszMsg);
 }

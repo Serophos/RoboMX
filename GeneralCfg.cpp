@@ -181,13 +181,14 @@ void CGeneralCfg::LoadRooms()
 void CGeneralCfg::SaveRooms()
 {
 
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\rooms.dat";
+	CString strIniFile = g_sSettings.GetWorkingDir() + "\\rooms.ini";
 	CStdioFile ini;
 	CString strBuffer;
 
 	TRY{
 
 		ini.Open(strIniFile, CFile::modeCreate|CFile::modeWrite|CFile::typeText|CFile::shareExclusive);
+		ini.SetLength(0);
 
 		for(int i = 0; i < m_lbChannels.GetCount(); i++){
 			

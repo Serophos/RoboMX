@@ -34,6 +34,7 @@
 class CMySocket  
 {
 public:
+	int RecvFrom(char* pBuff, int nLen, int nWair = 0);
 	CMySocket();
 	CMySocket(SOCKET sSocket);
 	CMySocket(int nProtocol, u_short uPort);

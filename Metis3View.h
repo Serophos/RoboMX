@@ -116,6 +116,7 @@ protected:
 	DWORD		 m_dwLastTic;
 // Generated message map functions
 protected:
+	BOOL m_bHasJoined;
 
 	afx_msg LRESULT OnInput(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMessage(WPARAM wParam, LPARAM lParam);
@@ -128,15 +129,16 @@ protected:
 	afx_msg LRESULT OnAddUser(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRedirect(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRenameMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnRclickChat(WPARAM w, LPARAM l);
 
 	//{{AFX_MSG(CMetis3View)
+	afx_msg void OnUpdateUserlistMenu(CCmdUI* pCmdUI);
 	afx_msg void OnRename();
 	afx_msg void OnTimer(UINT nIDEvent);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnDestroy();
 	afx_msg void OnLeave();
 	afx_msg void OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnRclickChat(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnUserlistSendmessage();
 	afx_msg void OnUserlistRemoveadmin();
 	afx_msg void OnUserlistRedirect();
@@ -152,7 +154,6 @@ protected:
 	afx_msg void OnUserlistCustomizethismenu();
 	afx_msg void OnUserlistIgnore();
 	afx_msg void OnUserlistUnignore();
-	afx_msg void OnUpdateUserlistMenu(CCmdUI* pCmdUI);
 	afx_msg void OnReconnect();
 	afx_msg void OnUpdateReconnect(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateWinampsongMenu(CCmdUI* pCmdUI);
@@ -166,6 +167,14 @@ protected:
 	afx_msg void OnDisplaySystemuptime();
 	afx_msg void OnDisplaySysteminfo();
 	afx_msg void OnDisplayAveragelag();
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
+	afx_msg void OnChatroomTexttricksBubbles();
+	afx_msg void OnChatroomTexttricksBox();
+	afx_msg void OnChatroomTexttricksHacker();
+	afx_msg void OnChatroomAsciiartdesign();
+	afx_msg void OnChatTexttricks3dbuttonsnormal();
+	afx_msg void OnChatTexttricks3dbuttonsaction();
+	afx_msg void OnLinkChat(NMHDR* pNMHDR, LRESULT* pResult);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

@@ -41,6 +41,7 @@ extern CSettings g_sSettings;
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
 CStringArray g_aRCMSCommands;
+extern CStringArray g_aQuick;
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
@@ -48,7 +49,6 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	//{{AFX_MSG_MAP(CMainFrame)
 	ON_WM_CLOSE()
 	ON_WM_CREATE()
-	ON_COMMAND(ID_APP_EXIT, OnAppExit)
 	ON_COMMAND(ID_VIEW_OPTIONS, OnViewOptions)
 	ON_WM_DESTROY()
 	ON_WM_SYSCOMMAND()
@@ -86,6 +86,7 @@ CMainFrame::CMainFrame()
 	// TODO: add member initialization code here
 	m_bChannelList    = FALSE;
 	m_bFullScreenMode = FALSE;
+	m_bPager		  = FALSE;
 }
 
 CMainFrame::~CMainFrame()
@@ -201,11 +202,11 @@ void CMainFrame::Dump(CDumpContext& dc) const
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame message handlers
 
-void CMainFrame::OnAppExit()
-{
-
-	OnClose();
-}
+//DEL void CMainFrame::OnAppExit()
+//DEL {
+//DEL 
+//DEL 	OnClose();
+//DEL }
 
 void CMainFrame::OnViewOptions() 
 {
@@ -336,7 +337,15 @@ void CMainFrame::OnSysCommand(UINT nID, LPARAM lParam)
 void CMainFrame::OnStartNodeserver() 
 {
 	
-	AfxMessageBox("Not implemented yet");
+	if(!m_bPager){
+
+		POSITION pos = GetApp()->GetFirstDocTemplatePosition();
+		CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
+		pTemplate = GetApp()->GetNextDocTemplate(pos);
+		pTemplate = GetApp()->GetNextDocTemplate(pos);
+		pTemplate->OpenDocumentFile(NULL);
+		m_bChannelList = TRUE;
+	}
 }
 
 void CMainFrame::OnUpdateStartNodeserver(CCmdUI* pCmdUI) 
@@ -412,6 +421,27 @@ void CMainFrame::LoadRCMS()
 
 		g_aRCMSCommands.Add("Error Reading RCMS.ini. Please check your installation");
 	}
+
+	strIniFile = g_sSettings.GetWorkingDir() + "\\quick.ini";
+	g_aQuick.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				g_aQuick.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
 }
 
 void CMainFrame::FullScreenModeOn()
@@ -530,3 +560,4 @@ void CMainFrame::OnViewChannelbar()
 
 	m_wndDocSelector.ShowWindow(SW_HIDE);
 }
+

@@ -174,11 +174,18 @@ BEGIN
         END
         POPUP "&Text Tricks"
         BEGIN
+            MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+
             MENUITEM "Bubbles",                     ID_CHATROOM_TEXTTRICKS_BUBBLES
 
-            MENUITEM "Box",                         ID_CHATROOM_TEXTTRICKS_BOX
+            MENUITEM "Blocks",                      ID_CHATROOM_TEXTTRICKS_BOX
 
-            MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+            MENUITEM "3D Buttons (Normal)",         ID_CHAT_TEXTTRICKS_3DBUTTONSNORMAL
+
+            MENUITEM "3D Buttons (Action)",         ID_CHAT_TEXTTRICKS_3DBUTTONSACTION
+
+            MENUITEM SEPARATOR
+            MENUITEM "ASCII Art Designer",          ID_CHATROOM_ASCIIARTDESIGN
 
         END
         POPUP "&Away Control"
@@ -339,12 +346,17 @@ BEGIN
         END
         POPUP "&Text Tricks"
         BEGIN
+            MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+
             MENUITEM "Bubbles",                     ID_CHATROOM_TEXTTRICKS_BUBBLES
 
             MENUITEM "Blocks",                      ID_CHATROOM_TEXTTRICKS_BOX
 
-            MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+            MENUITEM "3D Buttons (Normal)",         ID_CHAT_TEXTTRICKS_3DBUTTONSNORMAL
 
+            MENUITEM "3D Buttons (Action)",         ID_CHAT_TEXTTRICKS_3DBUTTONSACTION
+
+            MENUITEM SEPARATOR
             MENUITEM "ASCII Art Designer",          ID_CHATROOM_ASCIIARTDESIGN
 
         END
@@ -489,9 +501,7 @@ BEGIN
     PUSHBUTTON      "RoboMX [:]",IDC_STATIC,62,97,160,14,WS_DISABLED | NOT 
                     WS_TABSTOP
     GROUPBOX        "User Info",IDC_STATIC_USERSETUP,7,7,325,82
-    CONTROL         "Use Node-Server for room connection (enables you to recieve/send PMs)",
-                    IDC_USENODE,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
-                    WS_TABSTOP,12,72,314,10
+    PUSHBUTTON      "Clear Room History",IDC_CLEAR,255,70,71,14
 END
 
 IDD_RENAME DIALOG DISCARDABLE  0, 0, 254, 92
@@ -761,6 +771,21 @@ BEGIN
     PUSHBUTTON      "Play &Sound",IDC_PLAY,147,63,50,14
 END
 
+IDD_INPUT_REQUEST DIALOG DISCARDABLE  0, 0, 350, 118
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Input Request"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Input Request",IDC_STATIC_IR,7,7,336,88
+    EDITTEXT        IDC_INPUT,13,34,326,57,ES_MULTILINE | WS_VSCROLL
+    CONTROL         "Convert newline to #\\r\\n#",IDC_CONVERT,"Button",
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,13,99,221,10
+    DEFPUSHBUTTON   "OK",IDOK,239,97,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,293,97,50,14
+    LTEXT           "Enter your text here. SHIFT+ENTER = newline.  ENTER = OK",
+                    IDC_STATIC,13,19,196,8
+END
+
 
 #ifndef _MAC
 /////////////////////////////////////////////////////////////////////////////
@@ -783,17 +808,20 @@ VS_VERSION_INFO VERSIONINFO
 BEGIN
     BLOCK "StringFileInfo"
     BEGIN
-        BLOCK "040904B0"
+        BLOCK "040904b0"
         BEGIN
+            VALUE "Comments", "\0"
             VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "Metis3 MFC Application\0"
+            VALUE "FileDescription", "RoboMX\0"
             VALUE "FileVersion", "1, 0, 0, 1\0"
-            VALUE "InternalName", "Metis3\0"
+            VALUE "InternalName", "RoboMX\0"
             VALUE "LegalCopyright", "Copyright (C) 2004\0"
             VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "Metis3.EXE\0"
-            VALUE "ProductName", "Metis3 Application\0"
+            VALUE "OriginalFilename", "RoboMX.exe\0"
+            VALUE "PrivateBuild", "\0"
+            VALUE "ProductName", "RoboMX\0"
             VALUE "ProductVersion", "1, 0, 0, 1\0"
+            VALUE "SpecialBuild", "\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -954,6 +982,17 @@ BEGIN
         RIGHTMARGIN, 349
         TOPMARGIN, 7
         BOTTOMMARGIN, 77
+    END
+
+    IDD_INPUT_REQUEST, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 343
+        VERTGUIDE, 13
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 111
+        HORZGUIDE, 95
+        HORZGUIDE, 104
     END
 END
 #endif    // APSTUDIO_INVOKED

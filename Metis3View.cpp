@@ -31,6 +31,8 @@
 #include "Settings.h"
 #include "Tokenizer.h"
 #include "SfxCfg.h"
+#include "InputRequest.h"
+
 #include <mmsystem.h>
 
 #ifdef _DEBUG
@@ -42,7 +44,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define TIMER_CONNECT 10334
 #define TIMER_PING    10035
-#define TIMER_UPDATE  10036
+//#define TIMER_UPDATE  10036
 const char* line_types[] = {"Unknown", "14.4K", "28.8K", "33.3K", "56K", 
                             "64K ISDN", "128K ISDN", "Cable", "DSL", "T1", "T3"};
 
@@ -61,6 +63,7 @@ extern UINT UWM_UNKNOWN;
 extern UINT UWM_SYSTEM;
 extern UINT UWM_REDIRECT;
 extern UINT UWM_LOAD_SETTINGS;
+extern UINT UWM_RCLICK;
 
 extern axtoi(char *hexStg, int nLen);
 extern CSettings g_sSettings;
@@ -84,7 +87,6 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_LEAVE, OnLeave)
 	ON_NOTIFY(NM_RCLICK, IDC_USERLIST, OnRclickUserlist)
-	ON_NOTIFY(NM_RCLICK, IDC_CHAT, OnRclickChat)
 	ON_COMMAND(ID_USERLIST_SENDMESSAGE, OnUserlistSendmessage)
 	ON_COMMAND(ID_USERLIST_REMOVEADMIN, OnUserlistRemoveadmin)
 	ON_COMMAND(ID_USERLIST_REDIRECT, OnUserlistRedirect)
@@ -100,7 +102,6 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_COMMAND(ID_USERLIST_CUSTOMIZETHISMENU, OnUserlistCustomizethismenu)
 	ON_COMMAND(ID_USERLIST_IGNORE, OnUserlistIgnore)
 	ON_COMMAND(ID_USERLIST_UNIGNORE, OnUserlistUnignore)
-	ON_UPDATE_COMMAND_UI_RANGE(ID_USERLIST_SENDMESSAGE, ID_USERLIST_READUSERMESSAGE, OnUpdateUserlistMenu)
 	ON_COMMAND(ID_RECONNECT, OnReconnect)
 	ON_UPDATE_COMMAND_UI(ID_RECONNECT, OnUpdateReconnect)
 	ON_UPDATE_COMMAND_UI(ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, OnUpdateWinampsongMenu)
@@ -114,7 +115,16 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME, OnDisplaySystemuptime)
 	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO, OnDisplaySysteminfo)
 	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG, OnDisplayAveragelag)
+	ON_WM_SETFOCUS()
+	ON_COMMAND(ID_CHATROOM_TEXTTRICKS_BUBBLES, OnChatroomTexttricksBubbles)
+	ON_COMMAND(ID_CHATROOM_TEXTTRICKS_BOX, OnChatroomTexttricksBox)
+	ON_COMMAND(ID_CHATROOM_TEXTTRICKS_HACKER, OnChatroomTexttricksHacker)
+	ON_COMMAND(ID_CHATROOM_ASCIIARTDESIGN, OnChatroomAsciiartdesign)
+	ON_COMMAND(ID_CHAT_TEXTTRICKS_3DBUTTONSNORMAL, OnChatTexttricks3dbuttonsnormal)
+	ON_COMMAND(ID_CHAT_TEXTTRICKS_3DBUTTONSACTION, OnChatTexttricks3dbuttonsaction)
+	ON_NOTIFY(EN_LINK, IDC_CHAT, OnLinkChat)
 	//}}AFX_MSG_MAP
+	ON_UPDATE_COMMAND_UI_RANGE(ID_USERLIST_SENDMESSAGE,ID_USERLIST_UNIGNORE, OnUpdateUserlistMenu)
 	ON_REGISTERED_MESSAGE(UWM_INPUT, OnInput)
 	ON_REGISTERED_MESSAGE(UWM_MESSAGE, OnMessage)
 	ON_REGISTERED_MESSAGE(UWM_ACTION, OnAction)
@@ -128,6 +138,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_REGISTERED_MESSAGE(UWM_SYSTEM, OnSystem)
 	ON_REGISTERED_MESSAGE(UWM_REDIRECT, OnRedirect)
 	ON_REGISTERED_MESSAGE(UWM_LOAD_SETTINGS, OnReloadCfg)
+	ON_REGISTERED_MESSAGE(UWM_RCLICK, OnRclickChat)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -143,6 +154,7 @@ CMetis3View::CMetis3View()
 	m_pStatusBar = 0;
 	m_dwAvLag = 0;
 	m_dwLastTic = 0;
+	m_bHasJoined = FALSE;
 }
 
 CMetis3View::~CMetis3View()
@@ -290,7 +302,6 @@ BOOL CMetis3View::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 		SPC_NMHDR* pHdr = (SPC_NMHDR*) lParam;
 		DoResize2(pHdr->delta);
 	}	
-
 	return CFormView::OnNotify(wParam, lParam, pResult);
 }
 
@@ -344,12 +355,11 @@ void CMetis3View::OnDestroy()
 {
 	
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.RemoveButton(this);
-	KillTimer(TIMER_UPDATE);
 	KillTimer(TIMER_PING);
 
 	if(g_sSettings.GetSoundFX()){
 
-		PlaySound(g_sSettings.GetSfxPart(), NULL, SND_FILENAME|SND_SYNC);
+		PlaySound(g_sSettings.GetSfxPart(), NULL, SND_FILENAME|SND_ASYNC);
 	}
 
 	CFormView::OnDestroy();
@@ -370,18 +380,11 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 		}
 		KillTimer(TIMER_CONNECT);
 	
-		InputWelcome();
-
 		SetTimer(TIMER_PING, 5*60*1000, 0);
-		SetTimer(TIMER_UPDATE, 1000, 0);
 	}
 	else if(nIDEvent == TIMER_PING){
 
 		m_mxClient.Ping();
-	}
-	else if(nIDEvent == TIMER_UPDATE){
-
-		OnUpdate(this, 0, NULL);
 	}
 	CFormView::OnTimer(nIDEvent);
 }
@@ -396,6 +399,11 @@ void CMetis3View::WriteSystemMsg(CString strMsg, COLORREF crText)
 	
 	m_rSys.SetText(strTime, g_sSettings.GetRGBBg(), crText);
 	m_rSys.SetText(" " + strMsg + "\n", crText, g_sSettings.GetRGBBg());
+
+	if(crText == g_sSettings.GetRGBErr() && g_sSettings.GetSoundFX()){
+
+		PlaySound(g_sSettings.GetSfxError(), NULL, SND_FILENAME|SND_ASYNC);
+	}
 }
 
 void CMetis3View::RemoveUser(CString strUser)
@@ -461,7 +469,7 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 
 	if(g_sSettings.GetSoundFX()){
 
-		PlaySound(g_sSettings.GetSfxTopic(), NULL, SND_FILENAME|SND_SYNC);
+		PlaySound(g_sSettings.GetSfxTopic(), NULL, SND_FILENAME|SND_ASYNC);
 	}
 	return 1;
 }
@@ -483,7 +491,7 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 
 	if(g_sSettings.GetSoundFX()){
 
-		PlaySound(g_sSettings.GetSfxMotd(), NULL, SND_FILENAME|SND_SYNC);
+		PlaySound(g_sSettings.GetSfxMotd(), NULL, SND_FILENAME|SND_ASYNC);
 	}
 	return 1;
 }
@@ -592,6 +600,16 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort);
 
+	if(!m_bHasJoined){
+
+		if(strUser == GetDocument()->m_strName){
+
+			InputWelcome();
+			m_bHasJoined = TRUE;
+		}
+	}
+
+	OnUpdate(this, 0, 0);
 	return 1;
 }
 
@@ -678,6 +696,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		m_aUsers[i].wNodePort = wNewPort;
 	}
 
+	OnUpdate(this, 0, 0);
 	return 1;
 }
 
@@ -704,7 +723,8 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 	m_rChat.SetText(" " + strPart + "\n", g_sSettings.GetRGBPart(), g_sSettings.GetRGBBg());
 
 	RemoveUser(strUser);
-
+	
+	OnUpdate(this, 0, 0);
 	return 1;
 }
 
@@ -724,7 +744,7 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 
 	if(strMsg.IsEmpty() && strName.IsEmpty()) return 0;
 	
-	if(strName == GetDocument()->m_strName){
+	if(GetDocument()->m_strName.Find(strName, 0) == 0){
 
 		UpdateAverageLag(FALSE);
 	}
@@ -781,7 +801,7 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 
 	if(strMsg.IsEmpty() && strName.IsEmpty()) return 0;
 
-	if(strName == GetDocument()->m_strName){
+	if(GetDocument()->m_strName.Find(strName, 0) == 0){
 
 		UpdateAverageLag(FALSE);
 	}
@@ -1040,7 +1060,7 @@ LRESULT CMetis3View::OnRedirect(WPARAM wParam, LPARAM lParam)
 		m_mxClient.Connect();
 		if(g_sSettings.GetSoundFX()){
 
-			PlaySound(g_sSettings.GetSfxRedirect(), NULL, SND_FILENAME|SND_SYNC);
+			PlaySound(g_sSettings.GetSfxRedirect(), NULL, SND_FILENAME|SND_ASYNC);
 		}
 
 	}
@@ -1149,7 +1169,7 @@ void CMetis3View::OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-void CMetis3View::OnRclickChat(NMHDR* pNMHDR, LRESULT* pResult)
+LRESULT CMetis3View::OnRclickChat(WPARAM w, LPARAM l)
 {
 
 	CMenu mContextMenu;
@@ -1163,7 +1183,7 @@ void CMetis3View::OnRclickChat(NMHDR* pNMHDR, LRESULT* pResult)
 											point.y,
 											AfxGetMainWnd());
 
-	*pResult = 0;
+	return 1;
 }
 
 void CMetis3View::OnUserlistSendmessage() 
@@ -1487,17 +1507,18 @@ void CMetis3View::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 	if(m_pStatusBar){
 
 		CString strText;
+		
 		m_pStatusBar->SetPaneText(1, GetDocument()->m_strRoomShort);
+
 		strText.Format("Average Lag: %u ms", m_dwAvLag);
 		COLORREF cr = 0;
 		if(m_dwAvLag <= 500) cr = RGB(0, 100, 0);
 		else if((m_dwAvLag > 500) && (m_dwAvLag <= 1000)) cr = 0;
 		else if((m_dwAvLag > 1000) && (m_dwAvLag < 1500)) cr = RGB(255, 192, 64);
 		else cr = RGB(200, 0, 0);
-		m_pStatusBar->SetLagColor(cr, strText);
+		m_pStatusBar->SetPaneText(2, strText, cr);
+
 		strText.Format("%0d users", m_lcUsers.GetItemCount());
-		m_pStatusBar->SetPaneText(2, strText);
-		m_pStatusBar->GetStatusBarCtrl().SetText(strText, 2, SBT_OWNERDRAW); 
 		m_pStatusBar->SetPaneText(3, strText);
 		//m_pStatusBar->Invalidate();
 	}
@@ -1514,9 +1535,20 @@ void CMetis3View::UpdateAverageLag(BOOL bStart)
 
 
 		DWORD dwTime = GetTickCount() - m_dwLastTic;
+		CString strText;
 
 		m_dwAvLag = (m_dwAvLag + dwTime) / 2;
 		m_dwLastTic = 0;
+		
+		strText.Format("Average Lag: %u ms", m_dwAvLag);
+		
+		COLORREF cr = 0;
+		if(m_dwAvLag <= 500) cr = RGB(0, 100, 0);
+		else if((m_dwAvLag > 500) && (m_dwAvLag <= 1000)) cr = 0;
+		else if((m_dwAvLag > 1000) && (m_dwAvLag < 1500)) cr = RGB(255, 192, 64);
+		else cr = RGB(200, 0, 0);
+		
+		m_pStatusBar->SetPaneText(2, strText, cr);
 	}
 }
 
@@ -1807,7 +1839,7 @@ void CMetis3View::InputWelcome()
 
 	if(g_sSettings.GetSoundFX()){
 
-		PlaySound(g_sSettings.GetSfxJoin(), 0, SND_SYNC|SND_FILENAME);
+		PlaySound(g_sSettings.GetSfxJoin(), 0, SND_ASYNC|SND_FILENAME);
 	}
 	if(g_sSettings.GetDoEnterMsg()){
 		
@@ -1830,3 +1862,93 @@ void CMetis3View::InputWelcome()
 	}
 }
 
+
+void CMetis3View::OnSetFocus(CWnd* pOldWnd) 
+{
+	CFormView::OnSetFocus(pOldWnd);
+	
+
+	OnUpdate(this, 0, 0);
+}
+
+void CMetis3View::OnChatroomTexttricksHacker() 
+{
+
+	
+	CInputRequest dlg;
+	dlg.SetMode(0, &m_fFont);
+	if(dlg.DoModal() == IDOK){
+
+		Input(dlg.m_strInput);
+	}
+}
+
+void CMetis3View::OnChatroomTexttricksBubbles() 
+{
+
+	CInputRequest dlg;
+	dlg.SetMode(1, &m_fFont);
+	if(dlg.DoModal() == IDOK){
+
+		Input(dlg.m_strInput);
+	}
+}
+
+void CMetis3View::OnChatroomTexttricksBox() 
+{
+
+	
+	CInputRequest dlg;
+	dlg.SetMode(2, &m_fFont);
+	if(dlg.DoModal() == IDOK){
+
+		Input(dlg.m_strInput);
+	}
+}
+
+void CMetis3View::OnChatTexttricks3dbuttonsnormal() 
+{
+	
+	CInputRequest dlg;
+	dlg.SetMode(3, &m_fFont);
+	if(dlg.DoModal() == IDOK){
+
+		Input(dlg.m_strInput);
+	}
+}
+
+void CMetis3View::OnChatTexttricks3dbuttonsaction() 
+{
+	
+	CInputRequest dlg;
+	dlg.SetMode(4, &m_fFont);
+	if(dlg.DoModal() == IDOK){
+
+		Input(dlg.m_strInput);
+	}
+}
+
+void CMetis3View::OnChatroomAsciiartdesign() 
+{
+
+	
+	CInputRequest dlg;
+	dlg.SetMode(5, &m_fFont);
+	if(dlg.DoModal() == IDOK){
+
+		Input(dlg.m_strInput);
+	}
+}
+
+
+void CMetis3View::OnLinkChat(NMHDR* pNMHDR, LRESULT* pResult) 
+{
+	ENLINK *pEnPLink = reinterpret_cast<ENLINK *>(pNMHDR);
+	// TODO: The control will not send this notification unless you override the
+	// CFormView::OnInitDialog() function to send the EM_SETEVENTMASK message
+	// to the control with the ENM_PROTECTED flag ORed into the lParam mask.
+	TRACE("Boom\n");
+	// TODO: Add your control notification handler code here
+	
+	*pResult = 0;
+}

@@ -149,6 +149,10 @@ SOURCE=.\Ini.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\InputRequest.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\ListClient.cpp
 # End Source File
 # Begin Source File
@@ -250,6 +254,10 @@ SOURCE=.\Tokenizer.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\API.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\CfgDlg.h
 # End Source File
 # Begin Source File
@@ -303,6 +311,10 @@ SOURCE=.\ImageDataObject.h
 # Begin Source File
 
 SOURCE=.\Ini.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\InputRequest.h
 # End Source File
 # Begin Source File
 

@@ -30,6 +30,7 @@ public:
 
 // Implementation
 public:
+	void SetPaneText(DWORD dwIndex, CString strText, COLORREF cr = 0);
 	void SetLagColor(COLORREF cr, CString strLag);
 	virtual ~CColorStatusBar();
 

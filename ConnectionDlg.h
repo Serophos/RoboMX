@@ -60,7 +60,7 @@ protected:
 	//{{AFX_MSG(CConnectionDlg)
 	virtual void OnOK();
 	virtual BOOL OnInitDialog();
-	afx_msg void OnUsenode();
+	afx_msg void OnClear();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

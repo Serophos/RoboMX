@@ -1,5 +1,5 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
+// Microsoft Visual C++ generated include file.
 // Used by Metis3.rc
 //
 #define IDD_ABOUTBOX                    100
@@ -18,18 +18,19 @@
 #define IDR_USER                        147
 #define IDD_SETTINGS                    148
 #define IDR_SERVER                      149
-#define IDD_GENERAL                     149
 #define IDR_FULLSCREEN                  150
-#define IDD_COLORS                      150
 #define IDD_MESSAGES                    151
 #define IDR_CHAT                        152
-#define IDD_SOUND                       152
 #define IDB_TOOLBAR256                  153
 #define IDB_TOOLBAR256_DEACT            154
 #define IDB_MENU_BUTTON                 155
+#define IDD_GENERAL                     156
+#define IDD_COLORS                      157
 #define IDB_PREF                        158
 #define IDR_AWAY                        159
+#define IDD_SOUND                       160
 #define IDD_SFX_EDIT                    163
+#define IDD_INPUT_REQUEST               164
 #define IDC_CONNECT                     1000
 #define IDC_ROOM                        1001
 #define IDC_STATIC_ROOM                 1002
@@ -40,24 +41,24 @@
 #define IDC_STATIC_LINE                 1007
 #define IDC_LINE                        1008
 #define IDC_USERLIST                    1009
-#define IDC_COLORFOCUS                  1009
 #define IDC_CHAT                        1010
-#define IDC_TRIGGER                     1010
-#define IDC_STATIC_FOCUS                1010
 #define IDC_INPUT                       1011
-#define IDC_REACTION                    1011
 #define IDC_STATIC_CONNSTATUS           1012
-#define IDC_BROWSE_SOUND                1012
 #define IDC_SYSOUT                      1013
 #define IDC_EXIT                        1014
 #define IDC_RICHEDIT1                   1015
+#define IDC_COLORFOCUS                  1016
 #define IDC_SPLITTER_1                  1017
 #define IDC_SPLITTER_2                  1018
+#define IDC_STATIC_FOCUS                1019
 #define IDC_NAME                        1020
 #define IDC_STATIC_NAME                 1021
+#define IDC_TRIGGER                     1022
+#define IDC_REACTION                    1023
 #define IDC_STATIC_CHAT                 1024
 #define IDC_STATIC_SYSOUT               1025
 #define IDC_LEAVE                       1026
+#define IDC_BROWSE_SOUND                1027
 #define IDC_CHANNELS                    1028
 #define IDC_REFRESH                     1029
 #define IDC_CLEAR_REFRESH               1030
@@ -105,6 +106,9 @@
 #define IDC_PLAY                        1074
 #define IDC_STATIC_HILIGHT              1075
 #define IDC_FOCUSCLR                    1076
+#define IDC_CLEAR                       1077
+#define IDC_STATIC_IR                   1078
+#define IDC_CONVERT                     1080
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -147,7 +151,6 @@
 #define IDC_STATIC_MISCCOLOR            5074
 #define IDC_BACKG                       5075
 #define IDC_STATIC_BG                   5076
-#define IDC_SOUNDEFFECT                 5077
 #define IDC_PENDING                     5077
 #define IDC_TOPIC                       5078
 #define IDC_MOTD                        5079
@@ -252,15 +255,17 @@
 #define ID_AWAYCONTROL_STORE            32832
 #define ID_AWAYCONTROL_NONEOFYOURBUISNESS 32833
 #define ID_AWAYCONTROL_ENTERREASON      32834
+#define ID_CHAT_TEXTTRICKS_3DBUTTONSNORMAL 32835
+#define ID_CHAT_TEXTTRICKS_3DBUTTONSACTION 32836
 
 // Next default values for new objects
-// 
+//
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        164
-#define _APS_NEXT_COMMAND_VALUE         32835
-#define _APS_NEXT_CONTROL_VALUE         1077
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_3D_CONTROLS                1
+#define _APS_NEXT_RESOURCE_VALUE        169
+#define _APS_NEXT_COMMAND_VALUE         32837
+#define _APS_NEXT_CONTROL_VALUE         1081
+#define _APS_NEXT_SYMED_VALUE           32913
 #endif
 #endif

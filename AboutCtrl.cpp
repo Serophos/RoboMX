@@ -44,7 +44,7 @@ CAboutCtrl::CAboutCtrl()
 	m_xPos = 0;
 	m_yPos = 0; 
 
-	m_strCredits.Format("\t%s\nProtocoll-version 3.52 Beta 5\n \n"
+	m_strCredits.Format("\t%s\nProtocoll-version 3.53\n \n"
 				   "\rKey-Developer & Management:\n"
 				   "Thees Ch. Winkler (Schwab in spe)\n \n"
 				   "\rCrypt Module:\n"
@@ -77,11 +77,6 @@ CAboutCtrl::CAboutCtrl()
 				   "DISCLAIMER: Any resemblance to actual robots\n"
 				   "would be really cool :-)\n \n"
 				   "\r                 [:] \n \n \n"
-				   /*"The very powerful and the very stupid have one\n"
-				   "thing in common. Instead of altering their views\n"
-				   "to fit the facts, they alter the facts to fit their\n"
-				   "views... \n"*/
-
 						   , STR_VERSION_DLG);
 
 }

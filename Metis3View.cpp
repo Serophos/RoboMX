@@ -566,15 +566,20 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 	CString strMotd = (LPCSTR)lParam;
 	strMotd.Replace("\\rtf", "#rtf");
 
-	if(g_sSettings.GetPrintTime()){
+	CTokenizer token(strMotd, "\n");
+	CString strOut;
 
-		CString strTime;
-		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBMotd());
+	while(token.Next(strOut)){
+
+		if(g_sSettings.GetPrintTime()){
+
+			CString strTime;
+			strTime.Format("[%s]", GetMyLocalTime());
+			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBMotd());
+		}
+
+		m_rChat.SetText(" " + strOut + "\n", g_sSettings.GetRGBMotd(), g_sSettings.GetRGBBg());
 	}
-
-	m_rChat.SetText(" " + strMotd + "\n", g_sSettings.GetRGBMotd(), g_sSettings.GetRGBBg());
-
 	if(g_sSettings.GetSoundFX() && m_bHasJoined){
 
 		PlaySound(g_sSettings.GetSfxMotd(), NULL, SND_FILENAME|SND_ASYNC);
@@ -758,7 +763,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 			TRACE("Error decoding rename notification packet\n");
 			return 0;
 		}
-		wMode = 10;
+		wMode = 0;
 	}
 	//CString strOldName;
 	//strOldName.Format("%s", lpOldName);
@@ -770,8 +775,13 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	m_lcUsers.Sort();
 	int nPos = m_lcUsers.FindItem(&fi, -1);
 
-	MX_USERINFO oldUser, newUser;
+	if(GetDocument()->m_strName.Find(lpNewName, 0) == 0){
 
+		GetDocument()->m_wUserMode = wMode;
+	}
+
+	MX_USERINFO oldUser, newUser;
+	
 	if(nPos >= 0){
 
 		// Find user...
@@ -795,7 +805,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		newUser.wNodePort = wNewPort;
 		newUser.dwNumFiles = dwFiles;
 		newUser.strNodeIP = Util::FormatIP(dwNewIP);
-		newUser.wUserLever = (wMode != 10 ? wMode : oldUser.wUserLever);
+		newUser.wUserLever = wMode;
 		newUser.strRealIP = Util::FormatIP(dwRealIP);
 		
 		m_aUsers.SetAt(i, newUser);
@@ -803,13 +813,6 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		m_lcUsers.Sort();
 		m_lcUsers.AddItem(newUser.wUserLever, newUser.strUser, (LPCTSTR)Util::FormatInt(newUser.dwNumFiles), (LPCTSTR)Util::FormatLine(newUser.wLineType),
 			(LPCTSTR)newUser.strNodeIP, (LPCTSTR)Util::FormatInt(newUser.wNodePort), (LPCSTR)newUser.strRealIP);
-		//m_lcUsers.AddItem(wUserLevel, strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strNodeIP, (LPCTSTR)strPort, (LPCTSTR)strIP);
-		//m_lcUsers.SetItemState(nPos, &item);
-		//m_lcUsers.SetItemText(nPos, 0, newUser.strUser); // name
-		//m_lcUsers.SetItemText(nPos, 1, Util::FormatInt(newUser.dwNumFiles)); // files
-		//m_lcUsers.SetItemText(nPos, 2, Util::FormatLine(newUser.wLineType)); // line
-		//m_lcUsers.SetItemText(nPos, 3, newUser.strNodeIP); // nodeip
-		//m_lcUsers.SetItemText(nPos, 4, Util::FormatInt(newUser.wNodePort)); // nodeport
 		m_lcUsers.Sort();
 	}
 	else{
@@ -833,6 +836,8 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 {
 
 	CString strMsg = (char*)lParam;
+	WORD  wType		= LOWORD(wParam);
+	WORD  wLen		= HIWORD(wParam);
 	
 	strMsg.Replace("\\rtf", "#rtf");
 	
@@ -842,8 +847,34 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 		strTime.Format("[%s]", GetMyLocalTime());
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBOp());
 	}
-	
-	m_rChat.SetText(" " + strMsg + "\n", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
+	if(wType == 0x00D2){ // opmsgs
+
+		if(strMsg.Find("") > 0){
+			
+			CString strName;
+			CTokenizer token(strMsg, "> ");
+			token.Next(strName);
+			strMsg = token.Tail();
+
+			strName = strName.Mid(1, strName.GetLength()-1);
+			if(GetDocument()->m_strName.Find(strName, 0) == 0){
+
+				UpdateAverageLag(FALSE);
+			}
+			
+			m_rChat.SetText(" " + g_sSettings.GetBrMsgFront() +  strName + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
+			m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+		}
+		else{
+
+			m_rChat.SetText(" " + strMsg + "\n", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
+		}
+	}
+	else if(wType == 0x00D3){ // command echo
+
+		m_rChat.SetText(" " + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
+		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+	}
 	
 	return 1;
 }
@@ -1000,7 +1031,7 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 			return 1;
 	}
 
-	if(strName.IsEmpty() && (m_nServerType == SERVER_WINMX352)){
+	if(strName.IsEmpty() && (m_nServerType == SERVER_WINMX353)){
 
 		CTokenizer token(strMsg, "");
 		token.Next(strName);
@@ -1101,6 +1132,7 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 
 		UpdateData(TRUE);
 	}
+
 	if(m_strInput.GetLength() > 400){
 
 		m_strInput = m_strInput.Left(400);
@@ -1113,48 +1145,65 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 		m_strInput = "Sorry, I made a futile attemp to send an RTF exploit to the room. RoboMX outsmarted me though and blocked it. Please kick my butt!";
 	}
 
-	if(m_strInput.Find("/me ", 0) == 0){
-
-		m_strInput = m_strInput.Mid(4);
-		bAction = TRUE;
-	}
-	else if(m_strInput.Find("/action ", 0) == 0){
-
-		m_strInput = m_strInput.Mid(9);
-		bAction = TRUE;
-	}
-	else if(m_strInput.Find("/emote ", 0) == 0){
-
-		m_strInput = m_strInput.Mid(8);
-		bAction = TRUE;
-	}
-	else if(m_strInput.Find("/all ", 0) == 0){
+	
+	if(m_strInput.Find("/all ", 0) == 0){
 
 		m_strInput = m_strInput.Mid(5);
 		((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.InputAll(m_strInput);
-		m_strInput = "";
+		m_strInput.Empty();
 		UpdateData(FALSE);
 		return 1;
 	}
 	else if(m_strInput == "/clear"){
 
-		m_strInput = "";
+		m_strInput.Empty();
 		UpdateData(FALSE);
 		m_rChat.SetSel(0,-1);
 		m_rChat.ReplaceSel("");
+		return 1;
 	}
-
+	
 	for(int i = 0; i < g_aPlugins.GetSize(); i++){
 
 		PLUGIN->OnInputHook((DWORD)m_hWnd, &m_strInput);
 	}
 
-	if(!m_strInput.IsEmpty()){
+	// WinMX 3.53 handles this differently now
+	if((m_nServerType != SERVER_WINMX353) && !m_strInput.IsEmpty()){
 
-		m_mxClient.SendMessage(m_strInput, m_strInput.GetLength(), bAction);
+		if((m_strInput.Find("/me ", 0) == 0) && (m_nServerType != SERVER_WINMX353)){
+
+			m_strInput = m_strInput.Mid(4);
+			bAction = TRUE;
+		}
+		else if((m_strInput.Find("/action ", 0) == 0) && (m_nServerType != SERVER_WINMX353)){
+
+			m_strInput = m_strInput.Mid(9);
+			bAction = TRUE;
+		}
+		else if((m_strInput.Find("/emote ", 0) == 0) && (m_nServerType != SERVER_WINMX353)){
+
+			m_strInput = m_strInput.Mid(8);
+			bAction = TRUE;
+		}
+
+		if(!m_strInput.IsEmpty()){
+
+			m_mxClient.SendMessage(m_strInput, m_strInput.GetLength(), bAction);
+			UpdateAverageLag();
+			m_strInput.Empty();
+		}
+	}
+	// operators on winmx send everything via the admin package
+	else if((m_nServerType == SERVER_WINMX353) && !m_strInput.IsEmpty()){
+
+		m_mxClient.SendAdminCmd(m_strInput);
 		UpdateAverageLag();
 		m_strInput = "";
+		UpdateData(FALSE);
+		return 1;
 	}
+
 	UpdateData(FALSE);
 	OnUpdate(0,0,0);
 	return 1;
@@ -1185,6 +1234,10 @@ void CMetis3View::OnRename()
 		else{
 
 			m_mxClient.SendRename(dlg.m_strName, dlg.m_dwFiles, dlg.m_nLine);
+			if(m_nServerType == SERVER_WINMX353){
+
+				m_mxClient.SendRename(dlg.m_strName, dlg.m_dwFiles, dlg.m_nLine);
+			}
 		}
 
 		GetDocument()->m_dwFiles = dlg.m_dwFiles;
@@ -1357,7 +1410,14 @@ void CMetis3View::OnUserlistRedirect()
 
 		strCmd = m_aRCMSMenu[0];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1370,7 +1430,14 @@ void CMetis3View::OnUserlistKick()
 
 		strCmd = m_aRCMSMenu[1];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1383,7 +1450,14 @@ void CMetis3View::OnUserlistKickban()
 
 		strCmd = m_aRCMSMenu[2];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1396,7 +1470,14 @@ void CMetis3View::OnUserlistBan()
 
 		strCmd = m_aRCMSMenu[3];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1409,7 +1490,14 @@ void CMetis3View::OnUserlistUnban()
 
 		strCmd = m_aRCMSMenu[4];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1422,7 +1510,14 @@ void CMetis3View::OnUserlistPrintuserstat()
 
 		strCmd = m_aRCMSMenu[5];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1435,7 +1530,14 @@ void CMetis3View::OnUserlistPrintip()
 
 		strCmd = m_aRCMSMenu[6];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1448,7 +1550,14 @@ void CMetis3View::OnUserlistAddadmin()
 
 		strCmd = m_aRCMSMenu[7];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1461,7 +1570,14 @@ void CMetis3View::OnUserlistRemoveadmin()
 
 		strCmd = m_aRCMSMenu[8];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1475,7 +1591,14 @@ void CMetis3View::OnUserlistReadusermessage()
 
 		strCmd = m_aRCMSMenu[9];
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
-		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendAdminCmd(strCmd);
+		}
+		else{
+
+			m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+		}
 	}
 }
 
@@ -1587,8 +1710,16 @@ void CMetis3View::OnUserlistIgnore()
 		if(GetKeyState(VK_SHIFT) < 0){
 
 			CString strIgnored;
-			strIgnored.Format("ignored user '%s'", strUser);
-			m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), TRUE);
+			if(m_nServerType == SERVER_WINMX353){
+
+				strIgnored.Format("/me ignored user '%s'", strUser);
+				m_mxClient.SendAdminCmd(strIgnored);
+			}
+			else{
+
+				strIgnored.Format("ignored user '%s'", strUser);
+				m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), FALSE);
+			}
 		}
 	}	
 }
@@ -1614,8 +1745,16 @@ void CMetis3View::OnUserlistUnignore()
 				if(GetKeyState(VK_SHIFT) < 0){
 
 					CString strIgnored;
-					strIgnored.Format("un-ignored user '%s'", strUser);
-					m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), TRUE);
+					if(m_nServerType == SERVER_WINMX353){
+
+						strIgnored.Format("/me un-ignored user '%s'", strUser);
+						m_mxClient.SendAdminCmd(strIgnored);
+					}
+					else{
+
+						strIgnored.Format("un-ignored user '%s''", strUser);
+						m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), FALSE);
+					}
 				}
 			}
 		}
@@ -2193,7 +2332,7 @@ LRESULT CMetis3View::OnSetServerType(WPARAM wParam, LPARAM lParam)
 		case SERVER_RCMS:
 			m_eInput.SetCommands(&g_sSettings.m_aRCMSCommands);
 			break;
-		case SERVER_WINMX352:
+		case SERVER_WINMX353:
 			m_eInput.SetCommands(&g_sSettings.m_aWinMXCommands);
 			break;
 		case SERVER_ROBOMX:

@@ -34,8 +34,12 @@
 #define MXCHAT_LOGINGRANTED 0x0066
 
 #define SERVER_RCMS         0x0001
-#define SERVER_WINMX352		0x0002
+#define SERVER_WINMX353		0x0002
 #define SERVER_ROBOMX		0x0003
+
+#define USER_NORMAL			0x0000
+#define USER_OPERATOR       0x0001
+#define USER_VOICED         0x0002
 
 class CMetis3View;
 
@@ -87,6 +91,7 @@ public:
 	
 	// RCMS warning
 	BOOL m_bWarned;
+	BOOL SendAdminCmd(LPCTSTR lpszKey);
 };
 
 #endif // !defined(AFX_CHATCLIENT_H__E77F22CE_3865_4876_944C_DDDE8A6555F0__INCLUDED_)

@@ -122,8 +122,11 @@ CString Util::FormatIP(DWORD dwIP)
 	if(dwIP == 0) return "";
 
 	CString strReturn;
-
-	strReturn.Format("%d.%d.%d.%d", ((dwIP >> 24) & 0xff), ((dwIP >> 16) & 0xff), ((dwIP >> 8) & 0xff), (dwIP & 0xff));
+	int a = ((dwIP >> 24) & 0xff);
+	int b = ((dwIP >> 16) & 0xff);
+	int c = ((dwIP >> 8) & 0xff);
+	int d = (dwIP & 0xff);
+	strReturn.Format("%d.%d.%d.%d", d, c, b, a);
 	return strReturn;
 }
 

@@ -566,25 +566,32 @@ void CMainFrame::OnUpdateViewChannelBar(CCmdUI* pCmdUI)
 void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
 {
 
+	//CMDIFrameWnd::OnUpdateFrameTitle(bAddToTitle);
 	if ((GetStyle() & FWS_ADDTOTITLE) == 0)
 		return; // leave child window alone!
 
 	CDocument* pDocument = GetActiveDocument();
 	
-	if (bAddToTitle){
-
+	if(bAddToTitle){
+		
 		TCHAR szText[256+_MAX_PATH];
 		CString strTitle;
 
 		strTitle = AfxGetApp()->m_pszAppName;
 
-		if (pDocument == NULL)
-		lstrcpy(szText, m_strTitle);
-		else
-		lstrcpy(szText, pDocument->GetTitle());
+		if (pDocument == NULL){
+
+			lstrcpy(szText, m_strTitle);
+		}
+		else{
+
+			lstrcpy(szText, pDocument->GetTitle());
+		}
 	
-		if (m_nWindow > 0)
-		wsprintf(szText + lstrlen(szText), _T(":%d"), m_nWindow);
+		if (m_nWindow > 0){
+			
+			wsprintf(szText + lstrlen(szText), _T(":%d"), m_nWindow);
+		}
 
 		// set title if changed, but don't remove completely
 		SetWindowText(szText);

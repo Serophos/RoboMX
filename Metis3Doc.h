@@ -59,6 +59,7 @@ public:
 	CString m_strName;
 	DWORD   m_dwFiles;
 	WORD    m_wLine;
+	WORD    m_wUserMode;
 
 protected:
 

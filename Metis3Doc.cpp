@@ -47,8 +47,10 @@ END_MESSAGE_MAP()
 
 CMetis3Doc::CMetis3Doc()
 {
-	// TODO: add one-time construction code here
 
+	m_dwFiles    = 0;
+	m_wLine      = 0x00;
+	m_wUserMode  = 0;
 }
 
 CMetis3Doc::~CMetis3Doc()
@@ -81,7 +83,7 @@ BOOL CMetis3Doc::OnNewDocument()
 		m_strRoomShort = m_strRoom.Left(n);
 	}
 	
-	CDocument::SetTitle(m_strRoom);
+	CDocument::SetTitle(m_strRoom + " (" + m_strName + ")");
 	return TRUE;
 }
 
@@ -102,7 +104,7 @@ void CMetis3Doc::SetTitle(LPCTSTR lpszTitle)
 
 	m_strRoom = m_strRoomShort + strAppendix;
 
-	CDocument::SetTitle(m_strRoom);
+	CDocument::SetTitle(m_strRoom + " (" + m_strName + ")");
 }
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3Doc serialization

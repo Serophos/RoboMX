@@ -24,6 +24,7 @@
 #include "Metis3View.h"
 #include "Settings.h"
 #include "util.h"
+#include ".\chatclient.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -166,7 +167,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 	// Send new pre-login packet
 	// ED 13 01 00 31	nLen = 5;
-#ifndef _MXCHATD_COMPATIBLE
+//#ifndef _MXCHATD_COMPATIBLE
 	*(WORD*)buffer = 0xED;
 	*(WORD*)(buffer+1) = 0x13;
 	*(WORD*)(buffer+2) = 0x01;
@@ -185,7 +186,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 		pClient->m_eClose.SetEvent();
 		return FALSE;
 	}
-#endif
+//#endif
 	//Login-Request: (Client)
 	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
 	nLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
@@ -388,6 +389,33 @@ void CChatClient::SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction)
 	}
 }
 
+
+BOOL CChatClient::SendAdminCmd(LPCTSTR lpszKey)
+{
+
+	// admin cmd(client)
+	// 0x1450][LOGIN:N]
+	if(m_bListen){
+
+		char buffer[1024];
+		ZeroMemory(buffer, 1024);
+
+		WORD wLen = Util::FormatMXMessage(0x1450, (char*)&buffer, "S", lpszKey);
+		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, wLen, m_dwUPKey);
+
+		int nSend = m_mSocket.Send(buffer, wLen, 0);
+
+		if(nSend == SOCKET_ERROR){
+
+			CString strError;
+			strError.Format("Robo-Panic[z]: %s :'(", m_mSocket.GetLastErrorStr());
+			WriteMessage(strError, g_sSettings.GetRGBErr());
+			m_bListen  = FALSE;
+		}
+	}
+	return 0;
+}
+
 void CChatClient::Ping()
 {
 
@@ -488,7 +516,8 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		::SendMessage(m_pView->m_hWnd, UWM_RENAME, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x00D2: // user rename message (xy is now know as ab)
-		::SendMessage(m_pView->m_hWnd, UWM_RENOTIFY, wLen, (LPARAM)cmd);
+	case 0x00D3:  // login OK
+		::SendMessage(m_pView->m_hWnd, UWM_RENOTIFY, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x00C9: // normal message
 		::SendMessage(m_pView->m_hWnd, UWM_MESSAGE, wLen, (LPARAM)cmd);
@@ -505,8 +534,8 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		}
 		break;
 	case 0x0068: // ?
-		WriteMessage("Info: Room is powered by WinMX 3.52.", g_sSettings.GetRGBOp());
-		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX352, 0);
+		WriteMessage("Info: Room is powered by WinMX 3.53.", g_sSettings.GetRGBOp());
+		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX353, 0);
 		break;
 	case 0x012D: // room name changed
 		::SendMessage(m_pView->m_hWnd, UWM_ROOMRENAME, wLen, (LPARAM)cmd);

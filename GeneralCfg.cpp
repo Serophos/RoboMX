@@ -26,8 +26,6 @@
 #include "MainFrm.h"
 
 extern CSettings g_sSettings;
-extern CStringArray g_aRooms;
-extern CStringArray g_aGreetings;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -47,6 +45,7 @@ CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 	, m_bMaxi(FALSE)
 	, m_bUpdate(FALSE)
 	, m_bAutoList(FALSE)
+	, m_bScroller(FALSE)
 {
 	m_nHistory = 0;
 	m_bHistory = FALSE;
@@ -84,6 +83,7 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_MDIMAXI, m_bMaxi);
 	DDX_Check(pDX, IDC_UPDATE, m_bUpdate);
 	DDX_Check(pDX, IDC_LISTCHANNEL, m_bAutoList);
+	DDX_Check(pDX, IDC_SCROLLER, m_bScroller);
 }
 
 
@@ -128,6 +128,7 @@ BOOL CGeneralCfg::OnInitDialog()
 	m_bUpdate	   = g_sSettings.GetUpdate();
 	m_bAutoList	   = g_sSettings.GetAutoList();
 	m_bMaxi		   = g_sSettings.GetMaxi();
+	m_bScroller    = g_sSettings.GetEnableScroller();
 
 	UpdateData(FALSE);
 	LoadRooms();
@@ -158,58 +159,16 @@ void CGeneralCfg::OnAllchannels()
 void CGeneralCfg::LoadRooms()
 {
 
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\rooms.ini";
-	BOOL bReturn = TRUE;
-	CStdioFile ini;
-	CString strBuffer;
-	g_aRooms.RemoveAll();
 	m_lbChannels.ResetContent();
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aRooms.Add(strBuffer);
-				m_lbChannels.InsertString(m_lbChannels.GetCount(), strBuffer);
-			}
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
-	}END_CATCH;
-
-	strIniFile = g_sSettings.GetWorkingDir() + "\\hello.ini";
-	g_aGreetings.RemoveAll();
 	m_lbGreetings.ResetContent();
+	for(int i = 0; i < g_sSettings.m_aRooms.GetSize(); i++){
 
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aGreetings.Add(strBuffer);
-				m_lbGreetings.InsertString(m_lbGreetings.GetCount(), strBuffer);
-			}
-		}
-		ini.Close();
-		
+		m_lbChannels.InsertString(m_lbChannels.GetCount(), g_sSettings.m_aRooms[i]);
 	}
-	CATCH(CFileException, e){
+	for(i = 0; i < g_sSettings.m_aGreetings.GetSize(); i++){
 
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
-	}END_CATCH;
+		m_lbGreetings.InsertString(m_lbGreetings.GetCount(), g_sSettings.m_aGreetings[i]);
+	}
 }
 
 void CGeneralCfg::SaveRooms()
@@ -281,6 +240,7 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetUpdate(m_bUpdate);
 	g_sSettings.SetAutoList(m_bAutoList);
 	g_sSettings.SetMaxi(m_bMaxi);
+	g_sSettings.SetEnableScroller(m_bScroller);
 
 	SaveRooms();
 	LoadRooms();

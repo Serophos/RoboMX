@@ -28,12 +28,7 @@
 /////////////////////////////////////////////////////////////////////////////
 // CSfxCfg dialog
 #include "CfgDlg.h"
-
-typedef struct TAG_MXSOUND{
-
-	CString strTrigger;
-	CString strSound;
-} SOUND, *PSOUND;
+#include "Settings.h"
 
 class CSfxCfg : public CCfgDlg
 {

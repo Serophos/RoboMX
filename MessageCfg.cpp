@@ -31,7 +31,6 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CMessageCfg dialog
 
-extern CStringArray g_aQuick;
 extern CSettings    g_sSettings;
 
 CMessageCfg::CMessageCfg(CWnd* pParent /*=NULL*/)
@@ -106,31 +105,12 @@ void CMessageCfg::Apply()
 void CMessageCfg::LoadQuickCmds()
 {
 
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\quick.ini";
-	BOOL bReturn = TRUE;
-	CStdioFile ini;
-	CString strBuffer;
-	g_aQuick.RemoveAll();
 	m_lbQuick.ResetContent();
 
-	TRY{
+	for(int i = 0; i < g_sSettings.m_aQuick.GetSize(); i++){
 
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aQuick.Add(strBuffer);
-				m_lbQuick.InsertString(m_lbQuick.GetCount(), strBuffer);
-			}
-		}
-		ini.Close();
-		
+		m_lbQuick.InsertString(m_lbQuick.GetCount(), g_sSettings.m_aQuick[i]);
 	}
-	CATCH(CFileException, e){
-
-	}END_CATCH;
 }
 
 void CMessageCfg::SaveQuickCmds()
@@ -167,7 +147,7 @@ void CMessageCfg::OnMsgAddBtn()
 	if(m_strAdd.IsEmpty()) return;
 
 	m_lbQuick.AddString(m_strAdd);
-	g_aQuick.Add(m_strAdd);
+	g_sSettings.m_aQuick.Add(m_strAdd);
 	m_strAdd.Empty();
 
 	UpdateData(FALSE);
@@ -180,7 +160,7 @@ void CMessageCfg::OnQuickrem()
 	if(nSel != -1){
 
 		m_lbQuick.DeleteString(nSel);
-		g_aQuick.RemoveAt(nSel);
+		g_sSettings.m_aQuick.RemoveAt(nSel);
 	}
 }
 
@@ -193,9 +173,9 @@ void CMessageCfg::OnQuickup()
 		CString strTmp;
 		m_lbQuick.GetText(nSel, strTmp);
 		m_lbQuick.DeleteString(nSel);
-		g_aQuick.RemoveAt(nSel--);
+		g_sSettings.m_aQuick.RemoveAt(nSel--);
 		m_lbQuick.InsertString(nSel < 0 ? m_lbQuick.GetCount() : nSel, strTmp);
-		g_aQuick.InsertAt(nSel < 0 ? g_aQuick.GetSize() : nSel, strTmp);
+		g_sSettings.m_aQuick.InsertAt(nSel < 0 ? g_sSettings.m_aQuick.GetSize() : nSel, strTmp);
 		m_lbQuick.SetCurSel(nSel < 0 ? m_lbQuick.GetCount()-1 : nSel);
 	}	
 }
@@ -209,9 +189,9 @@ void CMessageCfg::OnQuickdown()
 		CString strTmp;
 		m_lbQuick.GetText(nSel, strTmp);
 		m_lbQuick.DeleteString(nSel);
-		g_aQuick.RemoveAt(nSel++);
+		g_sSettings.m_aQuick.RemoveAt(nSel++);
 		m_lbQuick.InsertString(nSel > m_lbQuick.GetCount() ? 0 : nSel,strTmp);
-		g_aQuick.InsertAt(nSel > g_aQuick.GetSize() ? 0 : nSel, strTmp);
+		g_sSettings.m_aQuick.InsertAt(nSel > g_sSettings.m_aQuick.GetSize() ? 0 : nSel, strTmp);
 		m_lbQuick.SetCurSel(nSel > m_lbQuick.GetCount()-1 ? 0 : nSel);
 	}	
 }

@@ -35,8 +35,6 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CSfxCfg dialog
 
-CArray<SOUND, SOUND> g_aSounds;
-
 extern CSettings g_sSettings;
 
 CSfxCfg::CSfxCfg(CWnd* pParent /*=NULL*/)
@@ -148,82 +146,14 @@ void CSfxCfg::Apply()
 void CSfxCfg::LoadSounds()
 {
 
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\MXSound.ini";
-
-	CStdioFile ini;
-	CString strBuffer;
-	int nMode = -1;
-	int p = 0;
-	
-	g_aSounds.RemoveAll();
 	m_lcSounds.DeleteAllItems();
+	int p = 0;
+	for(int i = 0; i < g_sSettings.m_aSounds.GetSize(); i++){
 
-	CString strSection;
-	TRY{
 
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText);
-
-		while(ini.ReadString(strBuffer)){
-
-			strBuffer.TrimLeft();
-			strBuffer.TrimRight();
-
-			if(strBuffer.Left(2) == "//") continue;
-			if(strBuffer.Find("[Sounds]", 0) == 0){
-				
-				nMode = 0;
-				continue;
-			}
-			if(strBuffer.Left(1) == "#"){
-				
-				strBuffer = strBuffer.Mid(1);
-				if(strBuffer.IsEmpty() || (nMode != 0)){
-
-					continue;
-				}
-
-				CString strEvent, strResp;
-				
-				CTokenizer token(strBuffer, "¨");
-
-				if(!token.Next(strEvent) || !token.Next(strResp)) continue;
-					
-				if(nMode == 0){
-				
-					
-					strEvent.MakeLower();
-					if(strResp.GetLength() < 8){
-
-						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
-					}
-					else if(strResp.GetAt(1) != ':'){
-
-						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
-					}
-
-					SOUND s;
-					s.strTrigger = strEvent;
-					s.strSound = strResp;
-					g_aSounds.Add(s);
-
-					p = m_lcSounds.InsertItem(m_lcSounds.GetItemCount(), strEvent, 0);
-					m_lcSounds.SetItemText(p, 1, strResp);
-				}
-				else{
-
-					TRACE("HELP\n");
-
-				}
-
-			}
-		}
-		ini.Close();
+		p = m_lcSounds.InsertItem(m_lcSounds.GetItemCount(), g_sSettings.m_aSounds[i].strTrigger, 0);
+		m_lcSounds.SetItemText(p, 1, g_sSettings.m_aSounds[i].strSound);
 	}
-	CATCH(CFileException, e){
-
-		AfxMessageBox("Error during file operation!", MB_OK+MB_ICONSTOP);
-
-	}END_CATCH;
 }
 
 void CSfxCfg::WriteSounds()

@@ -25,6 +25,7 @@
 #include "Settings.h"
 #include "Ini.h"
 #include ".\settings.h"
+#include "Tokenizer.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -144,6 +145,7 @@ void CSettings::Load()
 	m_bHistory  = ini.GetValue("History", "Enable", TRUE);
 	m_nMaxLines = ini.GetValue("History", "MaxLines", 300);
 
+	m_bScroller = ini.GetValue("Messages", "EnableScroller", TRUE);
 	m_strVideoMsg = ini.GetValue("Messages", "WinampVideo", "/me watches '%WA-ARTIST% - %WA-SONG%'");
 	m_strWinampMsg = ini.GetValue("Messages", "Winamp", "/me listens to '%WA-ARTIST% - %WA-SONG%'");
 	m_bOnEnter     = ini.GetValue("Messages", "OnEnterEnable", FALSE);
@@ -279,6 +281,9 @@ void CSettings::Load()
 	m_strSavePath	= ini.GetValue("Server", "File-Path", m_strWd + "\\Incoming");
 
 	LoadHiLite();
+	LoadRCMS();
+	LoadRooms();
+	LoadSounds();
 
 }
 
@@ -323,6 +328,7 @@ void CSettings::Save()
 	ini.SetValue("History", "MaxLines", m_nMaxLines);
 
 
+	ini.SetValue("Messages", "EnableScroller", m_bScroller);
 	ini.SetValue("Messages", "WinampVideo", m_strVideoMsg);
 	ini.SetValue("Messages", "Winamp", m_strWinampMsg);
 	ini.SetValue("Messages", "OnEnterEnable", m_bOnEnter);
@@ -615,3 +621,235 @@ void CSettings::LoadHiLite(void)
 		return;
 	}END_CATCH;
 }
+
+void CSettings::LoadQuickCmds()
+{
+
+	CString strIniFile = GetWorkingDir() + "\\quick.ini";
+	BOOL bReturn = TRUE;
+	CStdioFile ini;
+	CString strBuffer;
+	m_aQuick.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aQuick.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+}
+
+void CSettings::LoadRCMS()
+{
+
+	CString strIniFile = GetWorkingDir() + "\\RCMS.ini";
+	CStdioFile ini;
+	CString strBuffer;
+	m_aRCMSCommands.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aRCMSCommands.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+
+	///////////////////////////
+	// Load WinMX 3.52 commands
+	strIniFile = GetWorkingDir() + "\\WinMX.ini";
+	m_aWinMXCommands.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aWinMXCommands.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+
+	///////////////////////
+	// Load quick commands
+	strIniFile = GetWorkingDir() + "\\quick.ini";
+	m_aQuick.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aQuick.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+}
+
+void CSettings::LoadRooms(void)
+{
+
+	CString strIniFile = GetWorkingDir() + "\\rooms.ini";
+	BOOL bReturn = TRUE;
+	CStdioFile ini;
+	CString strBuffer;
+	m_aRooms.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aRooms.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
+
+	strIniFile = GetWorkingDir() + "\\hello.ini";
+	m_aGreetings.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				m_aGreetings.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
+}
+
+void CSettings::LoadSounds(void)
+{
+
+	CString strIniFile = GetWorkingDir() + "\\MXSound.ini";
+
+	CStdioFile ini;
+	CString strBuffer;
+	int nMode = -1;
+	
+	m_aSounds.RemoveAll();
+
+	CString strSection;
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText);
+
+		while(ini.ReadString(strBuffer)){
+
+			strBuffer.TrimLeft();
+			strBuffer.TrimRight();
+
+			if(strBuffer.Left(2) == "//") continue;
+			if(strBuffer.Find("[Sounds]", 0) == 0){
+				
+				nMode = 0;
+				continue;
+			}
+			if(strBuffer.Left(1) == "#"){
+				
+				strBuffer = strBuffer.Mid(1);
+				if(strBuffer.IsEmpty() || (nMode != 0)){
+
+					continue;
+				}
+
+				CString strEvent, strResp;
+				
+				CTokenizer token(strBuffer, "¨");
+
+				if(!token.Next(strEvent) || !token.Next(strResp)) continue;
+					
+				if(nMode == 0){
+				
+					
+					strEvent.MakeLower();
+					if(strResp.GetLength() < 8){
+
+						strResp = GetWorkingDir() + "\\" + strResp;
+					}
+					else if(strResp.GetAt(1) != ':'){
+
+						strResp = GetWorkingDir() + "\\" + strResp;
+					}
+
+					SOUND s;
+					s.strTrigger = strEvent;
+					s.strSound = strResp;
+					m_aSounds.Add(s);
+
+				}
+				else{
+
+					TRACE("HELP\n");
+
+				}
+
+			}
+		}
+		ini.Close();
+	}
+	CATCH(CFileException, e){
+
+		AfxMessageBox("Error during file operation!", MB_OK+MB_ICONSTOP);
+
+	}END_CATCH;
+}
+

@@ -55,7 +55,6 @@ public:
 // Implementation
 public:
 	afx_msg void OnChannelChannellist();
-	void LoadRCMS();
 	void JoinChannel();
 	
 	CString m_strRoom;
@@ -76,6 +75,9 @@ public:
 
 	CDocSelector	m_wndDocSelector;
 	CMenu   m_cmSystray;
+	BOOL	m_bAway;
+	CString m_strAway;
+	UINT    m_uAwayStart;
 protected:  // control bar embedded members
 
 	CColorStatusBar  m_wndStatusBar;
@@ -91,7 +93,6 @@ protected:  // control bar embedded members
 
 	void FullScreenModeOn();
 	void FullScreenModeOff();
-
 
 // Generated message map functions
 protected:
@@ -123,8 +124,6 @@ public:
 	void LoadPlugins(void);
 	void UnloadPlugins(void);
 	afx_msg void OnStartNodeserver();
-	void LoadRooms(void);
-	void LoadSounds(void);
 	afx_msg void OnSystrayRestore();
 	BOOL DeletePlugin(CString strName);
 	void ReloadPlugins(void);

@@ -89,6 +89,7 @@ public:
 	BOOL m_bUpdate;
 	afx_msg void OnBnClickedAddchannel2();
 	afx_msg void OnBnClickedRemovechannel2();
+	BOOL m_bScroller;
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -27,6 +27,13 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+typedef struct TAG_MXSOUND{
+
+	CString strTrigger;
+	CString strSound;
+} SOUND, *PSOUND;
+
+
 class CSettings  
 {
 public:
@@ -39,6 +46,7 @@ public:
 
 	// Set Functions
 
+	void    SetEnableScroller(BOOL bValue){ m_bScroller = bValue; }
 	void	SetMessageItalic(BOOL bValue){ m_bMsItalic = bValue; }
 	void	SetMessageLine(BOOL bValue){ m_bMsLine = bValue; }
 	void	SetMessageBold(BOOL bValue){ m_bMsBold = bValue; }
@@ -152,6 +160,7 @@ public:
 	DWORD	GetFiles(){ return m_dwFiles; }
 	WORD	GetLine(){ return m_wLine; }
 
+
 	BOOL	GetMessageItalic(){ return m_bMsItalic; }
 	BOOL	GetMessageLine(){ return m_bMsLine; }
 	BOOL	GetMessageBold(){ return m_bMsBold; }
@@ -208,6 +217,7 @@ public:
 	CString		GetFont(){ return m_strFont; }
 	int         GetFontSize(){ return m_nFontSize; }
 	
+	BOOL        GetEnableScroller(){ return m_bScroller; }
 	CString		GetWinampMsg(){ return m_strWinampMsg; }
 	CString		GetVideoMsg(){ return m_strVideoMsg; }
 	CString		GetEnterMsg(){ return m_strEnterMsg; }
@@ -238,8 +248,22 @@ public:
 	BOOL	   GetPMAcceptAll(){ return m_bAcceptAll; }
 	CString	   GetSavePath(){ return m_strSavePath; }
 
+// Loading stuff
+	void LoadRooms(void);
+	void LoadSounds(void);
+	void LoadRCMS(void);
+	void LoadQuickCmds(void);
+
 public: // public attributes
 	CStringArray m_aHilite;
+	CStringArray m_aIgnored;
+	CStringArray m_aRooms;
+	CStringArray m_aGreetings;
+	CStringArray m_aQuick;
+	CStringArray m_aRCMSCommands;
+	CStringArray m_aWinMXCommands;
+	CArray<SOUND, SOUND> m_aSounds;
+
 
 protected:
 	CString m_strWd;
@@ -277,6 +301,7 @@ protected:
 	BOOL	m_bUpdate;
 	BOOL	m_bAutoList;
 	BOOL	m_bMaxi;
+	BOOL    m_bScroller;
 
 	CHARFORMAT2	m_cfDefault;
 	COLORREF	m_crFocus;

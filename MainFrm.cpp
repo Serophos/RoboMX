@@ -40,10 +40,6 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-extern CSettings g_sSettings;
-extern CArray<SOUND, SOUND> g_aSounds;
-extern CStringArray g_aGreetings;
-
 CPtrArray g_aPlugins;
 
 #define WM_ECHOTEXT WM_APP+1
@@ -53,15 +49,12 @@ CPtrArray g_aPlugins;
 
 extern UINT UWM_INPUT;
 extern CSystemInfo  g_sSystem;
+extern CSettings    g_sSettings;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
 
-CStringArray g_aRCMSCommands;
-CStringArray g_aWinMXCommands;
-extern CStringArray g_aQuick;
-extern CStringArray g_aRooms;
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
@@ -109,6 +102,7 @@ CMainFrame::CMainFrame()
 	m_bChannelList    = FALSE;
 	m_bFullScreenMode = FALSE;
 	m_bSettings       = FALSE;
+	m_bAway			  = FALSE;
 }
 
 CMainFrame::~CMainFrame()
@@ -207,9 +201,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		PlaySound(g_sSettings.GetSfxStart(), 0, SND_FILENAME|SND_ASYNC);
 	}
 
-	LoadRCMS();
 	LoadEmoticons();
-	LoadRooms();
 	LoadPlugins();
 
 #ifndef _DEBUG
@@ -448,88 +440,6 @@ void CMainFrame::JoinChannel()
 	OnFileNew();
 }
 
-void CMainFrame::LoadRCMS()
-{
-
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\RCMS.ini";
-	CStdioFile ini;
-	CString strBuffer;
-	g_aRCMSCommands.RemoveAll();
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aRCMSCommands.Add(strBuffer);
-			}
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-	}END_CATCH;
-
-	if(g_aRCMSCommands.GetSize() == 0){
-
-		g_aRCMSCommands.Add("Error Reading RCMS.ini. Please check your installation");
-	}
-
-	///////////////////////////
-	// Load WinMX 3.52 commands
-	strIniFile = g_sSettings.GetWorkingDir() + "\\WinMX.ini";
-	g_aWinMXCommands.RemoveAll();
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aWinMXCommands.Add(strBuffer);
-			}
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-	}END_CATCH;
-
-	if(g_aWinMXCommands.GetSize() == 0){
-
-		g_aWinMXCommands.Add("Error Reading WinMX.ini. Please check your installation");
-	}
-
-	///////////////////////
-	// Load quick commands
-	strIniFile = g_sSettings.GetWorkingDir() + "\\quick.ini";
-	g_aQuick.RemoveAll();
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aQuick.Add(strBuffer);
-			}
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-	}END_CATCH;
-}
 
 void CMainFrame::FullScreenModeOn()
 {
@@ -883,142 +793,12 @@ LRESULT CMainFrame::OnPluginSysEcho(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-void CMainFrame::LoadRooms(void)
-{
-
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\rooms.ini";
-	BOOL bReturn = TRUE;
-	CStdioFile ini;
-	CString strBuffer;
-	g_aRooms.RemoveAll();
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aRooms.Add(strBuffer);
-			}
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
-	}END_CATCH;
-
-	strIniFile = g_sSettings.GetWorkingDir() + "\\hello.ini";
-	g_aGreetings.RemoveAll();
-
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
-
-		while(ini.ReadString(strBuffer)){
-
-			if(!strBuffer.IsEmpty()){
-
-				g_aGreetings.Add(strBuffer);
-			}
-		}
-		ini.Close();
-		
-	}
-	CATCH(CFileException, e){
-
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
-	}END_CATCH;
-}
-
 void CMainFrame::ActivateFrame(int nCmdShow)
 {
 
 	TRACE("Activate Frame %d\n", nCmdShow);
 
 	CMDIFrameWnd::ActivateFrame(nCmdShow);
-}
-
-void CMainFrame::LoadSounds(void)
-{
-
-	CString strIniFile = g_sSettings.GetWorkingDir() + "\\MXSound.ini";
-
-	CStdioFile ini;
-	CString strBuffer;
-	int nMode = -1;
-	
-	g_aSounds.RemoveAll();
-
-	CString strSection;
-	TRY{
-
-		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText);
-
-		while(ini.ReadString(strBuffer)){
-
-			strBuffer.TrimLeft();
-			strBuffer.TrimRight();
-
-			if(strBuffer.Left(2) == "//") continue;
-			if(strBuffer.Find("[Sounds]", 0) == 0){
-				
-				nMode = 0;
-				continue;
-			}
-			if(strBuffer.Left(1) == "#"){
-				
-				strBuffer = strBuffer.Mid(1);
-				if(strBuffer.IsEmpty() || (nMode != 0)){
-
-					continue;
-				}
-
-				CString strEvent, strResp;
-				
-				CTokenizer token(strBuffer, "¨");
-
-				if(!token.Next(strEvent) || !token.Next(strResp)) continue;
-					
-				if(nMode == 0){
-				
-					
-					strEvent.MakeLower();
-					if(strResp.GetLength() < 8){
-
-						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
-					}
-					else if(strResp.GetAt(1) != ':'){
-
-						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
-					}
-
-					SOUND s;
-					s.strTrigger = strEvent;
-					s.strSound = strResp;
-					g_aSounds.Add(s);
-
-				}
-				else{
-
-					TRACE("HELP\n");
-
-				}
-
-			}
-		}
-		ini.Close();
-	}
-	CATCH(CFileException, e){
-
-		AfxMessageBox("Error during file operation!", MB_OK+MB_ICONSTOP);
-
-	}END_CATCH;
 }
 
 void CMainFrame::OnSystrayRestore()

@@ -2,8 +2,12 @@
 #include ".\util.h"
 #include ".\ini.h"
 #include ".\settings.h"
+#include "SystemInfo.h"
+#include "Tokenizer.h"
+#include "winamp.h"
 
 extern CSettings g_sSettings;
+CSystemInfo  g_sSystem;
 
 const char* line_types[] = {"Unknown", "14.4K", "28.8K", "33.3K", "56K", 
                             "64K ISDN", "128K ISDN", "Cable", "DSL", "T1", "T3"};
@@ -233,4 +237,178 @@ void Util::MakeValidUserName(CString& strName)
 			return;
 		}
 	}
+}
+
+CString Util::GetStayTime(DWORD dwJoinTime)
+{
+
+	DWORD dwMinutes = GetTickCount() - dwJoinTime;
+	
+	CString strTime;
+	strTime.Format("%d", dwMinutes / 1000 / 60);
+	
+	return strTime;
+}
+
+CString Util::GetMyLocalTime()
+{
+
+	CString strTime;
+	SYSTEMTIME time;
+	
+	GetLocalTime(&time);
+	char szTime[9];
+	ZeroMemory(&szTime, 9);
+	GetTimeFormat(
+					LOCALE_SYSTEM_DEFAULT, 
+					(g_sSettings.GetTimeFmt() ? TIME_NOSECONDS : TIME_FORCE24HOURFORMAT),
+					&time,
+					(g_sSettings.GetTimeFmt() ? "hh':'mm tt" : "HH':'mm':'ss"),
+					(char*)&szTime, 8
+				 );
+
+	strTime = szTime;
+
+
+	//strTime.Format("%02d:%02d:%02d", time.wHour, time.wMinute, time.wSecond);
+
+	return strTime;
+}
+
+void Util::ReplaceVars(CString &strMsg)
+{
+
+	if(strMsg.Find("%", 0) < 0 ) return;
+
+	CString strArtist, strSong, strVersion, strPlayTime, strTotalTime, strRemTime, strSampleRate, strBitrate, strNumChannels, strStatus = "not running";
+	
+	strMsg.Replace(_T("%TIME%"), Util::GetMyLocalTime());
+	
+	CString strTmp = Util::GetWinampSong();
+
+
+	if(strMsg.Find("%WA-", 0) >= 0){
+
+
+		CTokenizer token(strTmp, "-");
+		token.Next(strArtist);
+		strSong = token.Tail();
+		strArtist.TrimRight();
+		strSong.TrimLeft();
+		
+		HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+
+		if(hwndWinamp != NULL){
+
+
+			strVersion.Format("%x", ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETVERSION));
+			strVersion.SetAt(1, '.');
+
+			int nTotal = 0, nRem = 0, nEla = 0;
+			nTotal = ::SendMessage(hwndWinamp, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
+			strTotalTime.Format("%02d:%02d", nTotal/60, nTotal%60);
+
+			nEla= ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;
+			strPlayTime.Format("%02d:%02d", nEla/60, nEla%60);
+			
+			nRem = nTotal - nEla;
+			strRemTime.Format("%02d:%02d", nRem/60, nRem%60);
+
+			strSampleRate.Format("%d", ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETINFO));
+			strBitrate.Format("%d", ::SendMessage(hwndWinamp, WM_WA_IPC, 1, IPC_GETINFO));
+			strNumChannels = (::SendMessage(hwndWinamp, WM_WA_IPC, 2, IPC_GETINFO) == 1 ? "Mono" : "Stereo");
+
+			switch(::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING)){
+
+			case 1: strStatus = "playing";
+				break;
+			case 3: strStatus = "paused";
+				break;
+			default: strStatus = "stopped";
+			}
+
+		}
+		strMsg.Replace(_T("%WA-ARTIST%"), strArtist);
+		strMsg.Replace(_T("%WA-SONG%"), strSong);
+		strMsg.Replace(_T("%WA-VERSION%"), strVersion);
+		strMsg.Replace(_T("%WA-ELATIME%"), strPlayTime);
+		strMsg.Replace(_T("%WA-REMTIME%"), strRemTime);
+		strMsg.Replace(_T("%WA-TOTALTIME%"), strTotalTime);
+		strMsg.Replace(_T("%WA-SAMPLERATE%"), strSampleRate);
+		strMsg.Replace(_T("%WA-BITRATE%"), strBitrate);
+		strMsg.Replace(_T("%WA-CHANNELS%"), strNumChannels);
+		strMsg.Replace(_T("%WA-STATUS%"), strStatus);
+	}	
+}
+
+CString Util::GetUpTime()
+{
+
+	CString strUp;
+	DWORD nMS = GetTickCount();
+	int nSec = nMS / 1000;
+	int nMin = nMS / 60000;
+	int nHour = nMS / 3600000;
+	strUp.Format("System Uptime %02d days %02d hours %02d minutes %02d seconds %03d milliseconds",
+		nHour/24, nHour%24, nMin - nHour*60, nSec - nMin*60, nMS-nSec*1000);
+
+	return strUp;
+}
+
+CString Util::GetWinampSong()
+{
+
+	CString strWinamp, strOut;
+	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+	if(hwndWinamp != NULL){
+
+		::SendMessage(hwndWinamp, WM_WA_IPC,0,IPC_UPDTITLE);
+		TCHAR *buff = new TCHAR[250];
+		::GetWindowText(hwndWinamp, buff, 250);
+		strWinamp = buff;
+		strWinamp = strWinamp.Mid(strWinamp.Find(" ", 0)+1, strWinamp.Find(" - Winamp") - strWinamp.Find(" ", 0)-1);
+		delete buff;
+		buff = NULL;
+	}
+	else{
+
+		strWinamp = "Winamp - Not active";
+	}
+
+	return strWinamp;
+}
+
+
+BOOL Util::IsVideoPlaying()
+{
+
+	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+	BOOL bReturn = FALSE;
+	switch(::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_IS_PLAYING_VIDEO)){
+
+	case 0:
+	case 1:
+		bReturn = FALSE;
+		break;
+	default:
+		bReturn = TRUE;
+	}
+
+	return bReturn;
+
+}
+
+
+CString Util::GetMySystemInfo()
+{
+
+	CString strInfo;
+	strInfo.Format(
+				"%s build=%d «» CPUs %d Speed %d MHz «» %s %s %s",
+				g_sSystem.GetOSType(), g_sSystem.GetBuildNumber(),
+				g_sSystem.GetNumProcessors(), g_sSystem.GetCPUSpeed(),
+				g_sSystem.GetCPUIdentifier(), g_sSystem.GetCPUVendorIdentifier(), g_sSystem.GetCPUNameString()
+			);
+	
+	return strInfo;
 }

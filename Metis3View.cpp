@@ -20,13 +20,11 @@
 #include "stdafx.h"
 #include "Metis3.h"
 
-#include "winamp.h"
 #include "MainFrm.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
 #include "RenameDlg.h"
 #include "Clipboard.h"
-#include "SystemInfo.h"
 #include "Settings.h"
 #include "Tokenizer.h"
 #include "SfxCfg.h"
@@ -74,8 +72,6 @@ extern CSettings g_sSettings;
 CStringArray g_aIgnored;
 extern CPtrArray g_aPlugins;
 #define PLUGIN ((CRoboEx*)g_aPlugins[i])
-
-CSystemInfo  g_sSystem;
 
 UINT UWM_RENAMECL = ::RegisterWindowMessage("UWM_RENAMECL-{494D99C1-03BE-49e3-8A47-D0D17C6D4ACE}");
 
@@ -451,7 +447,7 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 			m_lcUsers.DeleteAllItems();
 			m_mxClient.SetRoom(m_strTarget);
 			GetDocument()->m_strRoom = m_strTarget;
-			GetDocument()->SetTitle(GetDocument()->m_strRoom);
+			GetDocument()->SetTitle(GetDocument()->m_strRoom, FALSE);
 			m_mxClient.Connect();
 			if(g_sSettings.GetSoundFX()){
 
@@ -472,7 +468,7 @@ void CMetis3View::WriteSystemMsg(CString strMsg, COLORREF crText)
 	strMsg.Replace("\\rtf", "#rtf");
 
 	CString strTime;
-	strTime.Format("[%s]", GetMyLocalTime());
+	strTime.Format("[%s]", Util::GetMyLocalTime());
 	
 	m_rSys.SetText(strTime, g_sSettings.GetRGBTime(), crText);
 	m_rSys.SetText(" " + strMsg + "\n", crText, g_sSettings.GetRGBBg());
@@ -527,7 +523,7 @@ LRESULT CMetis3View::OnRoomRename(WPARAM wParam, LPARAM lParam)
 	CString strOldRoom = GetDocument()->m_strRoom;
 	CString strOut;
 
-	GetDocument()->SetTitle(strRoom);
+	GetDocument()->SetTitle(strRoom, TRUE);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.UpdateTitle(this, GetDocument()->m_strRoom);
 
 	strOut.Format("Roomname changed from %s to %s", strOldRoom, GetDocument()->m_strRoom);
@@ -547,7 +543,7 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 	if(g_sSettings.GetPrintTime()){
 
 		CString strTime;
-		strTime.Format("[%s]", GetMyLocalTime());
+		strTime.Format("[%s]", Util::GetMyLocalTime());
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBTopic());
 	}
 
@@ -574,7 +570,7 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 		if(g_sSettings.GetPrintTime()){
 
 			CString strTime;
-			strTime.Format("[%s]", GetMyLocalTime());
+			strTime.Format("[%s]", Util::GetMyLocalTime());
 			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBMotd());
 		}
 
@@ -625,6 +621,7 @@ LRESULT CMetis3View::OnAddUser(WPARAM wParam, LPARAM lParam)
 	user.strUser = strUser;
 	user.strNodeIP = Util::FormatIP(dwIP);
 	user.strRealIP = Util::FormatIP(dwRealIP);
+	user.dwJoinTime = GetTickCount();
 
 	m_aUsers.Add(user);
 	
@@ -682,8 +679,10 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	user.strUser = strUser;
 	user.strNodeIP = Util::FormatIP(dwIP);
 	user.strRealIP = Util::FormatIP(dwRealIP);
+	user.dwJoinTime = GetTickCount();
 
 	m_aUsers.Add(user);
+	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.wUserLever);
 
 	strUser.Replace("\\rtf", "#rtf");
 	
@@ -692,7 +691,7 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	if(g_sSettings.GetPrintTime()){
 
 		CString strTime;
-		strTime.Format("[%s]", GetMyLocalTime());
+		strTime.Format("[%s]", Util::GetMyLocalTime());
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBJoin());
 	}
 
@@ -701,10 +700,12 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	strJoin.Replace("%LINE%", Util::FormatLine(user.wLineType));
 	strJoin.Replace("%FILES%", Util::FormatInt(user.dwNumFiles));
 	strJoin.Replace("%IP%", user.strRealIP);
+	strJoin.Replace("%USERS%", Util::FormatInt(m_lcUsers.GetItemCount()));
+	strJoin.Replace("%ROOMNAME%", GetDocument()->m_strRoomShort);
+	Util::ReplaceVars(strJoin);
 
 	m_rChat.SetText(" " + strJoin + "\n", g_sSettings.GetRGBJoin(), g_sSettings.GetRGBBg());
 
-	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.wUserLever);
 
 	if(!m_bHasJoined){
 
@@ -844,7 +845,7 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 	CString strPart, strTime;
 	if(g_sSettings.GetPrintTime()){
 
-		strTime.Format("[%s]", GetMyLocalTime());
+		strTime.Format("[%s]", Util::GetMyLocalTime());
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBOp());
 	}
 	if(wType == 0x00D2){ // opmsgs
@@ -921,12 +922,19 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 	CString strPart, strTime;
 	if(g_sSettings.GetPrintTime()){
 
-		strTime.Format("[%s]", GetMyLocalTime());
+		strTime.Format("[%s]", Util::GetMyLocalTime());
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBPart());
 	}
 	
 	strPart = g_sSettings.GetPart();
 	strPart.Replace("%NAME%", strUser);
+	strPart.Replace("%ROOMNAME%", GetDocument()->m_strRoomShort);
+	strPart.Replace("%USERS%", Util::FormatInt(m_lcUsers.GetItemCount()));
+	strPart.Replace("%STAYTIME%", Util::GetStayTime(user.dwJoinTime));
+	strPart.Replace("%LINE%", Util::FormatLine(user.wLineType));
+	strPart.Replace("%FILES%", Util::FormatInt(user.dwNumFiles));
+	strPart.Replace("%IP%", user.strRealIP);
+	Util::ReplaceVars(strPart);
 
 	m_rChat.SetText(" " + strPart + "\n", g_sSettings.GetRGBPart(), g_sSettings.GetRGBBg());
 
@@ -978,7 +986,7 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 
 
 		CString strTime;
-		strTime.Format("[%s]", GetMyLocalTime());
+		strTime.Format("[%s]", Util::GetMyLocalTime());
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBNormalName());
 	}
 	m_rChat.SetText(" " + g_sSettings.GetBrMsgFront(), g_sSettings.GetRGBBrMessage(), g_sSettings.GetRGBBg());
@@ -1011,7 +1019,7 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 
 	CString strMsg, strName;
 	
-	BOOL bOperator = FALSE;
+	//BOOL bOperator = FALSE;
 
 	strName = pMsg;
 	int nNameLen = strName.GetLength()+1;
@@ -1031,13 +1039,13 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 			return 1;
 	}
 
-	if(strName.IsEmpty() && (m_nServerType == SERVER_WINMX353)){
+/*	if(strName.IsEmpty() && (m_nServerType == SERVER_WINMX353)){
 
 		CTokenizer token(strMsg, "");
 		token.Next(strName);
 		strMsg = token.Tail();
 		bOperator = TRUE;
-	}
+	}		*/
 
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
@@ -1047,13 +1055,13 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 		PLUGIN->OnMessage((DWORD)m_hWnd, &strName, &strMsg, TRUE);
 	}
 	
-	if(bOperator){
+	/*if(bOperator){
 
 		if(g_sSettings.GetPrintTime()){
 
 
 			CString strTime;
-			strTime.Format("[%s]", GetMyLocalTime());
+			strTime.Format("[%s]", Util::GetMyLocalTime());
 			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBOp());
 		}
 
@@ -1061,20 +1069,20 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
 	}
 	else{
+			*/
+	if(g_sSettings.GetPrintTime()){
 
-		if(g_sSettings.GetPrintTime()){
 
-
-			CString strTime;
-			strTime.Format("[%s]", GetMyLocalTime());
-			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBActionMsg());
-		}
-
-		m_rChat.SetText(" " + g_sSettings.GetBrActionFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
-		m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
-		m_rChat.SetText(g_sSettings.GetBrActionEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
-		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
+		CString strTime;
+		strTime.Format("[%s]", Util::GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBActionMsg());
 	}
+
+	m_rChat.SetText(" " + g_sSettings.GetBrActionFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
+	m_rChat.SetText(g_sSettings.GetBrActionEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
+	//}
 	HandleHiLite();
 
 	if(g_sSettings.GetSfxChatSfx()){
@@ -1197,7 +1205,7 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 	// operators on winmx send everything via the admin package
 	else if((m_nServerType == SERVER_WINMX353) && !m_strInput.IsEmpty()){
 
-		m_mxClient.SendAdminCmd(m_strInput);
+		m_mxClient.SendNew(m_strInput);
 		UpdateAverageLag();
 		m_strInput = "";
 		UpdateData(FALSE);
@@ -1227,6 +1235,11 @@ void CMetis3View::OnRename()
 
 	if(dlg.DoModal() == IDOK){
 
+		GetDocument()->m_dwFiles = dlg.m_dwFiles;
+		GetDocument()->m_strName = dlg.m_strName;
+		GetDocument()->m_wLine   = dlg.m_nLine;
+		GetDocument()->SetTitle(GetDocument()->m_strRoom, FALSE);
+
 		if(dlg.m_bAllRooms){
 
 			((CMainFrame*)GetApp()->m_pMainWnd)->m_wndDocSelector.BroadcastMessage(UWM_RENAMECL, 0, 0);
@@ -1239,11 +1252,6 @@ void CMetis3View::OnRename()
 				m_mxClient.SendRename(dlg.m_strName, dlg.m_dwFiles, dlg.m_nLine);
 			}
 		}
-
-		GetDocument()->m_dwFiles = dlg.m_dwFiles;
-		GetDocument()->m_strName = dlg.m_strName;
-		GetDocument()->m_wLine   = dlg.m_nLine;
-		GetDocument()->SetTitle(GetDocument()->m_strRoom);
 	}
 }
 
@@ -1350,13 +1358,21 @@ void CMetis3View::ReCalcLayout()
 void CMetis3View::OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult) 
 {
 
-	CMenu mContextMenu;
-	mContextMenu.LoadMenu(IDR_USER);
-
-	POINT point;
-	GetCursorPos(&point);
-
 	if(m_lcUsers.GetNextItem(-1, LVNI_FOCUSED) >= 0){
+
+		CMenu mContextMenu;
+		mContextMenu.LoadMenu(IDR_USER);
+
+		POINT point;
+		GetCursorPos(&point);
+
+		if(m_nServerType == SERVER_WINMX353){
+
+			mContextMenu.ModifyMenu(ID_USERLIST_REDIRECT, MF_STRING|MF_BYCOMMAND, ID_USERLIST_REDIRECT, "Kick-Ban for &5 minutes");
+			mContextMenu.ModifyMenu(ID_USERLIST_PRINTUSERSTAT, MF_STRING|MF_BYCOMMAND, ID_USERLIST_PRINTUSERSTAT, "Remove &Voice");
+			mContextMenu.ModifyMenu(ID_USERLIST_PRINTIP, MF_STRING|MF_BYCOMMAND, ID_USERLIST_PRINTIP, "&Give Voice");
+			mContextMenu.ModifyMenu(ID_USERLIST_READUSERMESSAGE, MF_STRING|MF_BYCOMMAND, ID_USERLIST_READUSERMESSAGE, "&Display Userlevel");
+		}
 
 		mContextMenu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 											point.x,
@@ -1412,7 +1428,7 @@ void CMetis3View::OnUserlistRedirect()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1432,7 +1448,7 @@ void CMetis3View::OnUserlistKick()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1452,7 +1468,7 @@ void CMetis3View::OnUserlistKickban()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1472,7 +1488,7 @@ void CMetis3View::OnUserlistBan()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1492,7 +1508,7 @@ void CMetis3View::OnUserlistUnban()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1512,7 +1528,7 @@ void CMetis3View::OnUserlistPrintuserstat()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1532,7 +1548,7 @@ void CMetis3View::OnUserlistPrintip()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1552,7 +1568,7 @@ void CMetis3View::OnUserlistAddadmin()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1572,7 +1588,7 @@ void CMetis3View::OnUserlistRemoveadmin()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1593,7 +1609,7 @@ void CMetis3View::OnUserlistReadusermessage()
 		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		if(m_nServerType == SERVER_WINMX353){
 
-			m_mxClient.SendAdminCmd(strCmd);
+			m_mxClient.SendNew(strCmd);
 		}
 		else{
 
@@ -1634,16 +1650,16 @@ void CMetis3View::OnUserlistCustomizethismenu()
 
 			if(m_nServerType != SERVER_RCMS){
 
-				ini.WriteString("#UserCmd Redirect %NAME%\n");
+				ini.WriteString("/kickban %NAME% 5\n");
 				ini.WriteString("/kick %NAME%\n");
 				ini.WriteString("/kickban %NAME%\n");
 				ini.WriteString("/ban %NAME%\n");
 				ini.WriteString("/unban %NAME%\n");
+				ini.WriteString("/setuserlevel %NAME% 5\n");
+				ini.WriteString("/setuserlevel %NAME% 65%\n");
+				ini.WriteString("/setuserlevel %NAME% 200\n");
+				ini.WriteString("/setuserlevel %NAME% 65\n");
 				ini.WriteString("/level %NAME%\n");
-				ini.WriteString("#AdminCmd PrintIP %NAME%\n");
-				ini.WriteString("/setuserlevel %NAME% 190\n");
-				ini.WriteString("/setuserlevel %NAME% 60\n");
-				ini.WriteString("#UserCmd Readmsg %NAME%\n");
 			}
 			else{
 
@@ -1713,7 +1729,7 @@ void CMetis3View::OnUserlistIgnore()
 			if(m_nServerType == SERVER_WINMX353){
 
 				strIgnored.Format("/me ignored user '%s'", strUser);
-				m_mxClient.SendAdminCmd(strIgnored);
+				m_mxClient.SendNew(strIgnored);
 			}
 			else{
 
@@ -1748,7 +1764,7 @@ void CMetis3View::OnUserlistUnignore()
 					if(m_nServerType == SERVER_WINMX353){
 
 						strIgnored.Format("/me un-ignored user '%s'", strUser);
-						m_mxClient.SendAdminCmd(strIgnored);
+						m_mxClient.SendNew(strIgnored);
 					}
 					else{
 
@@ -1818,16 +1834,16 @@ void CMetis3View::LoadRCMSMenu()
 
 		if(m_nServerType != SERVER_RCMS){
 
-			m_aRCMSMenu.Add("#UserCmd Redirect %NAME%");
+			m_aRCMSMenu.Add("/kickban %NAME% 5");
 			m_aRCMSMenu.Add("/kick %NAME%");
-			m_aRCMSMenu.Add("/kickban %NAME%");
-			m_aRCMSMenu.Add("/ban %NAME%");
+			m_aRCMSMenu.Add("/kickban %NAME% 255");
+			m_aRCMSMenu.Add("/ban %NAME% 255");
 			m_aRCMSMenu.Add("/unban %NAME%");
-			m_aRCMSMenu.Add("/level %NAME%");
-			m_aRCMSMenu.Add("#AdminCmd PrintIP %NAME%");
-			m_aRCMSMenu.Add("/setuserlevel %NAME% 190");
-			m_aRCMSMenu.Add("/setuserlevel %NAME% 60");
-			m_aRCMSMenu.Add("#UserCmd Readmsg %NAME%");
+			m_aRCMSMenu.Add("/setuserlevel %NAME% 5");	  // remove voice
+			m_aRCMSMenu.Add("/setuserlevel %NAME% 65");	  // give voice
+			m_aRCMSMenu.Add("/setuserlevel %NAME% 200");  // add admin
+			m_aRCMSMenu.Add("/setuserlevel %NAME% 65");	  // remove admin
+			m_aRCMSMenu.Add("/level %NAME%");             // display userlevel
 		}
 		else{
 
@@ -1923,178 +1939,13 @@ void CMetis3View::OnUpdateReconnect(CCmdUI* pCmdUI)
 	//pCmdUI->Enable(!m_mxClient.m_bListen);
 }
 
-CString CMetis3View::GetUpTime()
-{
-
-	CString strUp;
-	DWORD nMS = GetTickCount();
-	int nSec = nMS / 1000;
-	int nMin = nMS / 60000;
-	int nHour = nMS / 3600000;
-	strUp.Format("System Uptime %02d days %02d hours %02d minutes %02d seconds %03d milliseconds",
-		nHour/24, nHour%24, nMin - nHour*60, nSec - nMin*60, nMS-nSec*1000);
-
-	return strUp;
-}
-
-CString CMetis3View::GetWinampSong()
-{
-
-	CString strWinamp, strOut;
-	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
-	if(hwndWinamp != NULL){
-
-		::SendMessage(hwndWinamp, WM_WA_IPC,0,IPC_UPDTITLE);
-		TCHAR *buff = new TCHAR[250];
-		::GetWindowText(hwndWinamp, buff, 250);
-		strWinamp = buff;
-		strWinamp = strWinamp.Mid(strWinamp.Find(" ", 0)+1, strWinamp.Find(" - Winamp") - strWinamp.Find(" ", 0)-1);
-		delete buff;
-		buff = NULL;
-	}
-	else{
-
-		strWinamp = "Winamp - Not active";
-	}
-
-	return strWinamp;
-}
-
-
-BOOL CMetis3View::IsVideoPlaying()
-{
-
-	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
-	BOOL bReturn = FALSE;
-	switch(::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_IS_PLAYING_VIDEO)){
-
-	case 0:
-	case 1:
-		bReturn = FALSE;
-		break;
-	default:
-		bReturn = TRUE;
-	}
-
-	return bReturn;
-
-}
-
-
-CString CMetis3View::GetMySystemInfo()
-{
-
-	CString strInfo;
-	strInfo.Format(
-				"%s build=%d «» CPUs %d Speed %d MHz «» %s %s %s",
-				g_sSystem.GetOSType(), g_sSystem.GetBuildNumber(),
-				g_sSystem.GetNumProcessors(), g_sSystem.GetCPUSpeed(),
-				g_sSystem.GetCPUIdentifier(), g_sSystem.GetCPUVendorIdentifier(), g_sSystem.GetCPUNameString()
-			);
-	
-	return strInfo;
-}
-
-
-CString CMetis3View::GetMyLocalTime()
-{
-
-	CString strTime;
-	SYSTEMTIME time;
-	
-	GetLocalTime(&time);
-	char szTime[9];
-	ZeroMemory(&szTime, 9);
-	GetTimeFormat(
-					LOCALE_SYSTEM_DEFAULT, 
-					(g_sSettings.GetTimeFmt() ? TIME_NOSECONDS : TIME_FORCE24HOURFORMAT),
-					&time,
-					(g_sSettings.GetTimeFmt() ? "hh':'mm tt" : "HH':'mm':'ss"),
-					(char*)&szTime, 8
-				 );
-
-	strTime = szTime;
-
-
-	//strTime.Format("%02d:%02d:%02d", time.wHour, time.wMinute, time.wSecond);
-
-	return strTime;
-}
-
-void CMetis3View::ReplaceVars(CString &strMsg)
-{
-
-	if(strMsg.Find("%", 0) < 0 ) return;
-
-	CString strArtist, strSong, strVersion, strPlayTime, strTotalTime, strRemTime, strSampleRate, strBitrate, strNumChannels, strStatus = "not running";
-	
-	strMsg.Replace(_T("%TIME%"), CMetis3View::GetMyLocalTime());
-	
-	
-	CString strTmp = CMetis3View::GetWinampSong();
-
-
-	if(strMsg.Find("%WA-", 0) >= 0){
-
-
-		CTokenizer token(strTmp, "-");
-		token.Next(strArtist);
-		strSong = token.Tail();
-		strArtist.TrimRight();
-		strSong.TrimLeft();
-		
-		HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
-
-		if(hwndWinamp != NULL){
-
-
-			strVersion.Format("%x", ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETVERSION));
-			strVersion.SetAt(1, '.');
-
-			int nTotal = 0, nRem = 0, nEla = 0;
-			nTotal = ::SendMessage(hwndWinamp, WM_WA_IPC, 1, IPC_GETOUTPUTTIME);
-			strTotalTime.Format("%02d:%02d", nTotal/60, nTotal%60);
-
-			nEla= ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETOUTPUTTIME) / 1000;
-			strPlayTime.Format("%02d:%02d", nEla/60, nEla%60);
-			
-			nRem = nTotal - nEla;
-			strRemTime.Format("%02d:%02d", nRem/60, nRem%60);
-
-			strSampleRate.Format("%d", ::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_GETINFO));
-			strBitrate.Format("%d", ::SendMessage(hwndWinamp, WM_WA_IPC, 1, IPC_GETINFO));
-			strNumChannels = (::SendMessage(hwndWinamp, WM_WA_IPC, 2, IPC_GETINFO) == 1 ? "Mono" : "Stereo");
-
-			switch(::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_ISPLAYING)){
-
-			case 1: strStatus = "playing";
-				break;
-			case 3: strStatus = "paused";
-				break;
-			default: strStatus = "stopped";
-			}
-
-		}
-		strMsg.Replace(_T("%WA-ARTIST%"), strArtist);
-		strMsg.Replace(_T("%WA-SONG%"), strSong);
-		strMsg.Replace(_T("%WA-VERSION%"), strVersion);
-		strMsg.Replace(_T("%WA-ELATIME%"), strPlayTime);
-		strMsg.Replace(_T("%WA-REMTIME%"), strRemTime);
-		strMsg.Replace(_T("%WA-TOTALTIME%"), strTotalTime);
-		strMsg.Replace(_T("%WA-SAMPLERATE%"), strSampleRate);
-		strMsg.Replace(_T("%WA-BITRATE%"), strBitrate);
-		strMsg.Replace(_T("%WA-CHANNELS%"), strNumChannels);
-		strMsg.Replace(_T("%WA-STATUS%"), strStatus);
-	}	
-}
-
 void CMetis3View::OnDisplayWinampsong() 
 {
 
 	if(!m_mxClient.m_bListen) return;
 	
 	CString strMsg;
-	if(IsVideoPlaying()){
+	if(Util::IsVideoPlaying()){
 
 		strMsg = g_sSettings.GetVideoMsg();
 	}
@@ -2103,7 +1954,7 @@ void CMetis3View::OnDisplayWinampsong()
 		strMsg = g_sSettings.GetWinampMsg();
 	}
 
-	ReplaceVars(strMsg);
+	Util::ReplaceVars(strMsg);
 
 	Input(strMsg);
 }
@@ -2112,14 +1963,14 @@ void CMetis3View::OnDisplaySystemuptime()
 {
 	if(!m_mxClient.m_bListen) return;
 	
-	Input(GetUpTime());
+	Input(Util::GetUpTime());
 }
 
 void CMetis3View::OnDisplaySysteminfo() 
 {
 	if(!m_mxClient.m_bListen) return;
 	
-	Input(GetMySystemInfo());
+	Input(Util::GetMySystemInfo());
 }
 
 void CMetis3View::OnDisplayAveragelag() 
@@ -2196,7 +2047,8 @@ void CMetis3View::InputWelcome()
 	if(g_sSettings.GetDoEnterMsg() && g_sSettings.m_aGreetings.GetSize()){
 		
 		CString strMsg = g_sSettings.m_aGreetings[rand() % g_sSettings.m_aGreetings.GetSize()];
-		ReplaceVars(strMsg);
+		Util::ReplaceVars(strMsg);
+		strMsg.Replace("%USERS%", Util::FormatInt(m_lcUsers.GetItemCount()));
 		Input(strMsg);
 	}
 	else{
@@ -2206,7 +2058,8 @@ void CMetis3View::InputWelcome()
 			if(GetDocument()->m_strRoom.Find(g_sSettings.m_aRooms[i], 0) >= 0){
 
 				CString strMsg = g_sSettings.m_aGreetings[rand() % g_sSettings.m_aGreetings.GetSize()];
-				ReplaceVars(strMsg);
+				Util::ReplaceVars(strMsg);
+				strMsg.Replace("%USERS%", Util::FormatInt(m_lcUsers.GetItemCount()));
 				Input(strMsg);
 				break;
 			}

@@ -20,11 +20,11 @@
 #include "stdafx.h"
 #include "Metis3.h"
 #include "MyEdit.h"
-#include "Metis3Doc.h"
-#include "Metis3View.h"
+//#include "Metis3Doc.h"
+//#include "Metis3View.h"
 #include "Settings.h"
 #include ".\myedit.h"
-
+#include "util.h"
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -87,6 +87,22 @@ int CMyEdit::SearchItem(CString strString)
 	return nIndex + 1;
 }
 
+int CMyEdit::SearchRCMSItem(CString strString)
+{
+
+	CString strTmp;
+
+	for(int nIndex = 0; nIndex < m_pCommands->GetSize(); nIndex++){
+
+		strTmp = m_pCommands->GetAt(nIndex);
+		if(strTmp == strString) break;
+	}
+
+	if((nIndex >= m_pCommands->GetSize())  || m_pCommands->GetSize() == 0) return 0;
+
+	return nIndex + 1;
+}
+
 BOOL CMyEdit::PreTranslateMessage(MSG* pMsg) 
 {
 
@@ -115,25 +131,27 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_PRIOR) || 
 			(pMsg->message == WM_MOUSEWHEEL && ((short)HIWORD(pMsg->wParam)) > 0)){
 		
+			SetSel(0,-1);
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
 		
-				DWORD dwIndex = atol(szTempStr);
+				//DWORD dwIndex = atol(szTempStr);
+				DWORD dwIndex = SearchRCMSItem(szTempStr);
 				if(dwIndex == 0){
 
 					lstrcpy(szTempStr, m_pCommands->GetAt(m_aCommandsNUM - 1));
-					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					ReplaceSel(szTempStr, TRUE);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 					return TRUE;
 				}
 				else if((dwIndex == 1) || (dwIndex > m_aCommandsNUM)){
 
-					SetWindowText("");
+					ReplaceSel("", TRUE);
 				}
 				else{
 
 					lstrcpy(szTempStr, m_pCommands->GetAt(dwIndex - 2));
-					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					ReplaceSel(szTempStr, TRUE);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 				}
 				return TRUE;
@@ -141,7 +159,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			else{
 
 				lstrcpy(szTempStr, m_pCommands->GetAt(m_aCommandsNUM - 1));
-				SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+				ReplaceSel(szTempStr, TRUE);
 				SendMessage(WM_KEYDOWN, VK_END, 0);
 				return TRUE;
 			}
@@ -152,19 +170,21 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		else if(((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_NEXT) || 
 			(pMsg->message == WM_MOUSEWHEEL && ((short)HIWORD(pMsg->wParam)) <= 0)) && !m_bEx){
 		
+			SetSel(0,-1);
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
 
-				DWORD dwIndex = atol(szTempStr);
+				//DWORD dwIndex = atol(szTempStr);
+				DWORD dwIndex = SearchRCMSItem(szTempStr);
 				if(dwIndex >= m_aCommandsNUM){
 
-					SendMessage(WM_SETTEXT, 0, (LPARAM)"");
+					ReplaceSel("", TRUE);
 					//Beep(1000, 50);
 				}
 				else{
 
 					lstrcpy(szTempStr, m_pCommands->GetAt(dwIndex));
-					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					ReplaceSel(szTempStr, TRUE);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 				}
 				return TRUE;
@@ -172,7 +192,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			else{
 
 				lstrcpy(szTempStr, m_pCommands->GetAt(0));
-				SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+				ReplaceSel(szTempStr, TRUE);
 				SendMessage(WM_KEYDOWN, VK_END, 0);
 				return TRUE;
 			}
@@ -182,6 +202,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_UP) && (g_aQuickNUM != 0) && !m_bEx){
 		
+			SetSel(0,-1);
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
 		
@@ -189,9 +210,9 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 				if(dwIndex == 0){ // Item was not found
 
 					CString strOut = g_sSettings.m_aQuick[g_sSettings.m_aQuick.GetSize() - 1];
-					CMetis3View::ReplaceVars(strOut);
+					Util::ReplaceVars(strOut);
 					lstrcpy(szTempStr, strOut);
-					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					ReplaceSel(szTempStr, TRUE);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 					return TRUE;
 				}
@@ -203,9 +224,9 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 				else{ // item found 
 
 					CString strOut = g_sSettings.m_aQuick[dwIndex - 2];
-					CMetis3View::ReplaceVars(strOut);
+					Util::ReplaceVars(strOut);
 					lstrcpy(szTempStr, strOut);
-					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+					ReplaceSel(szTempStr, TRUE);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 				}
 				return TRUE;
@@ -213,9 +234,9 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			else{
 
 				CString strOut = g_sSettings.m_aQuick[g_sSettings.m_aQuick.GetSize() - 1];
-				CMetis3View::ReplaceVars(strOut);
+				Util::ReplaceVars(strOut);
 				lstrcpy(szTempStr, strOut);
-				SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
+				ReplaceSel(szTempStr, TRUE);
 				SendMessage(WM_KEYDOWN, VK_END, 0);
 				return TRUE;
 			}
@@ -225,6 +246,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DOWN) && (g_aQuickNUM != 0) && !m_bEx){
 		
+			SetSel(0,-1);
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
 				DWORD dwIndex = SearchItem(szTempStr);
@@ -236,7 +258,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 				else{
 
 					CString strOut = g_sSettings.m_aQuick[dwIndex];
-					CMetis3View::ReplaceVars(strOut);
+					Util::ReplaceVars(strOut);
 
 					lstrcpy(szTempStr, strOut);
 
@@ -248,7 +270,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			else{
 
 				CString strOut = g_sSettings.m_aQuick[0];
-				CMetis3View::ReplaceVars(strOut);
+				Util::ReplaceVars(strOut);
 
 				lstrcpy(szTempStr, strOut);
 				SetWindowText(szTempStr);

@@ -91,7 +91,7 @@ public:
 	
 	// RCMS warning
 	BOOL m_bWarned;
-	BOOL SendAdminCmd(LPCTSTR lpszKey);
+	BOOL SendNew(LPCTSTR lpszKey);
 };
 
 #endif // !defined(AFX_CHATCLIENT_H__E77F22CE_3865_4876_944C_DDDE8A6555F0__INCLUDED_)

@@ -148,7 +148,7 @@ void CChannelView::OnInitialUpdate()
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_LIST );
 
-	ListView_SetExtendedListViewStyle(m_lcList.m_hWnd, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
+	ListView_SetExtendedListViewStyle(m_lcList.m_hWnd, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_UNDERLINEHOT);
 
 	m_lcList.SetHeadings("Room,300;Users,50;Limit,50;Topic,300");
 	m_lcList.LoadColumnInfo();
@@ -418,6 +418,7 @@ void CChannelView::OnDblclkChannels(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if(pNMListView->iItem >= 0){
 
+		((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin = FALSE;
 		((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom = m_lcList.GetItemText(pNMListView->iItem, 0);
 		((CMainFrame*)GetApp()->m_pMainWnd)->JoinChannel();
 	}
@@ -429,18 +430,11 @@ void CChannelView::OnPopupLoopbackjoin()
 
 	int nSel = m_lcList.GetNextItem(-1, LVNI_SELECTED);
 	if(nSel >= 0){
-		
-		CString strRoom = m_lcList.GetItemText(nSel, 0);
-		nSel = strRoom.ReverseFind('_');
-		if(nSel > 0){
 
-			CString strTmp = strRoom.Mid(nSel + 9);
-			strRoom = strRoom.Left(nSel) + "_0100007F" + strTmp;
-		}
-		((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom = strRoom;
+	    ((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin = TRUE;
+		((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom = m_lcList.GetItemText(nSel, 0);
 		((CMainFrame*)GetApp()->m_pMainWnd)->JoinChannel();
 	}
-	
 }
 
 void CChannelView::OnPopupCopytopic() 

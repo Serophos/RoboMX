@@ -34,6 +34,7 @@ class CMyEdit : public CEdit
 public:
 	CMyEdit();
 	static int SearchItem(CString strString);
+	int SearchRCMSItem(CString strString);
 // Attributes
 public:
 

@@ -52,7 +52,7 @@
 #include <atlimage.h>
 
 
-#define STR_VERSION_DLG "RoboMX 0.1.2a [Scruffy]" //\n(Build: " __DATE__ ")"
+#define STR_VERSION_DLG "RoboMX 0.1.3a [Scruffy]" //\n(Build: " __DATE__ ")"
 
 //#include <olestd.h>
 //{{AFX_INSERT_LOCATION}}

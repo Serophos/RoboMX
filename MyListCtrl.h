@@ -79,7 +79,7 @@ protected:
 	BOOL CMyListCtrl::SetTextArray(int nItem, LPTSTR* arrpsz);
 	LPTSTR* CMyListCtrl::GetTextArray(int nItem) const;
 
-	CMyHeaderCtrl m_ctlHeader;
+	//CMyHeaderCtrl m_ctlHeader;
 
 	int  m_nNumColumns;
 	int  m_nSortColumn;

@@ -167,7 +167,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 	// Send new pre-login packet
 	// ED 13 01 00 31	nLen = 5;
-//#ifndef _MXCHATD_COMPATIBLE
+#ifndef _MXCHATD_COMPATIBLE
 	*(WORD*)buffer = 0xED;
 	*(WORD*)(buffer+1) = 0x13;
 	*(WORD*)(buffer+2) = 0x01;
@@ -186,7 +186,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 		pClient->m_eClose.SetEvent();
 		return FALSE;
 	}
-//#endif
+#endif
 	//Login-Request: (Client)
 	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
 	nLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
@@ -390,7 +390,7 @@ void CChatClient::SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction)
 }
 
 
-BOOL CChatClient::SendAdminCmd(LPCTSTR lpszKey)
+BOOL CChatClient::SendNew(LPCTSTR lpszKey)
 {
 
 	// admin cmd(client)

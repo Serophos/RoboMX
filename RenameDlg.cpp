@@ -80,14 +80,14 @@ void CRenameDlg::OnOK()
 		return;
 	}
 
-	Util::MakeValidUserName(m_strName);
-	UpdateData(FALSE);
-
 	if((m_strName.Find(" ") >= 0) || (m_strName.Find("\\rtf") >= 0)){
 
 		AfxMessageBox("Username contains illegal characters!", MB_ICONINFORMATION);
 		return;
 	}
+
+	Util::MakeValidUserName(m_strName);
+	UpdateData(FALSE);
 	
 	g_sSettings.SetNickname(m_strName);
 	g_sSettings.SetLine(m_nLine);

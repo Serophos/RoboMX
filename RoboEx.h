@@ -19,6 +19,7 @@ typedef struct TAG_MXCHATUSERINFO{
 	WORD    wNodePort;
 	WORD    wLineType;
 	DWORD	dwNumFiles;
+	DWORD   dwJoinTime;
 } MX_USERINFO, *PMX_USERINFO;
 
 typedef  CArray<MX_USERINFO, MX_USERINFO> CUserArray;

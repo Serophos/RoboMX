@@ -60,10 +60,7 @@ public:
 // Operations
 public:
 	LRESULT OnReloadCfg(WPARAM w, LPARAM l);
-	static CString GetMyLocalTime();
-	static void ReplaceVars(CString& strMsg);
 	void InputWelcome();
-	static CString GetMySystemInfo();
 	void Input(CString strText);
 	void UpdateAverageLag(BOOL bStart = TRUE);
 	void LoadRCMSMenu();
@@ -74,10 +71,6 @@ public:
 	void RemoveUser(const CString strUser, const CString strIP, WORD wPort);
 	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, WORD wUserLevel);
 	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0));
-
-	static CString GetWinampSong();
-	static BOOL    IsVideoPlaying();
-	static CString GetUpTime();
 
 	CChatClient m_mxClient;
 	CArray<MX_USERINFO, MX_USERINFO> m_aUsers;

@@ -59,14 +59,14 @@ void CMyHeaderCtrl::DrawItem( LPDRAWITEMSTRUCT lpDrawItemStruct )
 	CRect rc(lpDrawItemStruct->rcItem);
 
 	// set clipping region to limit drawing within the column.
-	CRgn rgn;
-	VERIFY(rgn.CreateRectRgnIndirect(&rc));
-    (void)dc.SelectObject(&rgn);
-	VERIFY(rgn.DeleteObject());
+	//CRgn rgn;
+	//VERIFY(rgn.CreateRectRgnIndirect(&rc));
+    //(void)dc.SelectObject(&rgn);
+	//VERIFY(rgn.DeleteObject());
 
 	// draw background,
-	CBrush brush(GetSysColor(COLOR_3DFACE));
-	dc.FillRect(rc, &brush);
+	//CBrush brush(GetSysColor(COLOR_3DFACE));
+	//dc.FillRect(rc, &brush);
 
 	// get the column text and format.
 	TCHAR szText[256];
@@ -115,11 +115,11 @@ void CMyHeaderCtrl::DrawItem( LPDRAWITEMSTRUCT lpDrawItemStruct )
 	rc.right -= iOffset;
 
 	// draw the column label.
-	if(rc.left < rc.right){
+	/*if(rc.left < rc.right){
 
 		(void)dc.DrawText(szText, -1, rc, uFormat);
 	}
-
+	*/
 	// draw the sort arrow.
 	if(lpDrawItemStruct->itemID == (UINT)m_nSortColumn){
 

@@ -214,14 +214,9 @@ BEGIN
         MENUITEM "&Ban",                        ID_USERLIST_BAN
         MENUITEM "Kick-Ba&n",                   ID_USERLIST_KICKBAN
         MENUITEM "&Unban",                      ID_USERLIST_UNBAN
-        MENUITEM "Redirect",                    ID_USERLIST_REDIRECT
         MENUITEM SEPARATOR
         MENUITEM "&Add Admin",                  ID_USERLIST_ADDADMIN
         MENUITEM "&Remove Admin",               ID_USERLIST_REMOVEADMIN
-        MENUITEM SEPARATOR
-        MENUITEM "Print User&stat",             ID_USERLIST_PRINTUSERSTAT
-        MENUITEM "Print &IP",                   ID_USERLIST_PRINTIP
-        MENUITEM "Read Usermessage",            ID_USERLIST_READUSERMESSAGE
         MENUITEM SEPARATOR
         MENUITEM "Customize this menu",         ID_USERLIST_CUSTOMIZETHISMENU
 
@@ -291,8 +286,8 @@ IDR_LISTRMENU MENU
 BEGIN
     POPUP "POPUP"
     BEGIN
+        MENUITEM "&Quick Join",                 ID_POPUP_LOOPBACKJOIN
         MENUITEM "&Join",                       ID_MYFILE_NEW
-        MENUITEM "&Loopback Join",              ID_POPUP_LOOPBACKJOIN
         MENUITEM SEPARATOR
         MENUITEM "Copy &Roomname",              ID_POPUP_COPYROOMNAME
         MENUITEM "Copy &Topic",                 ID_POPUP_COPYTOPIC

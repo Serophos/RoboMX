@@ -159,6 +159,8 @@ void CGeneralCfg::OnAllchannels()
 void CGeneralCfg::LoadRooms()
 {
 
+	g_sSettings.LoadRooms();
+
 	m_lbChannels.ResetContent();
 	m_lbGreetings.ResetContent();
 	for(int i = 0; i < g_sSettings.m_aRooms.GetSize(); i++){

@@ -66,6 +66,7 @@ CMyListCtrl::CMyListCtrl()
 	m_bHiLite  = FALSE;
 }
 
+
 CMyListCtrl::~CMyListCtrl()
 {
 }
@@ -124,6 +125,29 @@ void CMyListCtrl::OnCustomdrawMyList(NMHDR* pNMHDR, LRESULT* pResult)
 				}
 			}
 		}
+		if(pLVCD->iSubItem == m_nSortColumn){
+
+			DWORD dwColNormalColor = pLVCD->clrTextBk;
+
+			// emulate sort column coloring of Windows XP explorer
+			UINT nRed   = GetRValue(dwColNormalColor);
+			UINT nGreen = GetGValue(dwColNormalColor);
+			UINT nBlue  = GetBValue(dwColNormalColor);
+
+			if (nRed > 240 && nGreen > 240 && nBlue > 240)
+			{
+				nRed   -= 8;
+				nGreen -= 8;
+				nBlue  -= 8;
+			}
+			else
+			{
+				if (nRed   < 232) nRed   += nRed   / 10; else nRed   = 255;
+				if (nGreen < 232) nGreen += nGreen / 10; else nGreen = 255;
+				if (nBlue  < 232) nBlue  += nBlue  / 10; else nBlue  = 255;
+			}
+			pLVCD->clrTextBk = RGB(nRed, nGreen, nBlue);
+		}
         if(pLVCD->iSubItem == 1){ // files
 
             crText = m_cr2;
@@ -152,6 +176,7 @@ void CMyListCtrl::OnCustomdrawMyList(NMHDR* pNMHDR, LRESULT* pResult)
         *pResult = CDRF_DODEFAULT;
 	}
 }
+
 
 int CMyListCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
@@ -189,7 +214,7 @@ void CMyListCtrl::PreSubclassWindow()
 	ASSERT(GetStyle() & LVS_REPORT);
 
 	CListCtrl::PreSubclassWindow();
-	VERIFY(m_ctlHeader.SubclassWindow(GetHeaderCtrl()->GetSafeHwnd()));
+	//VERIFY(m_ctlHeader.SubclassWindow(GetHeaderCtrl()->GetSafeHwnd()));
 }
 
 
@@ -434,7 +459,7 @@ void CMyListCtrl::Sort(int nColumn, BOOL bAscending)
 	m_bSortAscending = bAscending;
 
 	// show the appropriate arrow in the header control.
-	m_ctlHeader.SetSortArrow(m_nSortColumn, m_bSortAscending);
+	//m_ctlHeader.SetSortArrow(m_nSortColumn, m_bSortAscending);
 
 	VERIFY(SortItems(CompareFunction, reinterpret_cast<DWORD>(this)));
 }
@@ -455,7 +480,7 @@ void CMyListCtrl::LoadColumnInfo()
 
 	m_bInited = true;
 	// you must call this after setting the column headings.
-	ASSERT(m_nNumColumns > 0);
+	/*ASSERT(m_nNumColumns > 0);
 
 	CString strKey;
 	strKey.Format(_T("%d"), GetDlgCtrlID());
@@ -475,7 +500,7 @@ void CMyListCtrl::LoadColumnInfo()
 		}
 
 		delete[] buf;
-	}
+	}			*/
 }
 
 
@@ -483,7 +508,7 @@ void CMyListCtrl::SaveColumnInfo()
 {
 
 	if(!m_bInited) return;
-	ASSERT(m_nNumColumns > 0);
+/*	ASSERT(m_nNumColumns > 0);
 
 	CString strKey;
 	strKey.Format(_T("%d"), GetDlgCtrlID());
@@ -499,7 +524,7 @@ void CMyListCtrl::SaveColumnInfo()
 
 	VERIFY(AfxGetApp()->WriteProfileBinary(g_pszSection, strKey, buf, dwLen));
 
-	free(buf);
+	free(buf);   */
 }
 
 

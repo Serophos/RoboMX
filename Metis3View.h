@@ -111,6 +111,8 @@ protected:
 	DWORD		 m_dwLastTic;
 
 	CImageList	m_iImageList;
+	CString		 m_strTarget;
+
 // Generated message map functions
 protected:
 	BOOL m_bHasJoined;

@@ -432,8 +432,6 @@ BOOL CChatClient::SetRoom(CString strRoom)
 
 	CString strTmp = m_strRoom.Mid(nIndex, 8);
 	
-	//m_dwClientIP = axtoi((LPSTR)(LPCSTR)strTmp, 8);
-
 	int nA = 0, nB = 0, nC = 0, nD = 0;
 	
 	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
@@ -443,18 +441,18 @@ BOOL CChatClient::SetRoom(CString strRoom)
 
 	m_strRoomIP.Format("%d.%d.%d.%d", nD, nC, nB, nA);
 
-	// 7F 00 00 01
-	m_dwClientIP = g_sSettings.GetServerIP();
-	m_wClientUDPPort = (WORD)g_sSettings.GetServerPort();
-    strTmp.Format("%X", m_dwClientIP);
-	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
-	nB = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
-	nC = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
-	nD = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
-	strTmp.Format("%02X%02X%02X%02X", nD, nC, nB, nA);
-	m_dwClientIP = Util::axtoi((LPSTR)(LPCSTR)strTmp, 8);
-
 	m_wRoomTCPPort = Util::axtoi((LPSTR)(LPCSTR)strRoom.Mid(m_strRoom.GetLength()-4), 4);
+
+	m_dwClientIP = g_sSettings.GetServerIP();
+
+	nA = ((m_dwClientIP >> 24) & 0xff);
+	nB = ((m_dwClientIP >> 16) & 0xff);
+	nC = ((m_dwClientIP >> 8) & 0xff);
+	nD = (m_dwClientIP & 0xff);
+
+	m_dwClientIP = MAKEIPADDRESS(nA, nB, nC, nD);
+
+	m_wClientUDPPort = (WORD)g_sSettings.GetServerPort();
 	
 	if(m_wRoomTCPPort < 1024) return FALSE;
 	return TRUE;
@@ -464,22 +462,21 @@ BOOL CChatClient::SetRoom(CString strRoom)
 void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 {
 
-
 	switch(wType){
 
-	case 0x12C: // topic
+	case 0x012C: // topic
 		::SendMessage(m_pView->m_hWnd, UWM_TOPIC, wLen, (LPARAM)cmd);
 		break;
-	case 0x078: // motd
+	case 0x0078: // motd
 		::SendMessage(m_pView->m_hWnd, UWM_MOTD, wLen, (LPARAM)cmd);
 		break;
-	case 0x06F: // userlist
-	case 0x072: // new userlist
+	case 0x006F: // userlist
+	case 0x0072: // new userlist
 		::SendMessage(m_pView->m_hWnd, UWM_ADDUSER, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
-	case 0x06E: // user join
-	case 0x071: // new join
-	case 0x075: // new user join with IP
+	case 0x006E: // user join
+	case 0x0071: // new join
+	case 0x0075: // new user join with IP
 		::SendMessage(m_pView->m_hWnd, UWM_JOIN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x0073: // user part
@@ -501,25 +498,24 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 	case 0x00C8: // rcms garbage
 		if(!m_bWarned){
 
-			WriteMessage("Info: Room is powered by RCMS.", g_sSettings.GetRGBPend());
+			WriteMessage("Info: Room is powered by RCMS.", g_sSettings.GetRGBOp());
 			::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_RCMS, 0);
 			m_bWarned = TRUE;
 		}
 		break;
 	case 0x0068: // ?
-		WriteMessage("Info: Room is powered by WinMX 3.52. Advanced channel commands available.", g_sSettings.GetRGBOK());
+		WriteMessage("Info: Room is powered by WinMX 3.52.", g_sSettings.GetRGBOp());
 		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX352, 0);
 		break;
 	case 0x012D: // room name changed
 		::SendMessage(m_pView->m_hWnd, UWM_ROOMRENAME, wLen, (LPARAM)cmd);
 		break;
 	case 0x0190: // redirect
-		::PostMessage(m_pView->m_hWnd, UWM_REDIRECT, wLen, (LPARAM)cmd);
+		::SendMessage(m_pView->m_hWnd, UWM_REDIRECT, wLen, (LPARAM)cmd);
 		break;
 	default: // unknown
 		::SendMessage(m_pView->m_hWnd, UWM_UNKNOWN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 	}
-
 }
 
 void CChatClient::WriteMessage(LPCTSTR lpszMsg, COLORREF rColor)

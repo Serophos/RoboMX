@@ -112,7 +112,7 @@ void CSettings::Load()
 	if(m_wLine > 8) m_wLine = 0;
 	if(m_dwFiles > 65535) m_dwFiles = 1;
 	
-	m_bUpdate		= ini.GetValue("Genereal", "CheckUpdate", TRUE);
+	m_bUpdate		= ini.GetValue("General", "CheckUpdate", TRUE);
 	m_bAutoList		= ini.GetValue("Look & Feel", "AutoList", TRUE);
 	m_bMaxi			= ini.GetValue("Look & Feel", "AlwaysMaximizeMDI", FALSE);	
 
@@ -257,6 +257,8 @@ void CSettings::Load()
 	m_crHiLite	 = ini.GetValue("Colors", "HiLite", RGB(150, 200, 255));
 	m_crDocHiLite = ini.GetValue("Colors", "DocHiLite", RGB(0, 0, 255));
 	m_crBg = ini.GetValue("Colors", "Background", RGB(255, 255, 255));
+	m_crOp = ini.GetValue("Colors", "OpMsgs", RGB(55, 170, 100));
+
 	m_cfDefault.crBackColor = m_crBg;
 
 	m_strSfxJoin		= ini.GetValue("SoundFX", "Join", m_strWd + "\\sfx\\Connect.wav");
@@ -293,7 +295,7 @@ void CSettings::Save()
 	ini.SetValue("UserInfo", "Files", m_dwFiles);
 	ini.SetValue("UserInfo", "Line", m_wLine);
 
-	ini.SetValue("Genereal", "CheckUpdate", m_bUpdate);
+	ini.SetValue("General", "CheckUpdate", m_bUpdate);
 	ini.SetValue("Look & Feel", "AutoList", m_bAutoList);
 	ini.SetValue("Look & Feel", "AlwaysMaximizeMDI", m_bMaxi);	
 
@@ -374,6 +376,7 @@ void CSettings::Save()
 	ini.SetValue("Colors", "HiLite", m_crHiLite);
 	ini.SetValue("Colors", "DocHiLite", m_crDocHiLite);
 	ini.SetValue("Colors", "Background", m_crBg);
+	ini.SetValue("Colors", "OpMsgs", m_crOp);
 
 	switch(m_nCharset){
 

@@ -84,6 +84,7 @@ public:
 	void    SetRGBTime(COLORREF crValue){ m_crTime = crValue; }
 	void    SetRGBHiLite(COLORREF crValue){ m_crHiLite = crValue; }
 	void	SetRGBDocHiLite(COLORREF crValue){ m_crDocHiLite = crValue; }
+	void	SetRGBOp(COLORREF crValue){m_crOp = crValue; }
 
 	void    SetUseImage(BOOL bValue){ m_bImage = bValue; }
 	void	SetImage(CString strValue){ m_strImage = strValue; }
@@ -198,6 +199,7 @@ public:
 	COLORREF	GetRGBFocus(){ return m_crFocus; }
 	COLORREF	GetRGBHiLite(){ return m_crHiLite; }
 	COLORREF	GetRGBDocHiLite() { return m_crDocHiLite; }
+	COLORREF	GetRGBOp(){return m_crOp; }
 
 	CString		GetBrActionFront(){ return m_FA; }
 	CString		GetBrMsgFront(){ return m_FM; }
@@ -298,7 +300,7 @@ protected:
 	COLORREF    m_crTime;
 	COLORREF    m_crHiLite;
 	COLORREF	m_crDocHiLite;
-
+	COLORREF    m_crOp;
 	CString		m_FA;
 	CString		m_FM;
 	CString		m_EA;

@@ -58,6 +58,7 @@ public:
 	CColorStatic	m_stActEnc;
 	CColorStatic	m_stAction;
 	CColorStatic	m_stDocHi;
+	CColorStatic	m_stOpMsg;
 	CComboBox		m_cbFont;
 	CComboBox		m_cbEncoding;
 	CString	m_strActionEnd;
@@ -119,6 +120,7 @@ public:
 	CColorStatic m_stHiLite;
 	afx_msg void OnBnClickedEdithilite();
 	afx_msg void OnBnClickedDochi();
+	afx_msg void OnBnClickedOpmsg();
 };
 
 //{{AFX_INSERT_LOCATION}}

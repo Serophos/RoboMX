@@ -47,7 +47,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define TIMER_CONNECT 10334
 #define TIMER_PING    10035
-//#define TIMER_UPDATE  10036
+#define TIMER_REDIRECT 10036
 
 extern UINT UWM_INPUT; // = ::RegisterWindowMessage("UWM_INPUT-7A14F66B-ABAB-4525-AC01-841C82EC48B6");
 extern UINT UWM_MESSAGE;
@@ -429,6 +429,45 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 
 		m_mxClient.Ping();
 	}
+	else if(nIDEvent == TIMER_REDIRECT){
+
+		CString strOut;
+
+		strOut.Format("Redirecting to %s", m_strTarget);
+		WriteSystemMsg(strOut, g_sSettings.GetRGBPend());
+
+		// 0100007F1A2B
+		if((m_strTarget.GetLength() - m_strTarget.ReverseFind('_') -1) != 12){
+
+			strOut.Format("%s does not appear to be a valid room name. Redirect aborted.", m_strTarget);
+			WriteSystemMsg(strOut, g_sSettings.GetRGBErr());
+			if(m_mxClient.m_bListen){
+
+				m_mxClient.Disconnect();
+			}
+		}
+		else{
+
+			if(m_mxClient.m_bListen){
+
+				m_mxClient.Disconnect();
+			}
+			m_bHasJoined = FALSE;
+			m_lcUsers.DeleteAllItems();
+			m_mxClient.SetRoom(m_strTarget);
+			GetDocument()->m_strRoom = m_strTarget;
+			GetDocument()->SetTitle(GetDocument()->m_strRoom);
+			m_mxClient.Connect();
+			if(g_sSettings.GetSoundFX()){
+
+				PlaySound(g_sSettings.GetSfxRedirect(), NULL, SND_FILENAME|SND_ASYNC);
+			}
+		} // end redirect
+
+		m_strTarget.Empty();
+		KillTimer(TIMER_REDIRECT);
+
+	}
 	CFormView::OnTimer(nIDEvent);
 }
 
@@ -669,7 +708,7 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 	if(!m_bHasJoined){
 
-		if(strUser == GetDocument()->m_strName){
+		if(strUser.Compare(GetDocument()->m_strName) == 0){
 
 			for(int i = 0; i < g_aPlugins.GetSize(); i++){
 
@@ -806,10 +845,10 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 	if(g_sSettings.GetPrintTime()){
 
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBPend());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBOp());
 	}
 	
-	m_rChat.SetText(" " + strMsg + "\n", g_sSettings.GetRGBPend(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(" " + strMsg + "\n", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
 	
 	return 1;
 }
@@ -945,6 +984,8 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 	WORD wLen  = (WORD)wParam;
 
 	CString strMsg, strName;
+	
+	BOOL bOperator = FALSE;
 
 	strName = pMsg;
 	int nNameLen = strName.GetLength()+1;
@@ -964,6 +1005,13 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 			return 1;
 	}
 
+	if(strName.IsEmpty() && (m_nServerType == SERVER_WINMX352)){
+
+		CTokenizer token(strMsg, "");
+		token.Next(strName);
+		strMsg = token.Tail();
+		bOperator = TRUE;
+	}
 
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
@@ -973,17 +1021,34 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 		PLUGIN->OnMessage((DWORD)m_hWnd, &strName, &strMsg, TRUE);
 	}
 	
-	if(g_sSettings.GetPrintTime()){
+	if(bOperator){
+
+		if(g_sSettings.GetPrintTime()){
 
 
-		CString strTime;
-		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBActionMsg());
+			CString strTime;
+			strTime.Format("[%s]", GetMyLocalTime());
+			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBOp());
+		}
+
+		m_rChat.SetText(strName, g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
+		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
 	}
-	m_rChat.SetText(" " + g_sSettings.GetBrActionFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
-	m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
-	m_rChat.SetText(g_sSettings.GetBrActionEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
-	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
+	else{
+
+		if(g_sSettings.GetPrintTime()){
+
+
+			CString strTime;
+			strTime.Format("[%s]", GetMyLocalTime());
+			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBActionMsg());
+		}
+
+		m_rChat.SetText(" " + g_sSettings.GetBrActionFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+		m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
+		m_rChat.SetText(g_sSettings.GetBrActionEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
+	}
 	HandleHiLite();
 
 	if(g_sSettings.GetSfxChatSfx()){
@@ -1146,40 +1211,9 @@ LRESULT CMetis3View::OnSystem(WPARAM wParam, LPARAM lParam)
 LRESULT CMetis3View::OnRedirect(WPARAM wParam, LPARAM lParam)
 {
 
-	CString strOut, strTarget;
-	
-	strTarget = (LPCTSTR)lParam;
-	strOut.Format("Redirecting to %s", strTarget);
-	WriteSystemMsg(strOut, g_sSettings.GetRGBPend());
+	m_strTarget = (LPCTSTR)lParam;
 
-	// 0100007F1A2B
-	if((strTarget.GetLength() - strTarget.ReverseFind('_') -1) != 12){
-
-		strOut.Format("%s does not appear to be a valid room name. Redirect aborted.", strTarget);
-		WriteSystemMsg(strOut, g_sSettings.GetRGBErr());
-		if(m_mxClient.m_bListen){
-
-			m_mxClient.Disconnect();
-		}
-	}
-	else{
-
-		if(m_mxClient.m_bListen){
-
-			m_mxClient.Disconnect();
-		}
-		m_bHasJoined = FALSE;
-		m_lcUsers.DeleteAllItems();
-		m_mxClient.SetRoom(strTarget);
-		GetDocument()->m_strRoom = strTarget;
-		GetDocument()->SetTitle(GetDocument()->m_strRoom);
-		m_mxClient.Connect();
-		if(g_sSettings.GetSoundFX()){
-
-			PlaySound(g_sSettings.GetSfxRedirect(), NULL, SND_FILENAME|SND_ASYNC);
-		}
-
-	}
+	SetTimer(TIMER_REDIRECT, 2000, NULL);
 
 	return 1;
 }
@@ -1315,7 +1349,8 @@ void CMetis3View::OnUserlistRedirect()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[0], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[0];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1327,7 +1362,8 @@ void CMetis3View::OnUserlistKick()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[1], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[1];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1339,7 +1375,8 @@ void CMetis3View::OnUserlistKickban()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[2], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[2];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1351,7 +1388,8 @@ void CMetis3View::OnUserlistBan()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[3], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[3];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1363,7 +1401,8 @@ void CMetis3View::OnUserlistUnban()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[4], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[4];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1375,7 +1414,8 @@ void CMetis3View::OnUserlistPrintuserstat()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[5], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[5];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1387,7 +1427,8 @@ void CMetis3View::OnUserlistPrintip()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[6], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[6];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1399,7 +1440,8 @@ void CMetis3View::OnUserlistAddadmin()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[7], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[7];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1411,7 +1453,8 @@ void CMetis3View::OnUserlistRemoveadmin()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[8], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[8];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1424,7 +1467,8 @@ void CMetis3View::OnUserlistReadusermessage()
 	CString strCmd;
 	if(n >= 0){
 
-		strCmd.Format("%s %s", m_aRCMSMenu[9], m_lcUsers.GetItemText(n, 0));
+		strCmd = m_aRCMSMenu[9];
+		strCmd.Replace("%NAME%", m_lcUsers.GetItemText(n, 0));
 		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
 	}
 }
@@ -1446,7 +1490,7 @@ void CMetis3View::OnUserlistCustomizethismenu()
 	strRoom.Remove('|');
 	strRoom.Replace(1, '-');
 
-	strIniFile.Format("%s.rcms", strRoom);
+	strIniFile.Format("%s.menu", strRoom);
 
 
 	CStdioFile ini;
@@ -1461,28 +1505,29 @@ void CMetis3View::OnUserlistCustomizethismenu()
 
 			if(m_nServerType != SERVER_RCMS){
 
-				m_aRCMSMenu.Add("#UserCmd Redirect");
-				m_aRCMSMenu.Add("/kick");
-				m_aRCMSMenu.Add("/kickban");
-				m_aRCMSMenu.Add("/ban");
-				m_aRCMSMenu.Add("/unban");
-				m_aRCMSMenu.Add("/level");
-				m_aRCMSMenu.Add("#AdminCmd PrintIP");
-				m_aRCMSMenu.Add("/setuserlevel 190");
-				m_aRCMSMenu.Add("/setuserlevel 60");
-				m_aRCMSMenu.Add("#UserCmd Readmsg");
+				ini.WriteString("#UserCmd Redirect %NAME%\n");
+				ini.WriteString("/kick %NAME%\n");
+				ini.WriteString("/kickban %NAME%\n");
+				ini.WriteString("/ban %NAME%\n");
+				ini.WriteString("/unban %NAME%\n");
+				ini.WriteString("/level %NAME%\n");
+				ini.WriteString("#AdminCmd PrintIP %NAME%\n");
+				ini.WriteString("/setuserlevel %NAME% 190\n");
+				ini.WriteString("/setuserlevel %NAME% 60\n");
+				ini.WriteString("#UserCmd Readmsg %NAME%\n");
 			}
 			else{
-				ini.WriteString("#UserCmd Redirect\n");
-				ini.WriteString("#UserCmd /kick\n");
-				ini.WriteString("#AdminCmd /kickban\n");
-				ini.WriteString("#AdminCmd /ban\n");
-				ini.WriteString("#UserCmd /unban\n");
-				ini.WriteString("#userCmd PrintUserStat\n");
-				ini.WriteString("#AdminCmd PrintIP\n");
-				ini.WriteString("#AdminCmd AddAdmin\n");
-				ini.WriteString("#AdminCmd RemoveAdmin\n");
-				ini.WriteString("#UserCmd Readmsg\n");
+
+				ini.WriteString("#UserCmd Redirect %NAME%\n");
+				ini.WriteString("#UserCmd /kick %NAME%\n");
+				ini.WriteString("#AdminCmd /kickban %NAME%\n");
+				ini.WriteString("#AdminCmd /ban %NAME%\n");
+				ini.WriteString("#UserCmd /unban %NAME%\n");
+				ini.WriteString("#userCmd PrintUserStat %NAME%\n");
+				ini.WriteString("#AdminCmd PrintIP %NAME%\n");
+				ini.WriteString("#AdminCmd AddAdmin %NAME%\n");
+				ini.WriteString("#AdminCmd RemoveAdmin %NAME%\n");
+				ini.WriteString("#UserCmd Readmsg %NAME%");
 			}
 		}
 
@@ -1525,7 +1570,7 @@ void CMetis3View::OnUserlistIgnore()
 		n = strUser.ReverseFind('_');
 		if(n > 0){
 
-			strUser = strUser.Left(n);
+			strUser = strUser.Left(n-3);
 		}
 		for(int i = 0; i < g_aIgnored.GetSize(); i++){
 
@@ -1553,7 +1598,7 @@ void CMetis3View::OnUserlistUnignore()
 		n = strUser.ReverseFind('_');
 		if(n > 0){
 
-			strUser = strUser.Left(n);
+			strUser = strUser.Left(n-3);
 		}
 		for(int i = 0; i < g_aIgnored.GetSize(); i++){
 
@@ -1595,7 +1640,7 @@ void CMetis3View::LoadRCMSMenu()
 	strRoom.Remove('|');
 	strRoom.Replace(1, '-');
 
-	strIniFile.Format("%s.rcms", strRoom);
+	strIniFile.Format("%s.menu", strRoom);
 
 
 	CStdioFile ini;
@@ -1628,30 +1673,30 @@ void CMetis3View::LoadRCMSMenu()
 
 		if(m_nServerType != SERVER_RCMS){
 
-			m_aRCMSMenu.Add("#UserCmd Redirect");
-			m_aRCMSMenu.Add("/kick");
-			m_aRCMSMenu.Add("/kickban");
-			m_aRCMSMenu.Add("/ban");
-			m_aRCMSMenu.Add("/unban");
-			m_aRCMSMenu.Add("/level");
-			m_aRCMSMenu.Add("#AdminCmd PrintIP");
-			m_aRCMSMenu.Add("/setuserlevel 190");
-			m_aRCMSMenu.Add("/setuserlevel 60");
-			m_aRCMSMenu.Add("#UserCmd Readmsg");
+			m_aRCMSMenu.Add("#UserCmd Redirect %NAME%");
+			m_aRCMSMenu.Add("/kick %NAME%");
+			m_aRCMSMenu.Add("/kickban %NAME%");
+			m_aRCMSMenu.Add("/ban %NAME%");
+			m_aRCMSMenu.Add("/unban %NAME%");
+			m_aRCMSMenu.Add("/level %NAME%");
+			m_aRCMSMenu.Add("#AdminCmd PrintIP %NAME%");
+			m_aRCMSMenu.Add("/setuserlevel %NAME% 190");
+			m_aRCMSMenu.Add("/setuserlevel %NAME% 60");
+			m_aRCMSMenu.Add("#UserCmd Readmsg %NAME%");
 		}
 		else{
 
 			// Fill in defaults
-			m_aRCMSMenu.Add("#UserCmd Redirect");
-			m_aRCMSMenu.Add("#UserCmd /kick");
-			m_aRCMSMenu.Add("#AdminCmd /kickban");
-			m_aRCMSMenu.Add("#AdminCmd /ban");
-			m_aRCMSMenu.Add("#UserCmd /unban");
-			m_aRCMSMenu.Add("#UserCmd PrintUserStat");
-			m_aRCMSMenu.Add("#AdminCmd PrintIP");
-			m_aRCMSMenu.Add("#AdminCmd AddAdmin");
-			m_aRCMSMenu.Add("#AdminCmd RemoveAdmin");
-			m_aRCMSMenu.Add("#UserCmd Readmsg");
+			m_aRCMSMenu.Add("#UserCmd Redirect %NAME%");
+			m_aRCMSMenu.Add("#UserCmd /kick %NAME%");
+			m_aRCMSMenu.Add("#AdminCmd /kickban %NAME%");
+			m_aRCMSMenu.Add("#AdminCmd /ban %NAME%");
+			m_aRCMSMenu.Add("#UserCmd /unban %NAME%");
+			m_aRCMSMenu.Add("#UserCmd PrintUserStat %NAME%");
+			m_aRCMSMenu.Add("#AdminCmd PrintIP %NAME%");
+			m_aRCMSMenu.Add("#AdminCmd AddAdmin %NAME%");
+			m_aRCMSMenu.Add("#AdminCmd RemoveAdmin %NAME%");
+			m_aRCMSMenu.Add("#UserCmd Readmsg %NAME%");
 		}
 	}
 }
@@ -1721,6 +1766,7 @@ void CMetis3View::OnReconnect()
 
 		m_mxClient.Disconnect();
 	}
+	m_bHasJoined = FALSE;
 	WriteSystemMsg("Reconnecting. Stand by...", g_sSettings.GetRGBPend());
 	m_lcUsers.DeleteAllItems();
 	m_mxClient.Connect();
@@ -2002,7 +2048,7 @@ void CMetis3View::InputWelcome()
 
 		PlaySound(g_sSettings.GetSfxJoin(), 0, SND_ASYNC|SND_FILENAME);
 	}
-	if(g_sSettings.GetDoEnterMsg()){
+	if(g_sSettings.GetDoEnterMsg() && g_aGreetings.GetSize()){
 		
 		CString strMsg = g_aGreetings[rand() % g_aGreetings.GetSize()];
 		ReplaceVars(strMsg);
@@ -2010,7 +2056,7 @@ void CMetis3View::InputWelcome()
 	}
 	else{
 
-		for(int i = 0; i < g_aRooms.GetSize(); i++){
+		for(int i = 0; i < g_aRooms.GetSize() && g_aGreetings.GetSize(); i++){
 
 			if(GetDocument()->m_strRoom.Find(g_aRooms[i], 0) >= 0){
 

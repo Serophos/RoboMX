@@ -59,6 +59,7 @@ CColorCfg::CColorCfg(CWnd* pParent /*=NULL*/)
 void CColorCfg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_STATIC_OPMSG, m_stOpMsg);
 	DDX_Control(pDX, IDC_STATIC_FOCUS, m_stFocus);
 	DDX_Control(pDX, IDC_STATIC_PENDING, m_stPend);
 	DDX_Control(pDX, IDC_STATIC_SUCCESS, m_stOK);
@@ -122,6 +123,7 @@ BEGIN_MESSAGE_MAP(CColorCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_HILITE, OnBnClickedHilite)
 	ON_BN_CLICKED(IDC_EDITHILITE, OnBnClickedEdithilite)
 	ON_BN_CLICKED(IDC_DOCHI, OnBnClickedDochi)
+	ON_BN_CLICKED(IDC_OPMSG, OnBnClickedOpmsg)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -168,6 +170,7 @@ BOOL CColorCfg::OnInitDialog()
 	m_stTime.SetBkColor(g_sSettings.GetRGBTime());
 	m_stHiLite.SetBkColor(g_sSettings.GetRGBHiLite());
 	m_stDocHi.SetBkColor(g_sSettings.GetRGBDocHiLite());
+	m_stOpMsg.SetBkColor(g_sSettings.GetRGBOp());
 
 	m_strMsgFront = g_sSettings.GetBrMsgFront();
 	m_strMsgEnd   = g_sSettings.GetBrMsgEnd();
@@ -211,6 +214,7 @@ void CColorCfg::Apply()
 	g_sSettings.SetRGBTime(m_stTime.GetBkColor());
 	g_sSettings.SetRGBHiLite(m_stHiLite.GetBkColor());
 	g_sSettings.SetRGBDocHiLite(m_stDocHi.GetBkColor());
+	g_sSettings.SetRGBOp(m_stOpMsg.GetBkColor());
 
 	g_sSettings.SetBrMsgFront(m_strMsgFront);
 	g_sSettings.SetBrMsgEnd(m_strMsgEnd);
@@ -429,6 +433,17 @@ void CColorCfg::OnError()
 }
 
 
+void CColorCfg::OnBnClickedOpmsg()
+{
+
+	CColorDialog cDlg(m_stOpMsg.GetBkColor());
+	
+	if(cDlg.DoModal() == IDOK){
+
+		m_stOpMsg.SetBkColor(cDlg.GetColor());
+	}
+}
+
 void CColorCfg::OnColorfocus() 
 {
 
@@ -506,4 +521,3 @@ void CColorCfg::OnBnClickedEdithilite()
 	g_sSettings.LoadHiLite();
 	AfxMessageBox("Hilight list was loaded", MB_ICONINFORMATION);
 }
-

@@ -182,6 +182,7 @@
 #define IDC_UPDATE                      1126
 #define IDC_MDIMAXI                     1127
 #define IDC_LISTCHANNEL                 1128
+#define IDC_OPMSG                       1129
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -254,6 +255,8 @@
 #define IDC_STATIC_TIME                 5100
 #define IDC_DOCHI                       5101
 #define IDC_STATIC_DOCHI                5102
+#define IDC_STATIC_TIME2                5103
+#define IDC_STATIC_OPMSG                5103
 #define IDC_COLOR_NAME                  5104
 #define IDC_STATIC_COLOR_NAME_PREV      5105
 #define IDC_QUICKREM                    5109
@@ -366,7 +369,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        181
 #define _APS_NEXT_COMMAND_VALUE         32857
-#define _APS_NEXT_CONTROL_VALUE         1129
+#define _APS_NEXT_CONTROL_VALUE         1130
 #define _APS_NEXT_SYMED_VALUE           32920
 #endif
 #endif

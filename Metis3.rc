@@ -1,0 +1,661 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE DISCARDABLE 
+BEGIN
+    "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
+    "#define _AFX_NO_OLE_RESOURCES\r\n"
+    "#define _AFX_NO_TRACKER_RESOURCES\r\n"
+    "#define _AFX_NO_PROPERTY_RESOURCES\r\n"
+    "\r\n"
+    "#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)\r\n"
+    "#ifdef _WIN32\r\n"
+    "LANGUAGE 9, 1\r\n"
+    "#pragma code_page(1252)\r\n"
+    "#endif //_WIN32\r\n"
+    "#include ""res\\Metis3.rc2""  // non-Microsoft Visual C++ edited resources\r\n"
+    "#include ""afxres.rc""         // Standard components\r\n"
+    "#endif\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Metis3.ico"
+IDR_CHANNEL             ICON    DISCARDABLE     "res\\metistyp.ico"
+IDR_LIST                ICON    DISCARDABLE     "res\\list.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BG                  BITMAP  DISCARDABLE     "res\\bg.bmp"
+IDR_MAINFRAME           BITMAP  MOVEABLE PURE   "res\\channel.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_MAINFRAME TOOLBAR DISCARDABLE  16, 16
+BEGIN
+    BUTTON      ID_MYFILE_NEW
+    BUTTON      ID_FILE_CLOSE
+    SEPARATOR
+    BUTTON      ID_CHANNEL_CHANNELLIST
+    SEPARATOR
+    BUTTON      ID_RENAME
+    SEPARATOR
+    BUTTON      ID_METIS_START
+    BUTTON      ID_METIS_STOP
+    SEPARATOR
+    BUTTON      ID_APP_EXIT
+    SEPARATOR
+    BUTTON      ID_APP_ABOUT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAINFRAME MENU PRELOAD DISCARDABLE 
+BEGIN
+    POPUP "&Channel"
+    BEGIN
+        MENUITEM "Connect &New Channel\tCtrl+N", ID_MYFILE_NEW
+        MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
+        MENUITEM SEPARATOR
+        MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Options",                    ID_VIEW_OPTIONS
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About Metis3...",            ID_APP_ABOUT
+    END
+END
+
+IDR_CHANNEL MENU PRELOAD DISCARDABLE 
+BEGIN
+    POPUP "&Channel"
+    BEGIN
+        MENUITEM "&Enter New Channel\tCtrl+N",  ID_MYFILE_NEW
+        MENUITEM "&Close this Channel",         ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "&Channellist\tCtrl+L",        ID_CHANNEL_CHANNELLIST
+        MENUITEM SEPARATOR
+        MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&Metis"
+    BEGIN
+        MENUITEM "&Start",                      ID_METIS_START
+        MENUITEM "&Stop",                       ID_METIS_STOP
+        MENUITEM SEPARATOR
+        POPUP "Edit"
+        BEGIN
+            MENUITEM "Filelist...",                 ID_METIS_EDIT_FILELIST
+        END
+        MENUITEM "Reload Configuration",        ID_METIS_RELOADCONFIGURATION
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Options",                    ID_VIEW_OPTIONS
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
+        MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
+        MENUITEM "&Arrange",                    ID_WINDOW_ARRANGE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About Metis3...",            ID_APP_ABOUT
+    END
+END
+
+IDR_LIST MENU PRELOAD DISCARDABLE 
+BEGIN
+    POPUP "&Channel"
+    BEGIN
+        MENUITEM "Connect &New Channel\tCtrl+N", ID_MYFILE_NEW
+        MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
+        MENUITEM SEPARATOR
+        MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Options",                    ID_VIEW_OPTIONS
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
+        MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
+        MENUITEM "&Arrange",                    ID_WINDOW_ARRANGE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About Metis3...",            ID_APP_ABOUT
+    END
+END
+
+IDR_LISTRMENU MENU DISCARDABLE 
+BEGIN
+    POPUP "POPUP"
+    BEGIN
+        MENUITEM "&Join",                       ID_MYFILE_NEW
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS PRELOAD MOVEABLE PURE 
+BEGIN
+    "L",            ID_CHANNEL_CHANNELLIST, VIRTKEY, CONTROL, NOINVERT
+    "N",            ID_MYFILE_NEW,          VIRTKEY, CONTROL, NOINVERT
+    VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
+    VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// 24
+//
+
+1                       24      MOVEABLE PURE   "RoboMX.exe.manifest"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 235, 97
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About RoboMX [:]"
+FONT 8, "MS Sans Serif"
+BEGIN
+    ICON            IDR_MAINFRAME,IDC_STATIC,11,17,20,20
+    LTEXT           "Metis/RoboMX [:] 0.1",IDC_STATIC,40,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Copyright (C) 2004 by Thees Christian Winkler",
+                    IDC_STATIC,40,25,188,8
+    DEFPUSHBUTTON   "OK",IDOK,178,7,50,14,WS_GROUP
+    LTEXT           "Distributed under the terms of the GNU General Public License version 2.0 or at you option any later version.",
+                    IDC_STATIC,40,38,188,17
+    LTEXT           "See license.txt in the Metis folder for more details. For Sourcecode and Updates please check http://mxcontrol.sourceforge.net",
+                    IDC_STATIC,7,57,221,33
+END
+
+IDD_METIS3_FORM DIALOGEX 0, 0, 458, 235
+STYLE DS_3DLOOK | WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    EDITTEXT        IDC_INPUT,1,219,403,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_STATIC_CHAT,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,1,103,456,115
+    CONTROL         "",IDC_STATIC_SYSOUT,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,1,57,456,42
+    CONTROL         "List1",IDC_USERLIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SORTASCENDING | WS_BORDER | 
+                    WS_TABSTOP,1,2,456,51
+    CONTROL         "",IDC_SPLITTER_1,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,1,53,456,4
+    CONTROL         "",IDC_SPLITTER_2,"Static",SS_BLACKFRAME | NOT 
+                    WS_VISIBLE,1,99,456,4
+    PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
+END
+
+IDD_CONNECT DIALOG DISCARDABLE  0, 0, 319, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Connect to..."
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "&Room",IDC_STATIC_ROOM,7,11,37,8
+    COMBOBOX        IDC_ROOM,62,9,250,134,CBS_DROPDOWN | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "&Username",IDC_STATIC_USERNAME,7,28,44,8
+    EDITTEXT        IDC_USERNAME,62,25,250,14,ES_AUTOHSCROLL
+    LTEXT           "&Files",IDC_STATIC_FILES,7,48,36,8
+    EDITTEXT        IDC_FILES,62,45,101,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "&Line",IDC_STATIC_LINE,180,48,40,8
+    COMBOBOX        IDC_LINE,225,46,87,259,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    DEFPUSHBUTTON   "OK",IDOK,207,65,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,262,65,50,14
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,59,20,20
+    PUSHBUTTON      "RoboMX [:]",IDC_STATIC,62,65,138,14,WS_DISABLED | NOT 
+                    WS_TABSTOP
+END
+
+IDD_RENAME DIALOG DISCARDABLE  0, 0, 254, 92
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Change User Details..."
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT           "&Name:",IDC_STATIC_NAME,7,10,47,8
+    EDITTEXT        IDC_NAME,59,7,188,14,ES_AUTOHSCROLL
+    LTEXT           "&Files:",IDC_STATIC_FILES,7,30,17,8
+    EDITTEXT        IDC_FILES,59,27,188,14,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "&Line",IDC_STATIC_LINE,7,48,40,8
+    COMBOBOX        IDC_LINE,59,46,188,259,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,65,20,20
+    DEFPUSHBUTTON   "OK",IDOK,141,71,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,197,71,50,14
+END
+
+IDD_CHANNELLIST DIALOG DISCARDABLE  0, 0, 340, 150
+STYLE WS_CHILD
+FONT 8, "MS Sans Serif"
+BEGIN
+    CONTROL         "List1",IDC_CHANNELS,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    WS_BORDER | WS_TABSTOP,2,35,336,113
+    PUSHBUTTON      "&Update",IDC_REFRESH,268,2,54,14,WS_DISABLED
+    PUSHBUTTON      "&Reload",IDC_CLEAR_REFRESH,268,18,54,14,WS_DISABLED
+    LTEXT           "Search:",IDC_STATIC_SEARCH,2,5,41,8
+    EDITTEXT        IDC_SEARCH,47,2,217,14,ES_AUTOHSCROLL
+    LTEXT           "",IDC_STATIC_MESSAGES,2,20,134,10
+    RTEXT           "",IDC_STATIC_ROOMS,143,21,122,8
+END
+
+
+#ifndef _MAC
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "\0"
+            VALUE "FileDescription", "Metis3 MFC Application\0"
+            VALUE "FileVersion", "1, 0, 0, 1\0"
+            VALUE "InternalName", "Metis3\0"
+            VALUE "LegalCopyright", "Copyright (C) 2004\0"
+            VALUE "LegalTrademarks", "\0"
+            VALUE "OriginalFilename", "Metis3.EXE\0"
+            VALUE "ProductName", "Metis3 Application\0"
+            VALUE "ProductVersion", "1, 0, 0, 1\0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+#endif    // !_MAC
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO DISCARDABLE 
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 228
+        VERTGUIDE, 40
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 90
+    END
+
+    IDD_METIS3_FORM, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 457
+        VERTGUIDE, 70
+        VERTGUIDE, 76
+        VERTGUIDE, 354
+        VERTGUIDE, 418
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 233
+        HORZGUIDE, 53
+        HORZGUIDE, 57
+        HORZGUIDE, 99
+        HORZGUIDE, 103
+    END
+
+    IDD_CONNECT, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 312
+        VERTGUIDE, 62
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 79
+        HORZGUIDE, 15
+        HORZGUIDE, 32
+        HORZGUIDE, 52
+        HORZGUIDE, 72
+    END
+
+    IDD_RENAME, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 247
+        VERTGUIDE, 59
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 85
+        HORZGUIDE, 14
+        HORZGUIDE, 34
+        HORZGUIDE, 52
+    END
+
+    IDD_CHANNELLIST, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 338
+        VERTGUIDE, 268
+        VERTGUIDE, 322
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 148
+        HORZGUIDE, 9
+        HORZGUIDE, 25
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog Info
+//
+
+IDD_CONNECT DLGINIT
+BEGIN
+    IDC_LINE, 0x403, 8, 0
+0x6e55, 0x6e6b, 0x776f, 0x006e, 
+    IDC_LINE, 0x403, 6, 0
+0x3431, 0x342e, 0x004b, 
+    IDC_LINE, 0x403, 6, 0
+0x3832, 0x382e, 0x004b, 
+    IDC_LINE, 0x403, 6, 0
+0x3333, 0x362e, 0x004b, 
+    IDC_LINE, 0x403, 4, 0
+0x3635, 0x004b, 
+    IDC_LINE, 0x403, 9, 0
+0x3436, 0x204b, 0x5349, 0x4e44, "\000" 
+    IDC_LINE, 0x403, 10, 0
+0x3231, 0x4b38, 0x4920, 0x4453, 0x004e, 
+    IDC_LINE, 0x403, 6, 0
+0x6143, 0x6c62, 0x0065, 
+    IDC_LINE, 0x403, 4, 0
+0x5344, 0x004c, 
+    IDC_LINE, 0x403, 3, 0
+0x3154, "\000" 
+    IDC_LINE, 0x403, 3, 0
+0x3354, "\000" 
+    0
+END
+
+IDD_RENAME DLGINIT
+BEGIN
+    IDC_LINE, 0x403, 8, 0
+0x6e55, 0x6e6b, 0x776f, 0x006e, 
+    IDC_LINE, 0x403, 6, 0
+0x3431, 0x342e, 0x004b, 
+    IDC_LINE, 0x403, 6, 0
+0x3832, 0x382e, 0x004b, 
+    IDC_LINE, 0x403, 6, 0
+0x3333, 0x362e, 0x004b, 
+    IDC_LINE, 0x403, 4, 0
+0x3635, 0x004b, 
+    IDC_LINE, 0x403, 9, 0
+0x3436, 0x204b, 0x5349, 0x4e44, "\000" 
+    IDC_LINE, 0x403, 10, 0
+0x3231, 0x4b38, 0x4920, 0x4453, 0x004e, 
+    IDC_LINE, 0x403, 6, 0
+0x6143, 0x6c62, 0x0065, 
+    IDC_LINE, 0x403, 4, 0
+0x5344, 0x004c, 
+    IDC_LINE, 0x403, 3, 0
+0x3154, "\000" 
+    IDC_LINE, 0x403, 3, 0
+0x3354, "\000" 
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE PRELOAD DISCARDABLE 
+BEGIN
+    IDR_MAINFRAME           "RoboMX [:]\n\nRoboMX [:]\n\n\nRoboMX.Document\nRoboMX Document"
+END
+
+STRINGTABLE PRELOAD DISCARDABLE 
+BEGIN
+    AFX_IDS_APP_TITLE       "RoboMX [:]"
+    AFX_IDS_IDLEMESSAGE     "Ready"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_INDICATOR_EXT        "EXT"
+    ID_INDICATOR_CAPS       "CAP"
+    ID_INDICATOR_NUM        "NUM"
+    ID_INDICATOR_SCRL       "SCRL"
+    ID_INDICATOR_OVR        "OVR"
+    ID_INDICATOR_REC        "REC"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_FILE_NEW             "Connect to a new Channel\nConnec to New Channel"
+    ID_FILE_OPEN            "Open an existing document\nOpen"
+    ID_FILE_CLOSE           "Close the active document\nClose"
+    ID_FILE_SAVE            "Save the active document\nSave"
+    ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
+    ID_APP_EXIT             "Quit the application; prompts to save documents\nQuite RoboMX"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_FILE_MRU_FILE1       "Open this document"
+    ID_FILE_MRU_FILE2       "Open this document"
+    ID_FILE_MRU_FILE3       "Open this document"
+    ID_FILE_MRU_FILE4       "Open this document"
+    ID_FILE_MRU_FILE5       "Open this document"
+    ID_FILE_MRU_FILE6       "Open this document"
+    ID_FILE_MRU_FILE7       "Open this document"
+    ID_FILE_MRU_FILE8       "Open this document"
+    ID_FILE_MRU_FILE9       "Open this document"
+    ID_FILE_MRU_FILE10      "Open this document"
+    ID_FILE_MRU_FILE11      "Open this document"
+    ID_FILE_MRU_FILE12      "Open this document"
+    ID_FILE_MRU_FILE13      "Open this document"
+    ID_FILE_MRU_FILE14      "Open this document"
+    ID_FILE_MRU_FILE15      "Open this document"
+    ID_FILE_MRU_FILE16      "Open this document"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
+    ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_WINDOW_NEW           "Open another window for the active document\nNew Window"
+    ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
+    ID_WINDOW_CASCADE       "Arrange windows so they overlap\nCascade Windows"
+    ID_WINDOW_TILE_HORZ     "Arrange windows as non-overlapping tiles\nTile Windows"
+    ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_EDIT_CLEAR           "Erase the selection\nErase"
+    ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
+    ID_EDIT_COPY            "Copy the selection and put it on the Clipboard\nCopy"
+    ID_EDIT_CUT             "Cut the selection and put it on the Clipboard\nCut"
+    ID_EDIT_FIND            "Find the specified text\nFind"
+    ID_EDIT_PASTE           "Insert Clipboard contents\nPaste"
+    ID_EDIT_REPEAT          "Repeat the last action\nRepeat"
+    ID_EDIT_REPLACE         "Replace specific text with different text\nReplace"
+    ID_EDIT_SELECT_ALL      "Select the entire document\nSelect All"
+    ID_EDIT_UNDO            "Undo the last action\nUndo"
+    ID_EDIT_REDO            "Redo the previously undone action\nRedo"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_VIEW_TOOLBAR         "Show or hide the toolbar\nToggle ToolBar"
+    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle StatusBar"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    AFX_IDS_SCSIZE          "Change the window size"
+    AFX_IDS_SCMOVE          "Change the window position"
+    AFX_IDS_SCMINIMIZE      "Reduce the window to an icon"
+    AFX_IDS_SCMAXIMIZE      "Enlarge the window to full size"
+    AFX_IDS_SCNEXTWINDOW    "Switch to the next document window"
+    AFX_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    AFX_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    AFX_IDS_SCRESTORE       "Restore the window to normal size"
+    AFX_IDS_SCTASKLIST      "Activate Task List"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_RENAME               "Change User details\nChange User details"
+    ID_EXIT                 "Disconnect from channel\nDisconnect"
+    ID_METIS_START          "Start bot\nStart bot"
+    ID_METIS_STOP           "Stop the bot\nStop bot"
+    ID_METIS_RELOADCONFIGURATION 
+                            "Reload Configuration files\nReload Configuartion"
+    ID_VIEW_OPTIONS         "Adjust Programs Settings\nOptions"
+    ID_CHANNEL_CHANNELLIST  "Connects to WPN and downloads a list of all available Chat-Channels\nGet Channellist"
+    ID_MYFILE_NEW           "Connect to a new channel\nConnect"
+END
+
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+#define _AFX_NO_SPLITTER_RESOURCES
+#define _AFX_NO_OLE_RESOURCES
+#define _AFX_NO_TRACKER_RESOURCES
+#define _AFX_NO_PROPERTY_RESOURCES
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE 9, 1
+#pragma code_page(1252)
+#endif //_WIN32
+#include "res\Metis3.rc2"  // non-Microsoft Visual C++ edited resources
+#include "afxres.rc"         // Standard components
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

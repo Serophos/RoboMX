@@ -1,0 +1,97 @@
+WinMX Chat protocoll (Thanks to Nushi for the Protocoll analyzer :-)
+----
+Note: Might contain errors. Have not tested that yet
+
+Please Help: What UDP Port?????
+
+Cheers.
+
+------------------------------------------
+Command-Name : (send by Server/Client)
+ID][Commandt:Length]
+------------------------------------------
+
+Login-Request: (Client) (implemented)
+
+0x0064][00:1][RoomName:N][LineType:1][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
+
+-
+
+Login-Permission: (Server) (implemented)
+0x0066][00:1]
+
+-
+
+Topic-Notification: (Server) (implemented)
+0x012C][Topic:N]
+
+-
+
+Userlist-Notification (Server) (implemented)
+0x006F][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
+
+-
+
+Motd-Notification (Server) (implemented)
+0x0078][Motd:N][00:1]
+
+-
+
+User-Join notification (Server) (implemented)
+0x006E][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
+
+-
+
+User-Part notification (Server) (implemented)
+0x0073][Username:N][00:1][IP-Address:4][UDP-Port:2]
+
+-
+
+Rename notification (Client) (implemented)
+0x0065][Line-Type:2][IP-Address:4][UDP-Port:2][Shared-Files:4][New-Name:N][00:1]
+
+-
+
+Rename notification (Server) (implemented)
+0x0070][Name:N][00:1][IP-Address:4][UDP-Port:2][Name:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:42][Shared-Files:4]
+
+-
+
+Normal Message (Client) (implemented)
+0x00C8][Name:N][Message:N]
+
+-
+
+Action Message (Client) (implemented)
+0x00CA][Name:N][Message:N][00:1]
+
+-
+
+Normal Message (Server) (implemented)
+0x00C9][Name:N][00:1][Message:N][00:1]
+
+-
+
+Action Message (Server) (implemented)
+0x00CB][Name:N][00:1][Message:N][00:1]
+
+-
+
+Ping-Transmission (Client) (implemented)
+0xFDE8]
+
+
+-
+
+Linetypes:
+Unknown 0x0000
+14.4K   0x0001
+28.8K   0x0002
+33.6K   0x0003
+56K     0x0004
+64K ISDN 0x0005
+128K ISDN 0x0006
+Cable   0x0007
+DSL     0x0008
+T1      0x0009
+T3      0x000A

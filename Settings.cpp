@@ -24,6 +24,7 @@
 #include "Metis3.h"
 #include "Settings.h"
 #include "Ini.h"
+#include ".\settings.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -119,6 +120,8 @@ void CSettings::Load()
 	m_strImage = ini.GetValue("Look & Feel", "BG-Image", m_strWd + "\\gfx\\robomx.bmp");
 	m_bPing	   = ini.GetValue("Look & Feel", "ShowPing", FALSE);
 	m_nTimeFormat = ini.GetValue("Look & Feel", "TimeFormat", 0);
+	m_bHiliteUsers = ini.GetValue("Look & Feel", "HiliteUsers", FALSE);
+	m_bEmoticons   = ini.GetValue("Look & Feel", "Emoticons", TRUE);
 
 	m_bLimit    = ini.GetValue("History", "LimitChat", TRUE);
 	m_nDepth    = ini.GetValue("History", "Depth", 50);
@@ -234,7 +237,9 @@ void CSettings::Load()
 	m_crPend  = ini.GetValue("Colors", "Pend", RGB(254, 128, 64));
 	m_crOK  = ini.GetValue("Colors", "OK", RGB(0, 150, 0));
 	m_crErr  = ini.GetValue("Colors", "Err", RGB(150, 0, 0));
-
+	m_crTime = ini.GetValue("Colors", "Time", RGB(255,255,255));
+	m_crHiLite	 = ini.GetValue("Colors", "HiLite", RGB(150, 200, 255));
+	m_crDocHiLite = ini.GetValue("Colors", "DocHiLite", RGB(0, 0, 255));
 	m_crBg = ini.GetValue("Colors", "Background", RGB(255, 255, 255));
 	m_cfDefault.crBackColor = m_crBg;
 
@@ -247,6 +252,16 @@ void CSettings::Load()
 	m_strSfxError		= ini.GetValue("SoundFX", "Error", m_strWd + "\\sfx\\Error.wav");
 	m_bChatSfx			= ini.GetValue("SoundFX", "ChatSfx", TRUE);
 	m_bSoundFX			= ini.GetValue("SoundFX", "Sfx", TRUE);
+
+
+	m_dwIP			= ini.GetValue("Server", "IP", 2130706433);
+	m_dwPort		= ini.GetValue("Server", "Port", 14223);
+	m_bAutoStart	= ini.GetValue("Server", "Auto", FALSE);
+	m_bAcceptAll	= ini.GetValue("Server", "PM-All", TRUE);
+	m_strSavePath	= ini.GetValue("Server", "File-Path", m_strWd + "\\Incoming");
+
+	LoadHiLite();
+
 }
 
 void CSettings::Save()
@@ -275,6 +290,8 @@ void CSettings::Save()
 	ini.SetValue("Look & Feel", "BG-Image", m_strImage);
 	ini.SetValue("Look & Feel", "ShowPing", m_bPing);
 	ini.SetValue("Look & Feel", "TimeFormat", m_nTimeFormat);
+	ini.SetValue("Look & Feel", "HiliteUsers", m_bHiliteUsers);
+	ini.SetValue("Look & Feel", "Emoticons", m_bEmoticons);
 	
 	ini.SetValue("History", "LimitChat", m_bLimit);
 	ini.SetValue("History", "Depth", m_nDepth);
@@ -310,7 +327,7 @@ void CSettings::Save()
 
 	ini.SetValue("Colors", "ColorActionName", m_bColorAcName);
 	ini.SetValue("Colors", "NormalNick", m_crNick);
-
+	ini.SetValue("Colors", "Time", m_crTime);
 	
 	ini.SetValue("Colors", "ActionNameEnc", m_crActionBr);
 	ini.SetValue("Colors", "ActionText", m_crAction);
@@ -332,7 +349,8 @@ void CSettings::Save()
 	ini.SetValue("Colors", "Err", m_crErr);
 	ini.SetValue("Colors", "FocusColor", m_crFocus);
 	ini.SetValue("Colors", "UseFocusColor", m_bFocus);
-	
+	ini.SetValue("Colors", "HiLite", m_crHiLite);
+	ini.SetValue("Colors", "DocHiLite", m_crDocHiLite);
 	ini.SetValue("Colors", "Background", m_crBg);
 
 	switch(m_nCharset){
@@ -391,6 +409,12 @@ void CSettings::Save()
 	ini.SetValue("SoundFX", "Error", m_strSfxError);
 	ini.SetValue("SoundFX", "ChatSfx", m_bChatSfx);
 	ini.SetValue("SoundFX", "Sfx", m_bSoundFX);
+	
+	ini.SetValue("Server", "IP", m_dwIP);
+	ini.SetValue("Server", "Port", m_dwPort);
+	ini.SetValue("Server", "Auto", m_bAutoStart);
+	ini.SetValue("Server", "PM-All", m_bAcceptAll);
+	ini.SetValue("Server", "File-Path", m_strSavePath);
 }
 
 
@@ -532,4 +556,37 @@ CString CSettings::GetWorkingDir(BOOL bCached)
 	}
 
 	return pszAppPath;
+}
+
+void CSettings::LoadHiLite(void)
+{
+
+	CString strIniFile = GetWorkingDir() + "\\hilite.ini";
+	BOOL bReturn = TRUE;
+	CStdioFile ini;
+	CString strBuffer;
+	m_aHilite.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				if(strBuffer[0] != ';'){
+
+					m_aHilite.Add(strBuffer);
+				}
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
 }

@@ -97,7 +97,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		::SendMessage(GetParent()->m_hWnd, UWM_INPUT, 0, 0);
 	}
 	else if((pMsg->message == WM_KEYDOWN) && (pMsg->wParam == VK_RETURN)
-				&& (GetKeyState(VK_SHIFT) < 0)){
+				&& (GetKeyState(VK_SHIFT) < 0) && (GetStyle() & ES_MULTILINE)){
 
 		CString strText;
 		GetWindowText(strText);
@@ -127,7 +127,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 					return TRUE;
 				}
-				else if((dwIndex == 1) || (dwIndex >= g_aRCMSCommandsNUM)){
+				else if((dwIndex == 1) || (dwIndex > g_aRCMSCommandsNUM)){
 
 					SetWindowText("");
 				}
@@ -270,7 +270,7 @@ HBRUSH CMyEdit::CtlColor(CDC* pDC, UINT nCtlColor)
 	HBRUSH hbr;
 	hbr = (HBRUSH)m_brBkgnd;
 	pDC->SetBkColor(m_crDraw);
-
+	pDC->SetTextColor(g_sSettings.GetRGBNormalMsg());
 	return hbr;
 	
 }
@@ -280,7 +280,7 @@ void CMyEdit::OnKillFocus(CWnd* pNewWnd)
 
 	CEdit::OnKillFocus(pNewWnd);
 
-	if(g_sSettings.GetFocus() && !m_bEx){
+	if(!m_bEx){
 
 		m_crDraw = m_crBg;
 		m_brBkgnd.DeleteObject(); 
@@ -293,9 +293,9 @@ void CMyEdit::OnSetFocus(CWnd* pOldWnd)
 {
 
 	CEdit::OnSetFocus(pOldWnd);
-	if(g_sSettings.GetFocus() && !m_bEx){
+	if(!m_bEx){
 
-		m_crDraw = m_crBgFocus;
+		m_crDraw = (g_sSettings.GetFocus() ?  m_crBgFocus : m_crBg);
 		m_brBkgnd.DeleteObject();
 		m_brBkgnd.CreateSolidBrush(m_crDraw);
 		RedrawWindow();
@@ -307,7 +307,7 @@ void CMyEdit::SetBkColor(COLORREF cr)
 
 	m_crBg = cr;
 	m_crBgFocus = g_sSettings.GetRGBFocus();
-	Invalidate();
+	RedrawWindow();
 }
 
 void CMyEdit::SetExtended()

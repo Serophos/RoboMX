@@ -23,6 +23,7 @@
 #include "Metis3Doc.h"
 #include "Metis3View.h"
 #include "Settings.h"
+#include "util.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -31,54 +32,6 @@ static char THIS_FILE[]=__FILE__;
 #endif
 
 extern CSettings g_sSettings;
-
-// move to utils.cpp
-
-int axtoi(char *hexStg, int nLen)
-{
-
-  int n = 0;         // position in string
-  int m = 0;         // position in digit[] to shift
-  int count;         // loop index
-  int intValue = 0;  // integer value of hex string
-  int *digit = new int[nLen];      // hold values to convert
-  while (n < nLen) {
-	if (hexStg[n]=='\0'){
-     
-		break;
-	}
-    if (hexStg[n] > 0x29 && hexStg[n] < 0x40 ){
-		//if 0 to 9
-        digit[n] = hexStg[n] & 0x0f;            //convert to int
-	}
-    else if (hexStg[n] >='a' && hexStg[n] <= 'f'){ //if a to f
-
-        digit[n] = (hexStg[n] & 0x0f) + 9; 
-	}//convert to int
-	else if (hexStg[n] >='A' && hexStg[n] <= 'F'){ //if A to F
-
-        digit[n] = (hexStg[n] & 0x0f) + 9;  
-	}//convert to int
-    else break;
-    n++;
-  }
-  count = n;
-  m = n - 1;
-  n = 0;
-  while(n < count) {
-     // digit[n] is value of hex digit at position n
-     // (m << 2) is the number of positions to shift
-     // OR the bits into return value
-     intValue = intValue | (digit[n] << (m << 2));
-     m--;   // adjust the position to set
-     n++;   // next digit to process
-  }
-
-  delete digit;
-  digit = 0;
-  return (intValue);
-}
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -179,8 +132,9 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	}
 
 	// Recv DW Key Block
-	if(pClient->m_mSocket.Recv(buffer, 16, 50) != 16){
+	if(pClient->m_mSocket.Recv(buffer, 16, 5) != 16){
 		
+		//AfxMessageBox(pClient->m_mSocket.GetLastErrorStr());
 		pClient->WriteMessage("Robo-Panic: Error nogotiating. Recieve Keyblock failed.",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
@@ -206,21 +160,14 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	// Prepare login buffer...
 	ZeroMemory(buffer, sizeof(buffer));
 	
-	nLen = 4;
-	lstrcpy(buffer+nLen, pClient->m_strRoom);
-	nLen+=pClient->m_strRoom.GetLength()+1;
-	memcpy(buffer+nLen, &pClient->m_wLineType, 2);
-	nLen+=2;
-	memcpy(buffer+nLen, &pClient->m_dwClientIP, 4);
-	nLen+=4;
-	memcpy(buffer+nLen, &pClient->m_wClientUDPPort, 2);
-	nLen+=2;
-	memcpy(buffer+nLen, &pClient->m_dwFiles, 4);
-	nLen+=4;
-	lstrcpy(buffer+nLen, pClient->m_strUser);
-	nLen+=pClient->m_strUser.GetLength()+1;
-	*(WORD*)buffer = MXCHAT_LOGIN;
-	*(WORD*)(buffer+2) = nLen-4;
+
+	nLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
+					(LPCTSTR)pClient->m_strRoom, 
+					pClient->m_wLineType,
+					pClient->m_dwClientIP,
+					pClient->m_wClientUDPPort,
+					pClient->m_dwFiles, 
+					(LPCTSTR)pClient->m_strUser);
 
 	pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
 
@@ -270,7 +217,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			if((pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT) && pClient->m_bListen){
 
 				CString strError;
-				strError.Format("Robo-Panic [a]: %s '(", pClient->m_mSocket.GetLastErrorStr());
+				strError.Format("Robo-Panic [a]: %s :'(", pClient->m_mSocket.GetLastErrorStr());
 				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 				pClient->m_bListen  = FALSE;
 				break;
@@ -288,14 +235,15 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			continue;
 		}
 		
+		pClient->m_dwDWKey = DecryptMXTCP((BYTE*)(buffer), 4, pClient->m_dwDWKey);
+
 		memcpy(&wType, buffer, 2);
 		if(wType == 0xFDE8){
 
-			pClient->WriteMessage("PONG", RGB(150,150,150));
+			if(g_sSettings.GetPing())
+				pClient->WriteMessage("PONG", RGB(150,150,150));
 			continue;
 		}
-
-		pClient->m_dwDWKey = DecryptMXTCP((BYTE*)(buffer), 4, pClient->m_dwDWKey);
 
 		nLen = *(WORD*)(buffer+2);
 		
@@ -362,8 +310,8 @@ BOOL CChatClient::SendRename(CString strUser, DWORD dwFiles, WORD wLine)
 
 		char buffer[1024];
 		ZeroMemory(buffer, 1024);
-
-		int nCmdLen = 0;
+		
+		/*int nCmdLen = 0;
 		memcpy(buffer+4, &m_wLineType, 2);
 		nCmdLen+=2;
 		memcpy(buffer+6, &m_dwClientIP, 4);
@@ -377,15 +325,21 @@ BOOL CChatClient::SendRename(CString strUser, DWORD dwFiles, WORD wLine)
 		
 		*(WORD*)buffer = 0x0065;
 		*(WORD*)(buffer+2) = nCmdLen;
-		nCmdLen+=4;
-		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nCmdLen, m_dwUPKey);
+		nCmdLen+=4;*/
 
-		int nSend = m_mSocket.Send(buffer, nCmdLen,0);
+		WORD wLen = Util::FormatMXMessage(0x0065, (char*)&buffer, "WDWDS", 
+									  m_wLineType, m_dwClientIP,
+									  m_wClientUDPPort, m_dwFiles,
+									  (LPCTSTR)m_strUser);
+
+		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, wLen, m_dwUPKey);
+
+		int nSend = m_mSocket.Send(buffer, wLen,0);
 
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic [i]: %s '(", m_mSocket.GetLastErrorStr());
+			strError.Format("Robo-Panic [i]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 			return FALSE;
@@ -407,28 +361,20 @@ void CChatClient::SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction)
 
 		char buffer[1024];
 		ZeroMemory(buffer, 1024);
-		
-		int nCmdLen = nLen+1;
-		strcpy(buffer+4, lpszMessage);
-		*(WORD*)buffer = (bAction ? 0x00CA : 0x00C8);
-		*(WORD*)(buffer+2) = nCmdLen;
-	
-		nCmdLen+=4;
-		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nCmdLen, m_dwUPKey);
 
+		WORD wLen = Util::FormatMXMessage((bAction ? 0x00CA : 0x00C8), (char*)&buffer, "S", lpszMessage);
+		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, wLen, m_dwUPKey);
 		
-		int nSend = m_mSocket.Send(buffer, nCmdLen, 0);
+		int nSend = m_mSocket.Send(buffer, wLen, 0);
 
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic[j]: %s '(", m_mSocket.GetLastErrorStr());
+			strError.Format("Robo-Panic[j]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
 	}
-	// crash
-	// 0x0042408d at 0x003808aa
 }
 
 void CChatClient::Ping()
@@ -441,8 +387,7 @@ void CChatClient::Ping()
 		ZeroMemory(buffer, 4);
 		WORD wType = 0xFDE8;
 		memcpy(buffer, &wType, 2);
-		//*(WORD*)buffer = 0x00E8;
-		//*(WORD*)(buffer+2) = 0x00FD;
+
 		m_dwUPKey = EncryptMXTCP((BYTE*)buffer, 4, m_dwUPKey);
 		
 		if(g_sSettings.GetPing()){
@@ -455,7 +400,7 @@ void CChatClient::Ping()
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic [k]: %s '(", m_mSocket.GetLastErrorStr());
+			strError.Format("Robo-Panic [k]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
@@ -481,14 +426,25 @@ BOOL CChatClient::SetRoom(CString strRoom)
 
 	int nA = 0, nB = 0, nC = 0, nD = 0;
 	
-	nA = axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
-	nB = axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
-	nC = axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
-	nD = axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
+	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
+	nB = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
+	nC = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
+	nD = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
 
 	m_strRoomIP.Format("%d.%d.%d.%d", nD, nC, nB, nA);
-	
-	m_wRoomTCPPort = axtoi((LPSTR)(LPCSTR)strRoom.Mid(m_strRoom.GetLength()-4), 4);
+
+	// 7F 00 00 01
+	m_dwClientIP = g_sSettings.GetServerIP();
+	m_wClientUDPPort = (WORD)g_sSettings.GetServerPort();
+    strTmp.Format("%X", m_dwClientIP);
+	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
+	nB = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
+	nC = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
+	nD = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
+	strTmp.Format("%02X%02X%02X%02X", nD, nC, nB, nA);
+	m_dwClientIP = Util::axtoi((LPSTR)(LPCSTR)strTmp, 8);
+
+	m_wRoomTCPPort = Util::axtoi((LPSTR)(LPCSTR)strRoom.Mid(m_strRoom.GetLength()-4), 4);
 	
 	if(m_wRoomTCPPort < 1024) return FALSE;
 	return TRUE;
@@ -542,6 +498,7 @@ void CChatClient::WriteMessage(LPCTSTR lpszMsg, COLORREF rColor)
 {
 
 	if(!m_pView) return;
-	
+	if(!::IsWindow(m_pView->m_hWnd)) return;
+
 	::SendMessage(m_pView->m_hWnd, UWM_SYSTEM, (WPARAM)rColor, (LPARAM)lpszMsg);
 }

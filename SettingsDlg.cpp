@@ -22,6 +22,7 @@
 #include "Settings.h"
 #include "SettingsDlg.h"
 #include "MainFrm.h"
+#include ".\settingsdlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -58,6 +59,7 @@ BEGIN_MESSAGE_MAP(CSettingsDlg, CDialog)
 	ON_BN_CLICKED(IDC_APPLY, OnApply)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_CAT, OnItemchangedCat)
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDCANCEL, OnBnClickedCancel)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -90,17 +92,25 @@ BOOL CSettingsDlg::OnInitDialog()
 	cfgColor.Create(IDD_COLORS, this);
 	cfgColor.MoveWindow(rcClient);
 
+	cfgPeer.Create(IDD_PAGERCFG, this);
+	cfgPeer.MoveWindow(rcClient);
+
 	cfgMsg.Create(IDD_MESSAGES, this);
 	cfgMsg.MoveWindow(rcClient);
 
 	cfgSfx.Create(IDD_SOUND, this);
 	cfgSfx.MoveWindow(rcClient);
 
+	cfgFun.Create(IDD_FUN, this);
+	cfgFun.MoveWindow(rcClient);
+
 	AddCategory(&cfgGen, 0, "General");
 	AddCategory(&cfgColor, 1, "Colors");
+	AddCategory(&cfgPeer, 5, "Server");
 	AddCategory(&cfgMsg, 2, "Messages");
 	AddCategory(&cfgSfx, 3, "Sound FX");
-	
+	AddCategory(&cfgFun, 4, "Fun :-)");
+
 	m_lcCat.SetItemState(0, LVNI_SELECTED, LVNI_SELECTED);
 	cfgGen.ShowWindow(SW_SHOW);
 	
@@ -153,3 +163,9 @@ void CSettingsDlg::AddCategory(CCfgDlg *pCat, int nIcon, LPCTSTR lpszName)
 }
 
 
+
+void CSettingsDlg::OnBnClickedCancel()
+{
+
+	OnCancel();
+}

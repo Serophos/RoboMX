@@ -2,57 +2,59 @@
 
 [General Info]
 Version=1
-LastClass=CMetis3View
+LastClass=CChannelView
 LastTemplate=CDialog
 NewFileInclude1=#include "stdafx.h"
 NewFileInclude2=#include "Metis3.h"
 LastPage=0
 
-ClassCount=22
+ClassCount=23
 Class1=CMetis3App
 Class2=CMetis3Doc
 Class3=CMetis3View
 Class4=CMainFrame
 
-ResourceCount=20
-Resource1=IDR_LIST
-Resource2=IDR_AWAY
-Resource3=IDR_LISTRMENU
+ResourceCount=21
+Resource1=IDR_CHANNEL
+Resource2=IDR_CHAT
+Resource3=IDR_LIST
 Class5=CAboutDlg
 Class6=CConnectionDlg
 Class7=CMyEdit
-Resource4=IDD_SETTINGS
+Resource4=IDD_METIS3_FORM
 Class8=CRenameDlg
 Class9=CMyListCtrl
 Resource5=IDR_FULLSCREEN
-Resource6=IDD_GENERAL
+Resource6=IDD_CONNECT
 Class10=CChannelView
 Class11=CChannelDoc
-Resource7=IDR_MAINFRAME
-Resource8=IDR_CHANNEL
-Resource9=IDD_CHANNELLIST
-Resource10=IDD_SFX_EDIT
+Resource7=IDR_LISTRMENU
+Resource8=IDR_AWAY
+Resource9=IDD_ABOUTBOX
+Resource10=IDD_GENERAL
 Class12=CServerDoc
 Class13=CServerView
-Resource11=IDD_MESSAGES
-Resource12=IDD_COLORS
+Resource11=IDD_CHANNELLIST
+Resource12=IDD_RENAME
 Class14=CColorStatusBar
 Class15=CSettingsDlg
 Class16=CCfgDlg
-Resource13=IDD_ABOUTBOX
-Resource14=IDR_CHAT
+Resource13=IDR_USER
+Resource14=IDD_MESSAGES
 Class17=CGeneralCfg
 Class18=CColorCfg
-Resource15=IDD_RENAME
-Resource16=IDD_CONNECT
+Resource15=IDR_MAINFRAME
+Resource16=IDD_SFX_EDIT
 Class19=CMessageCfg
-Resource17=IDD_METIS3_FORM
+Resource17=IDD_SOUND
 Class20=CSfxCfg
-Resource18=IDR_USER
+Resource18=IDD_COLORS
 Class21=CSfxEdit
-Resource19=IDD_SOUND
+Resource19=IDD_SETTINGS
 Class22=CInputRequest
 Resource20=IDD_INPUT_REQUEST
+Class23=CFunCfg
+Resource21=IDD_FUN
 
 [CLS:CMetis3App]
 Type=0
@@ -73,7 +75,7 @@ ImplementationFile=Metis3View.cpp
 Filter=W
 BaseClass=CFormView
 VirtualFilter=VWC
-LastObject=IDC_USERLIST
+LastObject=AFX_IDS_SCNEXTWINDOW
 
 
 [CLS:CMainFrame]
@@ -304,7 +306,7 @@ ImplementationFile=ChannelView.cpp
 BaseClass=CFormView
 Filter=M
 VirtualFilter=VWC
-LastObject=IDC_SELECTION_NOSCROLL
+LastObject=ID_MYFILE_NEW
 
 [CLS:CChannelDoc]
 Type=0
@@ -336,9 +338,12 @@ CommandCount=15
 
 [MNU:IDR_LISTRMENU]
 Type=1
-Class=?
+Class=CChannelView
 Command1=ID_MYFILE_NEW
-CommandCount=1
+Command2=ID_POPUP_LOOPBACKJOIN
+Command3=ID_POPUP_COPYROOMNAME
+Command4=ID_POPUP_COPYTOPIC
+CommandCount=4
 
 [MNU:IDR_USER]
 Type=1
@@ -684,4 +689,31 @@ BaseClass=CDialog
 Filter=D
 VirtualFilter=dWC
 LastObject=IDC_INPUT
+
+[DLG:IDD_FUN]
+Type=1
+Class=CFunCfg
+ControlCount=13
+Control1=IDC_STATIC_RANDOMIZER,static,1342308352
+Control2=IDC_STATIC_VENDORS,button,1342177287
+Control3=IDC_VENDOR_ADD,edit,1350631552
+Control4=IDC_BTN_VENDOR_ADD,button,1342242816
+Control5=IDC_VENDORS,listbox,1352728835
+Control6=IDC_STATIC_NAMES,button,1342177287
+Control7=IDC_NAME_ADD,edit,1350631552
+Control8=IDC_BTN_NAME_ADD,button,1342242816
+Control9=IDC_NAMES,listbox,1352728835
+Control10=IDC_STATIC_SUFFIXES,button,1342177287
+Control11=IDC_SUFFIX_ADD,edit,1350631552
+Control12=IDC_BTN_SUFFIX_ADD,button,1342242816
+Control13=IDC_SUFFIXES,listbox,1352728835
+
+[CLS:CFunCfg]
+Type=0
+HeaderFile=FunCfg.h
+ImplementationFile=FunCfg.cpp
+BaseClass=CCfgDlg
+Filter=D
+VirtualFilter=dWC
+LastObject=ID_POPUP_LOOPBACKJOIN
 

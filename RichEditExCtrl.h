@@ -26,6 +26,7 @@
 //
 #include "ImageDataObject.h"
 
+/*
 class _AFX_RICHEDITEX_STATE
 {
 public:
@@ -36,18 +37,20 @@ public:
 };
 
 BOOL PASCAL AfxInitRichEditEx();
-
-struct EMOTICON
+*/
+class Emoticon
 {
+public:
+	Emoticon(){}
+	~Emoticon(){}
 	HBITMAP hBitmap;
+	//CImage iImage;
 	char szFileName[1024];
 	char szActivationText[64];
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl window
-
-class CMetis3View;
 
 class CRichEditExCtrl : public CRichEditCtrl
 {
@@ -67,8 +70,6 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CRichEditExCtrl)
 	public:
-	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
-	virtual BOOL CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, void *lpExtra);
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	//}}AFX_VIRTUAL
 
@@ -86,7 +87,6 @@ public:
 protected:
 	afx_msg void	OnLink(NMHDR *in_pNotifyHeader, LRESULT *out_pResult);
 	//{{AFX_MSG(CRichEditExCtrl)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
@@ -94,7 +94,6 @@ protected:
 protected:
 	UINT m_nID;
 	void AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg);
-	CMetis3View* m_pView;
 	// datamembers for bitmap storage
 };
 

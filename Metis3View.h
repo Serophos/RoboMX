@@ -49,8 +49,6 @@ public:
 	CButton	m_btExit;
 	CMyEdit	m_eInput;
 	CMyListCtrl	m_lcUsers;
-	CRichEditExCtrl m_rSys;
-	CRichEditExCtrl m_rChat;
 	CString	m_strInput;
 	//}}AFX_DATA
 	CSplitterControl m_sSplitter1;
@@ -71,12 +69,9 @@ public:
 	void LoadRCMSMenu();
 	void ReCalcLayout();
 	afx_msg LRESULT OnSystem(WPARAM wParam, LPARAM lParam);
-	void DeleteEmoticons();
-	void AddEmoticon(char *szFileName, char *szActivationText);
-	void LoadEmoticons();
 	void DoResize2(int delta);
 	void DoResize1(int delta);
-	void RemoveUser(CString strUser);
+	void RemoveUser(const CString strUser, const CString strIP, WORD wPort);
 	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort);
 	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0));
 
@@ -86,7 +81,6 @@ public:
 
 	CChatClient m_mxClient;
 	CArray<MX_USERINFO, MX_USERINFO> m_aUsers;
-	CList<struct EMOTICON *, struct EMOTICON *> m_lEmoticons;
 	CFont m_fFont;
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -118,6 +112,8 @@ protected:
 protected:
 	BOOL m_bHasJoined;
 
+	afx_msg LRESULT OnEchoText(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnEchoSysText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnInput(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMessage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnAction(WPARAM wParam, LPARAM lParam);
@@ -174,9 +170,15 @@ protected:
 	afx_msg void OnChatroomAsciiartdesign();
 	afx_msg void OnChatTexttricks3dbuttonsnormal();
 	afx_msg void OnChatTexttricks3dbuttonsaction();
-	afx_msg void OnLinkChat(NMHDR* pNMHDR, LRESULT* pResult);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	CRichEditExCtrl m_rSys;
+	CRichEditExCtrl m_rChat;
+	afx_msg void OnEnLinkChat(NMHDR *pNMHDR, LRESULT *pResult);
+
+
+	void HandleHiLite(void);
 };
 
 #ifndef _DEBUG  // debug version in Metis3View.cpp

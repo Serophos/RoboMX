@@ -26,6 +26,9 @@
 
 #include "docselect.h"
 #include "ColorStatusBar.h"
+#include "Winsock2.h"
+
+class Emoticon;
 
 class CMainFrame : public CMDIFrameWnd
 {
@@ -45,27 +48,37 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CMainFrame)
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	virtual void OnUpdateFrameTitle(BOOL bAddToTitle);
+	virtual void ActivateFrame(int nCmdShow = -1);
 	//}}AFX_VIRTUAL
 
 // Implementation
 public:
 	void LoadRCMS();
 	void JoinChannel();
+	
 	CString m_strRoom;
+	CImage  m_iBgImage;
 	BOOL  m_bChannelList;
-	BOOL  m_bPager;
+	BOOL  m_bSettings;
+
+	CList<Emoticon*, Emoticon*> m_lEmoticons;
+
 	afx_msg LRESULT OnTrayNotify(WPARAM wParam, LPARAM lParam);
+
 	virtual ~CMainFrame();
+
 #ifdef _DEBUG
 	virtual void AssertValid() const;
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
 	CDocSelector	m_wndDocSelector;
-
+	CMenu   m_cmSystray;
 protected:  // control bar embedded members
+
 	CColorStatusBar  m_wndStatusBar;
-	CToolBar    m_wndToolBar;
+	CToolBar m_wndToolBarStd;
 	
 	// used for full-screen mode
 	BOOL	  m_bFullScreenMode;
@@ -81,10 +94,10 @@ protected:  // control bar embedded members
 
 // Generated message map functions
 protected:
+	CArray<HINSTANCE, HINSTANCE> m_aMods;
 	HICON m_hIcon;
 	NOTIFYICONDATA m_nIconData;
 
-	//{{AFX_MSG(CMainFrame)
 	afx_msg void OnClose();
 	afx_msg int  OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewOptions();
@@ -92,15 +105,28 @@ protected:
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
 	afx_msg void OnChannelChannellist();
 	afx_msg void OnUpdateChannelChannellist(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateViewChannelBar(CCmdUI* pCmdUI);
 	afx_msg void OnFileNew();
-	afx_msg void OnStartNodeserver();
-	afx_msg void OnUpdateStartNodeserver(CCmdUI* pCmdUI);
 	afx_msg void OnViewFullScreen();
 	afx_msg void OnUpdateViewFullScreen(CCmdUI* pCmdUI);
 	afx_msg void OnIdsScnextwindow();
 	afx_msg void OnViewChannelbar();
-	//}}AFX_MSG
+	afx_msg LRESULT OnPluginInput(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPluginEcho(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnPluginSysEcho(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
+public:
+	void LoadEmoticons(void);
+	void AddEmoticon(char* szFileName, char* szActivationText);
+	void DeleteEmoticons(void);
+	void LoadPlugins(void);
+	void UnloadPlugins(void);
+	afx_msg void OnStartNodeserver();
+	void LoadRooms(void);
+	void LoadSounds(void);
+	afx_msg void OnSystrayRestore();
+	BOOL DeletePlugin(CString strName);
+	void ReloadPlugins(void);
 };
 
 /////////////////////////////////////////////////////////////////////////////

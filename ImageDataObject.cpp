@@ -99,7 +99,7 @@ void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl 
 		char lpszError[400];
 		e->GetErrorMessage(lpszError, 400);
 		CString strOut;
-		strOut.Format("OleException. Could not add bitmap to view. [Reason: %s]", lpszError);
+		strOut.Format("Could not insert emoticon due to OleException. Returned error message was:\n%s", lpszError);
         AfxMessageBox(strOut, MB_ICONSTOP);
     }
     END_CATCH

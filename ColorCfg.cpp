@@ -21,7 +21,8 @@
 #include "Metis3.h"
 #include "ColorCfg.h"
 #include "Settings.h"
-
+#include ".\colorcfg.h"
+#include "Util.h"
 extern CSettings g_sSettings;
 
 #ifdef _DEBUG
@@ -58,7 +59,6 @@ CColorCfg::CColorCfg(CWnd* pParent /*=NULL*/)
 void CColorCfg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CColorCfg)
 	DDX_Control(pDX, IDC_STATIC_FOCUS, m_stFocus);
 	DDX_Control(pDX, IDC_STATIC_PENDING, m_stPend);
 	DDX_Control(pDX, IDC_STATIC_SUCCESS, m_stOK);
@@ -74,6 +74,7 @@ void CColorCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_STATIC_MOTD, m_stMotd);
 	DDX_Control(pDX, IDC_STATIC_PART, m_stPart);
 	DDX_Control(pDX, IDC_STATIC_TOPIC, m_stTopic);
+	DDX_Control(pDX, IDC_STATIC_DOCHI, m_stDocHi);
 	DDX_Control(pDX, IDC_STATIC_COLOR_ENG_ACTION_PREV, m_stActEnc);
 	DDX_Control(pDX, IDC_STATIC_COLOR_ACTION_PREV, m_stAction);
 	DDX_Control(pDX, IDC_FONT, m_cbFont);
@@ -91,12 +92,13 @@ void CColorCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_USE_BGIMAGE, m_bImage);
 	DDX_Text(pDX, IDC_STATIC_IMAGEPATH, m_strImage);
 	DDX_Check(pDX, IDC_FOCUSCLR, m_bFocus);
-	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_STATIC_COLOR_NAME_PREV, m_stName);
+	DDX_Control(pDX, IDC_STATIC_TIME, m_stTime);
+	DDX_Control(pDX, IDC_STATIC_HILITE, m_stHiLite);
 }
 
 
 BEGIN_MESSAGE_MAP(CColorCfg, CCfgDlg)
-	//{{AFX_MSG_MAP(CColorCfg)
 	ON_BN_CLICKED(IDC_ENC_MSG_COLOR, OnEncMsgColor)
 	ON_BN_CLICKED(IDC_COLOR_MESSAGE, OnColorMessage)
 	ON_BN_CLICKED(IDC_ENC_ACTION_COLOR, OnEncActionColor)
@@ -115,7 +117,11 @@ BEGIN_MESSAGE_MAP(CColorCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_ERROR, OnError)
 	ON_BN_CLICKED(IDC_SELECT_IMAGE, OnSelectImage)
 	ON_BN_CLICKED(IDC_COLORFOCUS, OnColorfocus)
-	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDC_COLOR_NAME, OnBnClickedColorName)
+	ON_BN_CLICKED(IDC_TIME, OnBnClickedTime)
+	ON_BN_CLICKED(IDC_HILITE, OnBnClickedHilite)
+	ON_BN_CLICKED(IDC_EDITHILITE, OnBnClickedEdithilite)
+	ON_BN_CLICKED(IDC_DOCHI, OnBnClickedDochi)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -144,6 +150,7 @@ BOOL CColorCfg::OnInitDialog()
 	m_stJoin.SetBkColor(g_sSettings.GetRGBJoin());
 	m_stMotd.SetBkColor(g_sSettings.GetRGBMotd());
 	m_stMsg.SetBkColor(g_sSettings.GetRGBNormalMsg());
+	m_stName.SetBkColor(g_sSettings.GetRGBNormalName());
 	m_stMsgEnc.SetBkColor(g_sSettings.GetRGBBrMessage());
 	m_stPart.SetBkColor(g_sSettings.GetRGBPart());
     m_stAction.SetBkColor(g_sSettings.GetRGBActionMsg());
@@ -158,7 +165,10 @@ BOOL CColorCfg::OnInitDialog()
 	m_stPend.SetBkColor(g_sSettings.GetRGBPend());
 	m_stErr.SetBkColor(g_sSettings.GetRGBErr());
 	m_stFocus.SetBkColor(g_sSettings.GetRGBFocus());
-	
+	m_stTime.SetBkColor(g_sSettings.GetRGBTime());
+	m_stHiLite.SetBkColor(g_sSettings.GetRGBHiLite());
+	m_stDocHi.SetBkColor(g_sSettings.GetRGBDocHiLite());
+
 	m_strMsgFront = g_sSettings.GetBrMsgFront();
 	m_strMsgEnd   = g_sSettings.GetBrMsgEnd();
 	m_strActionFront = g_sSettings.GetBrActionFront();
@@ -182,6 +192,7 @@ void CColorCfg::Apply()
 	
 	g_sSettings.SetRGBJoin(m_stJoin.GetBkColor());
 	g_sSettings.SetRGBMotd(m_stMotd.GetBkColor());
+	g_sSettings.SetRGBNormalName(m_stName.GetBkColor());
 	g_sSettings.SetRGBNormalMsg(m_stMsg.GetBkColor());
 	g_sSettings.SetRGBBrMessage(m_stMsgEnc.GetBkColor());
 	g_sSettings.SetRGBPart(m_stPart.GetBkColor());
@@ -197,6 +208,9 @@ void CColorCfg::Apply()
 	g_sSettings.SetRGBPend(m_stPend.GetBkColor());
 	g_sSettings.SetRGBErr(m_stErr.GetBkColor());
 	g_sSettings.SetRGBFocus(m_stFocus.GetBkColor());
+	g_sSettings.SetRGBTime(m_stTime.GetBkColor());
+	g_sSettings.SetRGBHiLite(m_stHiLite.GetBkColor());
+	g_sSettings.SetRGBDocHiLite(m_stDocHi.GetBkColor());
 
 	g_sSettings.SetBrMsgFront(m_strMsgFront);
 	g_sSettings.SetBrMsgEnd(m_strMsgEnd);
@@ -211,6 +225,19 @@ void CColorCfg::Apply()
 	g_sSettings.SetImage(m_strImage);
 	g_sSettings.SetUseImage(m_bImage);
 	g_sSettings.SetFocus(m_bFocus);
+
+	GetApp()->ApplyPic();
+}
+
+void CColorCfg::OnBnClickedColorName()
+{
+
+	CColorDialog cDlg(m_stName.GetBkColor());
+	
+	if(cDlg.DoModal() == IDOK){
+
+		m_stName.SetBkColor(cDlg.GetColor());
+	}
 }
 
 void CColorCfg::OnEncMsgColor() 
@@ -413,10 +440,45 @@ void CColorCfg::OnColorfocus()
 	}
 }
 
+
+void CColorCfg::OnBnClickedTime()
+{
+
+	CColorDialog cDlg(m_stTime.GetBkColor());
+	
+	if(cDlg.DoModal() == IDOK){
+
+		m_stTime.SetBkColor(cDlg.GetColor());
+	}
+}
+
+
+void CColorCfg::OnBnClickedHilite()
+{
+
+	CColorDialog cDlg(m_stHiLite.GetBkColor());
+	
+	if(cDlg.DoModal() == IDOK){
+
+		m_stHiLite.SetBkColor(cDlg.GetColor());
+	}
+}
+
+void CColorCfg::OnBnClickedDochi()
+{
+
+	CColorDialog cDlg(m_stDocHi.GetBkColor());
+	
+	if(cDlg.DoModal() == IDOK){
+
+		m_stDocHi.SetBkColor(cDlg.GetColor());
+	}
+}
+
 void CColorCfg::OnSelectImage() 
 {
 
-	static char BASED_CODE szFilter[] = "Bitmap files (*.bmp)|*.bmp|All Files (*.*)|*.*||";
+	static char BASED_CODE szFilter[] = "Image Files (*.bmp;*.jpg;*.gif;*.png;*.tiff)|*.bmp;*.jpg;*.gif;*.png;*.tiff|All Files (*.*)|*.*||";
 
 	CFileDialog dlg(TRUE, ".bmp", m_strImage, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
 
@@ -426,7 +488,22 @@ void CColorCfg::OnSelectImage()
 
 			m_strImage = dlg.GetPathName();
 			UpdateData(FALSE);
-			AfxMessageBox("You need to restart RoboMX to take the change into effect.", MB_ICONINFORMATION);
+			//AfxMessageBox("You need to restart RoboMX to take the change into effect.", MB_ICONINFORMATION);
 		}
 	}
 }
+
+void CColorCfg::OnBnClickedEdithilite()
+{
+
+	char buffer[MAX_PATH+1];
+	GetWindowsDirectory((LPSTR)&buffer, MAX_PATH+1);
+
+	CString strExec, strParam;
+	strExec.Format("%s\\notepad.exe", buffer);
+	strParam.Format("%s\\hilite.ini", g_sSettings.GetWorkingDir());
+	Util::ShellExecuteWait(strExec, strParam);
+	g_sSettings.LoadHiLite();
+	AfxMessageBox("Hilight list was loaded", MB_ICONINFORMATION);
+}
+

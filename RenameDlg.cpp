@@ -19,6 +19,7 @@
 #include "stdafx.h"
 #include "Metis3.h"
 #include "RenameDlg.h"
+#include ".\renamedlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -57,6 +58,7 @@ void CRenameDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CRenameDlg, CDialog)
 	//{{AFX_MSG_MAP(CRenameDlg)
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDOK, OnBnClickedOk)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -78,4 +80,10 @@ void CRenameDlg::OnOK()
 		return;
 	}
 	CDialog::OnOK();
+}
+
+void CRenameDlg::OnBnClickedOk()
+{
+	// TODO: Add your control notification handler code here
+	OnOK();
 }

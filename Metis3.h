@@ -35,12 +35,21 @@
 //
 
 class CMetis3View;
+class CMainFrame;
 
 class CMetis3App : public CWinApp
 {
 public:
+	void ApplyPic(void);
+	CString m_strAppTitle;
+	void SetRandomAppTitle();
 	CMetis3App();
 
+	inline CMainFrame* GetMainFrame(){
+
+		ASSERT(m_pMainWnd);
+		return (CMainFrame*)m_pMainWnd;
+	}
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CMetis3App)
@@ -48,14 +57,13 @@ public:
 	virtual BOOL InitInstance();
 	//}}AFX_VIRTUAL
 	
-	int m_nWSA;
-	//CMetis3View* m_pView;
-// Implementation
-	//{{AFX_MSG(CMetis3App)
+	int    m_nWSA;
+	BOOL   m_bPicLoaded;
+	CImage m_iBgImage;
+	WNDPROC m_pOldWndProc;
+	static LRESULT CALLBACK NewWndProc(HWND hwnd, UINT uMsg, WPARAM wParam,LPARAM lParam);
+
 	afx_msg void OnAppAbout();
-		// NOTE - the ClassWizard will add and remove member functions here.
-		//    DO NOT EDIT what you see in these blocks of generated code !
-	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };
 

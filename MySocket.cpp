@@ -19,6 +19,7 @@
 #include "stdafx.h"
 #include "Metis3.h"
 #include "MySocket.h"
+#include ".\mysocket.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -30,6 +31,7 @@ static char THIS_FILE[]=__FILE__;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
+// default constructor for TCP server/client socket
 CMySocket::CMySocket()
 {
 
@@ -37,6 +39,7 @@ CMySocket::CMySocket()
 	m_dwLastError = SOCK_NOERROR;
 }
 
+// Constructor for incoming TCP clients
 CMySocket::CMySocket(SOCKET sSocket) :
   m_sSocket(sSocket)
 {
@@ -44,6 +47,7 @@ CMySocket::CMySocket(SOCKET sSocket) :
 	m_dwLastError = SOCK_NOERROR;
 }
 
+// Constructor for UDP datagram socket
 CMySocket::CMySocket(int nProtocol, u_short uPort)
 {
 
@@ -69,11 +73,6 @@ CMySocket::CMySocket(int nProtocol, u_short uPort)
 		m_dwLastError = WSAGetLastError();
 		Close();
 	}
-	/*if(listen(m_sSocket, 10) != 0){
-
-		m_dwLastError = WSAGetLastError();
-		Close();
-	}*/
 
 	m_dwLastError = SOCK_NOERROR;
 }
@@ -82,6 +81,50 @@ CMySocket::CMySocket(int nProtocol, u_short uPort)
 {
 
 	Close();
+}
+
+
+void CMySocket::SetSocket(SOCKET sSocket)
+{
+
+	if(m_sSocket != INVALID_SOCKET){
+
+		Close();
+	}
+
+	m_sSocket = sSocket;
+}
+
+int CMySocket::Listen(u_short uPort)
+{
+	sockaddr_in local;
+
+	local.sin_family	  = AF_INET;
+	local.sin_addr.s_addr = INADDR_ANY;
+	local.sin_port		  = htons(uPort);
+
+	m_sSocket = socket(AF_INET,SOCK_STREAM,0);
+
+	if(m_sSocket == INVALID_SOCKET){
+
+		m_dwLastError = WSAGetLastError();
+		Close();
+		return 0;
+	}
+
+	if(bind(m_sSocket, (sockaddr*)&local, sizeof(local)) != 0){
+
+		m_dwLastError = WSAGetLastError();
+		Close();
+		return 0;
+	}
+
+	if(listen(m_sSocket, SOMAXCONN) != 0){
+
+		m_dwLastError = WSAGetLastError();
+		Close();
+	}
+	return 1;
 }
 
 BOOL CMySocket::Connect(LPCTSTR lpszIP, WORD wPort, int nWait, int nProtocol)
@@ -197,7 +240,7 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait, int nProtocol)
 	return TRUE;
 }
 
-SOCKET CMySocket::Accept()
+SOCKET CMySocket::Accept(sockaddr_in* from)
 {
 
 	if(m_sSocket == INVALID_SOCKET){
@@ -206,11 +249,10 @@ SOCKET CMySocket::Accept()
 		return INVALID_SOCKET;
 	}
 
-	sockaddr_in from;
-	int fromlen = sizeof(from);
+	int fromlen = (from != NULL ? sizeof(from) : 0);
 
-	SOCKET nSocket = accept(m_sSocket, (struct sockaddr*)&from, &fromlen);
-	if(nSocket = INVALID_SOCKET){
+	SOCKET nSocket = accept(m_sSocket, 0, 0);
+	if(nSocket == INVALID_SOCKET){
 
 		Close();
 		m_dwLastError = WSAGetLastError();
@@ -367,10 +409,10 @@ BOOL CMySocket::Close(void)
 	// check if we are actually connected ;)
 	if(m_sSocket != INVALID_SOCKET){
 
-		char Char;
+		//char Char;
 
 		shutdown(m_sSocket, SD_BOTH);
-		while(recv(m_sSocket, &Char, 1, 0) == 1); // recv left data...
+		//while(recv(m_sSocket, &Char, 1, 0) == 1); // recv left data...
 		closesocket(m_sSocket);
 		m_sSocket = INVALID_SOCKET;
 	}
@@ -395,7 +437,7 @@ CString CMySocket::GetLastErrorStr(void)
 	switch(GetLastError()){
 
 	case SOCK_NOERROR:
-		strError = "No error occured";
+		strError = "No software-error occured. Probably Disconnected / Kicked / Banned?";
 		break;
 	case SOCK_TIMEOUT:
 		strError = "Connection timeout";

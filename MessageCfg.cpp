@@ -49,7 +49,7 @@ CMessageCfg::CMessageCfg(CWnd* pParent /*=NULL*/)
 
 void CMessageCfg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
+	CCfgDlg::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CMessageCfg)
 	DDX_Control(pDX, IDC_QUICKCMDS, m_lbQuick);
 	DDX_Text(pDX, IDC_MSG_ADD, m_strAdd);
@@ -76,7 +76,7 @@ END_MESSAGE_MAP()
 BOOL CMessageCfg::OnInitDialog() 
 {
 
-	CDialog::OnInitDialog();
+	CCfgDlg::OnInitDialog();
 	
 	LoadQuickCmds();
 

@@ -30,6 +30,8 @@
 #include "ColorCfg.h"
 #include "MessageCfg.h"
 #include "SfxCfg.h"
+#include "FunCfg.h"
+#include "PeerCfg.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // CSettingsDlg dialog
@@ -52,6 +54,8 @@ public:
 	CColorCfg cfgColor;
 	CMessageCfg cfgMsg;
 	CSfxCfg  cfgSfx;
+	CFunCfg  cfgFun;
+	CPeerCfg cfgPeer;
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CSettingsDlg)
@@ -70,6 +74,8 @@ protected:
 	virtual BOOL OnInitDialog();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedCancel();
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -87,10 +87,13 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
+#include "Metis3.h"
 #include "resource.h"
 #include "docselect.h"
 #include "switcherbutton.h"
 #include "menubutton.h"
+#include ".\docselect.h"
+#include "MainFrm.h"
 
 //#include <afxpriv.h>
 
@@ -117,6 +120,8 @@ static char THIS_FILE[] = __FILE__;
 		// the document bar.
 
 // End Yogesh Jagota
+
+extern UINT UWM_INPUT;
 
 /////////////////////////////////////////////////////////////////////////////
 // CDocSelector
@@ -412,6 +417,39 @@ void CDocSelector::OnSize(UINT nType, int cx, int cy)
 	// End Yogesh Jagota
 }
 
+
+void CDocSelector::UpdateTitle(CWnd* pWnd, CString strTitle)
+{
+
+	int index = -1;
+	
+	for(int i = 0; i < m_Buttons.GetSize(); i++){
+
+		if(GetButtonFromID(i)->m_AttachedView == pWnd){
+
+			GetButtonFromID(i)->SetText(strTitle);
+			break;
+		}
+	}
+}
+
+
+void CDocSelector::SetHiLite(CView* pView)
+{
+
+	int index = -1;
+	
+	for(int i = 0; i < m_Buttons.GetSize(); i++){
+
+		if(GetButtonFromID(i)->m_AttachedView == pView){
+
+			GetButtonFromID(i)->SetHiLite();
+			break;
+		}
+	}
+}
+
+
 BOOL CDocSelector::RemoveButton(CWnd* wnd)
 {
 	// Yogesh Jagota
@@ -665,7 +703,11 @@ void CDocSelector::OnTimer(UINT nIDEvent)
 		// May be the user has destroyed the view...
 		if ( wndButton->m_AttachedView )
 		{
-			if ( GetFocus() == wndButton->m_AttachedView )
+
+			// Modified by Thees Winkler to fix akward problem with CFormView and GetFocus()
+			// MFC works in misterious ways ;)
+			if(GetApp()->GetMainFrame()->MDIGetActive() == wndButton->m_AttachedView->GetParentFrame())
+			//if ( GetFocus() == wndButton->m_AttachedView)
 			{
 				if ( wndButton->m_nState != SWITCHBUTTON_SELECTED )
 				{
@@ -693,6 +735,25 @@ void CDocSelector::BroadcastMessage(UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	for(int i = 0; i < m_Buttons.GetSize(); i++){
 
-		GetButtonFromID( i )->m_AttachedView->SendMessage(uMsg, wParam, lParam);
+		GetButtonFromID(i)->m_AttachedView->SendMessage(uMsg, wParam, lParam);
 	}
+}
+
+UINT CDocSelector::DeliverMessage(DWORD dwID, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+
+	for(int i = 0; i < m_Buttons.GetSize(); i++){
+
+		if(GetButtonFromID(i)->m_AttachedView->m_hWnd == (HWND)dwID){
+
+			GetButtonFromID(i)->m_AttachedView->SendMessage(uMsg, wParam, lParam);
+		}
+	}
+	return 1;
+}
+
+void CDocSelector::InputAll(CString strText)
+{
+	
+	BroadcastMessage(UWM_INPUT, 1, (LPARAM)(LPCTSTR)strText);
 }

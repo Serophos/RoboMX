@@ -59,6 +59,7 @@ protected:
 		// NOTE: the ClassWizard will add member functions here
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+	virtual BOOL OnInitDialog(void);
 };
 
 //{{AFX_INSERT_LOCATION}}

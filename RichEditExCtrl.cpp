@@ -22,8 +22,7 @@
 #include "Metis3.h"
 #include "RichEditExCtrl.h"
 #include "resource.h"
-#include "Metis3Doc.h"
-#include "Metis3View.h"
+#include "MainFrm.h"
 #include "Settings.h"
 
 #ifdef _DEBUG
@@ -34,38 +33,7 @@ static char THIS_FILE[] = __FILE__;
 
 extern CSettings g_sSettings;
 
-_AFX_RICHEDITEX_STATE::_AFX_RICHEDITEX_STATE()
-{
-	m_hInstRichEdit20 = NULL ;
-}
-
-_AFX_RICHEDITEX_STATE::~_AFX_RICHEDITEX_STATE()
-{
-	if( m_hInstRichEdit20 != NULL )
-	{
-		::FreeLibrary( m_hInstRichEdit20 ) ;
-	}
-}
-
-_AFX_RICHEDITEX_STATE _afxRichEditStateEx ;
-
-BOOL PASCAL AfxInitRichEditEx()
-{
-	if( ! ::AfxInitRichEdit() )
-	{
-		return FALSE ;
-	}
-
-	_AFX_RICHEDITEX_STATE* l_pState = &_afxRichEditStateEx ;
-
-	if( l_pState->m_hInstRichEdit20 == NULL )
-	{
-		l_pState->m_hInstRichEdit20 = LoadLibraryA( "RICHED20.DLL" ) ;
-	}
-
-	return l_pState->m_hInstRichEdit20 != NULL ;
-}
-
+//#define _NO_EMOTICONS
 /////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl
 UINT UWM_RCLICK = ::RegisterWindowMessage("UWM_RCLICK_F20B5623-6391-4396-8A7E-3C48F6194F10");
@@ -93,56 +61,10 @@ BEGIN_MESSAGE_MAP(CRichEditExCtrl, CRichEditCtrl)
 	//{{AFX_MSG_MAP(CRichEditExCtrl)
 	ON_WM_CREATE()
 	//}}AFX_MSG_MAP
-	ON_NOTIFY_REFLECT_EX(EN_LINK, OnLink)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl message handlers
-
-int CRichEditExCtrl::OnCreate(LPCREATESTRUCT lpCreateStruct) 
-{
-	if (CRichEditCtrl::OnCreate(lpCreateStruct) == -1)
-		return -1;
-	
-	OleInitialize(NULL);
-	
-	
-	return 0;
-}
-
-BOOL CRichEditExCtrl::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, 
-							 DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, 
-							 UINT nID, CCreateContext* pContext) 
-{
-
-	
-	if (!AfxInitRichEditEx())
-		return FALSE;
-	
-	CWnd* pWnd = this;
-	BOOL bReturn =  pWnd->Create(_T("RichEdit20A"), NULL, dwStyle, rect, pParentWnd, nID);
-	m_nID = nID;
-
-	return bReturn;
-
-}
-
-BOOL CRichEditExCtrl::CreateEx(DWORD dwExStyle, LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, void *lpExtra) 
-{
-
-	if (!::AfxInitRichEditEx())
-    {
-        return FALSE;
-    
-	}
-	
-	VERIFY(pParentWnd != NULL);
-
-	m_pView = (CMetis3View*)pParentWnd;
-	m_nID = nID;
-
-	return CWnd::CreateEx(dwExStyle, "RichEdit20A", lpszWindowName, dwStyle, rect, pParentWnd, nID, lpExtra);
-}
 
 void CRichEditExCtrl::Init()
 {
@@ -154,48 +76,54 @@ void CRichEditExCtrl::Init()
 void CRichEditExCtrl::SetText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 {
 
-	PARAFORMAT pf;
+	if(!g_sSettings.GetEmoticons()){
 
-	pf.cbSize = sizeof(PARAFORMAT);
-	pf.dwMask = PFM_OFFSETINDENT | PFM_RIGHTINDENT;
-	pf.dxRightIndent = 0;
-	pf.dxStartIndent = 0;
+		AppendText(lpszText, text, bg);
+	}
+	else{
+		PARAFORMAT pf;
 
-	SetParaFormat(pf);
+		pf.cbSize = sizeof(PARAFORMAT);
+		pf.dwMask = PFM_OFFSETINDENT | PFM_RIGHTINDENT;
+		pf.dxRightIndent = 0;
+		pf.dxStartIndent = 0;
 
-	char before[1024], after[1024];
-	
-	for (;;)
-	{
-		char next[16] = { NULL }, *rpl = NULL;
-		HBITMAP hbmNext = NULL;
-		POSITION pos;
-		CList<EMOTICON *, EMOTICON *> &lEmoticons = m_pView->m_lEmoticons;
-		pos = lEmoticons.GetHeadPosition();
+		SetParaFormat(pf);
 
-		while (pos)
+		char before[1024], after[1024];
+		
+		for (;;)
 		{
-			EMOTICON *eEmoticon = lEmoticons.GetNext(pos);
-			char *txt = stristr(lpszText, eEmoticon->szActivationText);
-			if ((txt < rpl && txt) || !rpl && txt)
+			char next[16] = { NULL }, *rpl = NULL;
+			HBITMAP hNext;
+			POSITION pos;
+			CList<Emoticon *, Emoticon*> &lEmoticons = ((CMainFrame*)GetApp()->m_pMainWnd)->m_lEmoticons;
+			pos = lEmoticons.GetHeadPosition();
+
+			while (pos)
 			{
-				rpl = txt;
-				hbmNext = eEmoticon->hBitmap;
-				strcpy(next, eEmoticon->szActivationText);
+				Emoticon *eEmoticon = lEmoticons.GetNext(pos);
+				char *txt = stristr(lpszText, eEmoticon->szActivationText);
+				if ((txt < rpl && txt) || !rpl && txt)
+				{
+					rpl = txt;
+					hNext = eEmoticon->hBitmap;
+					strcpy(next, eEmoticon->szActivationText);
+				}
 			}
-		}
 
-		if (rpl)
-		{
-			strstp(lpszText, before, next, after);
-			AppendText(before, text, bg);
-			InsertBitmap(hbmNext);
-			lpszText = after;
-		}
-		else
-		{
-			if (strlen(lpszText) > 0) AppendText(lpszText, text, bg);
-			break;
+			if (rpl)
+			{
+				strstp(lpszText, before, next, after);
+				AppendText(before, text, bg);
+				InsertBitmap(hNext);
+				lpszText = after;
+			}
+			else
+			{
+				if (strlen(lpszText) > 0) AppendText(lpszText, text, bg);
+				break;
+			}
 		}
 	}
 }
@@ -206,6 +134,7 @@ void CRichEditExCtrl::InsertBitmap(HBITMAP hBitmap)
 	LineScroll(1);
 	int nLen = GetWindowTextLength();
 	SetSel(nLen, nLen);
+
 	CImageDataObject::InsertBitmap(GetIRichEditOle(), this, hBitmap);
 }
 

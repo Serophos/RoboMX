@@ -24,6 +24,7 @@
 #include "Tokenizer.h"
 #include "SfxEdit.h"
 #include <mmsystem.h>
+#include ".\sfxcfg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -87,6 +88,13 @@ BEGIN_MESSAGE_MAP(CSfxCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_EDIT, OnEdit)
 	ON_BN_CLICKED(IDC_PLAY, OnPlay)
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDC_PLAY_CONNECTED, OnBnClickedPlayConnected)
+	ON_BN_CLICKED(IDC_PLAY_DISCONNECTED, OnBnClickedPlayDisconnected)
+	ON_BN_CLICKED(IDC_PLAY_TOPIC, OnBnClickedPlayTopic)
+	ON_BN_CLICKED(IDC_PLAY_MOTD, OnBnClickedPlayMotd)
+	ON_BN_CLICKED(IDC_PLAY_REDIRECTED, OnBnClickedPlayRedirected)
+	ON_BN_CLICKED(IDC_PLAY_START, OnBnClickedPlayStart)
+	ON_BN_CLICKED(IDC_PLAY_ERROR, OnBnClickedPlayError)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -186,11 +194,11 @@ void CSfxCfg::LoadSounds()
 					strEvent.MakeLower();
 					if(strResp.GetLength() < 8){
 
-						strResp = g_sSettings.GetWorkingDir() + "\\sfx\\" + strResp;
+						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
 					}
 					else if(strResp.GetAt(1) != ':'){
 
-						strResp = g_sSettings.GetWorkingDir() + "\\sfx\\" + strResp;
+						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
 					}
 
 					SOUND s;
@@ -436,4 +444,44 @@ void CSfxCfg::OnPlay()
 
 		AfxMessageBox("Could not play file " + m_lcSounds.GetItemText(iItem.iItem, 1), MB_ICONSTOP);
 	}
+}
+
+void CSfxCfg::OnBnClickedPlayConnected()
+{
+
+	PlaySound(m_strConnect, NULL, SND_FILENAME|SND_ASYNC);
+}
+
+void CSfxCfg::OnBnClickedPlayDisconnected()
+{
+
+	PlaySound(m_strDisconnect, NULL, SND_FILENAME|SND_ASYNC);
+}
+
+void CSfxCfg::OnBnClickedPlayTopic()
+{
+
+	PlaySound(m_strTopic, NULL, SND_FILENAME|SND_ASYNC);
+}
+
+void CSfxCfg::OnBnClickedPlayMotd()
+{
+
+	PlaySound(m_strMotd, NULL, SND_FILENAME|SND_ASYNC);
+}
+
+void CSfxCfg::OnBnClickedPlayRedirected()
+{
+
+	PlaySound(m_strRedirect, NULL, SND_FILENAME|SND_ASYNC);}
+
+void CSfxCfg::OnBnClickedPlayStart()
+{
+
+	PlaySound(m_strStart, NULL, SND_FILENAME|SND_ASYNC);}
+
+void CSfxCfg::OnBnClickedPlayError()
+{
+
+	PlaySound(m_strError, NULL, SND_FILENAME|SND_ASYNC);
 }

@@ -25,15 +25,17 @@
 #include "Metis3Doc.h"
 #include "Metis3View.h"
 #include "RenameDlg.h"
-#include <fstream.h>
 #include "Clipboard.h"
 #include "SystemInfo.h"
 #include "Settings.h"
 #include "Tokenizer.h"
 #include "SfxCfg.h"
 #include "InputRequest.h"
-
+#include "RoboEx.h"
 #include <mmsystem.h>
+#include "RoboEx.h"
+#include "Util.h"
+#include ".\metis3view.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -45,10 +47,6 @@ static char THIS_FILE[] = __FILE__;
 #define TIMER_CONNECT 10334
 #define TIMER_PING    10035
 //#define TIMER_UPDATE  10036
-const char* line_types[] = {"Unknown", "14.4K", "28.8K", "33.3K", "56K", 
-                            "64K ISDN", "128K ISDN", "Cable", "DSL", "T1", "T3"};
-
-#define NUM_LINES 11
 
 extern UINT UWM_INPUT; // = ::RegisterWindowMessage("UWM_INPUT-7A14F66B-ABAB-4525-AC01-841C82EC48B6");
 extern UINT UWM_MESSAGE;
@@ -65,14 +63,19 @@ extern UINT UWM_REDIRECT;
 extern UINT UWM_LOAD_SETTINGS;
 extern UINT UWM_RCLICK;
 
-extern axtoi(char *hexStg, int nLen);
+#define WM_ECHOTEXT WM_APP+1
+#define WM_ECHOSYSTEXT WM_APP+2
+
 extern CSettings g_sSettings;
 
-extern CArray<SOUND, SOUND> g_aSounds;
+extern CPtrArray g_aPlugins;
+#define PLUGIN ((CRoboEx*)g_aPlugins[i])
 
+extern CArray<SOUND, SOUND> g_aSounds;
 CStringArray g_aIgnored;
 CSystemInfo  g_sSystem;
 CStringArray g_aRooms;
+
 
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3View
@@ -80,7 +83,6 @@ CStringArray g_aRooms;
 IMPLEMENT_DYNCREATE(CMetis3View, CFormView)
 
 BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
-	//{{AFX_MSG_MAP(CMetis3View)
 	ON_COMMAND(ID_RENAME, OnRename)
 	ON_WM_TIMER()
 	ON_WM_SIZE()
@@ -122,9 +124,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_COMMAND(ID_CHATROOM_ASCIIARTDESIGN, OnChatroomAsciiartdesign)
 	ON_COMMAND(ID_CHAT_TEXTTRICKS_3DBUTTONSNORMAL, OnChatTexttricks3dbuttonsnormal)
 	ON_COMMAND(ID_CHAT_TEXTTRICKS_3DBUTTONSACTION, OnChatTexttricks3dbuttonsaction)
-	ON_NOTIFY(EN_LINK, IDC_CHAT, OnLinkChat)
-	//}}AFX_MSG_MAP
-	ON_UPDATE_COMMAND_UI_RANGE(ID_USERLIST_SENDMESSAGE,ID_USERLIST_UNIGNORE, OnUpdateUserlistMenu)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_USERLIST_SENDMESSAGE,ID_USERLIST_READUSERMESSAGE, OnUpdateUserlistMenu)
 	ON_REGISTERED_MESSAGE(UWM_INPUT, OnInput)
 	ON_REGISTERED_MESSAGE(UWM_MESSAGE, OnMessage)
 	ON_REGISTERED_MESSAGE(UWM_ACTION, OnAction)
@@ -139,6 +139,9 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_REGISTERED_MESSAGE(UWM_REDIRECT, OnRedirect)
 	ON_REGISTERED_MESSAGE(UWM_LOAD_SETTINGS, OnReloadCfg)
 	ON_REGISTERED_MESSAGE(UWM_RCLICK, OnRclickChat)
+	ON_NOTIFY(EN_LINK, IDC_CHAT, OnEnLinkChat)
+	ON_MESSAGE(WM_ECHOTEXT, OnEchoText)
+	ON_MESSAGE(WM_ECHOSYSTEXT, OnEchoSysText)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -171,6 +174,8 @@ void CMetis3View::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_USERLIST, m_lcUsers);
 	DDX_Text(pDX, IDC_INPUT, m_strInput);
 	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_SYS, m_rSys);
+	DDX_Control(pDX, IDC_CHAT, m_rChat);
 }
 
 BOOL CMetis3View::PreCreateWindow(CREATESTRUCT& cs)
@@ -189,7 +194,6 @@ void CMetis3View::OnInitialUpdate()
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_CHANNEL );
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	
-	LoadEmoticons();
 	LoadRCMSMenu();
 	CRect rc;
 	CWnd* pWnd = GetDlgItem(IDC_SPLITTER_1);
@@ -205,27 +209,11 @@ void CMetis3View::OnInitialUpdate()
 	m_sSplitter2.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_2);
 	m_sSplitter2.SetStyle(SPS_HORIZONTAL);
 	m_sSplitter2.SetRange(150, 150, 1);
-	//m_sSplitter2.SetRange(-150, 150);
-
-	pWnd = GetDlgItem(IDC_STATIC_SYSOUT);
-	pWnd->GetWindowRect(&rc);
-	ScreenToClient(&rc);
-	
-	m_rSys.CreateEx(0, NULL, NULL, WS_VISIBLE | WS_CHILD |
-					WS_CLIPCHILDREN | WS_VSCROLL | ES_MULTILINE | ES_READONLY |
-					ES_AUTOVSCROLL | ES_LEFT | ES_WANTRETURN, rc, this, IDC_SYSOUT, NULL);
 
 	m_rSys.Init();
-	pWnd = GetDlgItem(IDC_STATIC_CHAT);
-	pWnd->GetWindowRect(&rc);
-	ScreenToClient(&rc);
-	
-	m_rChat.CreateEx(0, NULL, NULL, WS_VISIBLE | WS_CHILD |
-					WS_CLIPCHILDREN | WS_VSCROLL | ES_MULTILINE | ES_READONLY |
-					ES_AUTOVSCROLL | ES_LEFT | ES_WANTRETURN, rc, this, IDC_CHAT, NULL);
-
-
+	m_rSys.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
 	m_rChat.Init();
+	m_rChat.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
 	m_rChat.SendMessage(EM_AUTOURLDETECT, TRUE, 0);
 
 
@@ -233,12 +221,10 @@ void CMetis3View::OnInitialUpdate()
 		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, "Arial");
 	ListView_SetExtendedListViewStyle(m_lcUsers.m_hWnd, LVS_EX_FULLROWSELECT);
 
-	// Set up layout
-	m_lcUsers.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
-	m_lcUsers.InsertColumn(1, "Files", LVCFMT_RIGHT, 60);
-	m_lcUsers.InsertColumn(2, "Line", LVCFMT_CENTER, 80);
-	m_lcUsers.InsertColumn(3, "Node-IP", LVCFMT_RIGHT, 120);
-	m_lcUsers.InsertColumn(4, "Node-Port", LVCFMT_RIGHT, 80);
+
+	m_lcUsers.SetHeadings("Name,120;Files,60;Line,80;Node-IP,120;Node-Port,80");
+	m_lcUsers.LoadColumnInfo();
+	
 	m_lcUsers.SetColors(
 		g_sSettings.GetRGBNormalMsg(),
 		g_sSettings.GetRGBFiles(),
@@ -248,6 +234,17 @@ void CMetis3View::OnInitialUpdate()
 		);
 	m_lcUsers.SetBkColor(g_sSettings.GetRGBBg());
 
+	m_lcUsers.SetColors(
+		g_sSettings.GetRGBNormalMsg(),
+		g_sSettings.GetRGBFiles(),
+		g_sSettings.GetRGBLine(),
+		g_sSettings.GetRGBIP(),
+		g_sSettings.GetRGBPort()
+		);
+	if(g_sSettings.GetHiliteUsers()){
+
+		m_lcUsers.SetHiLite();
+	}
 	m_lcUsers.SetFont(&m_fFont);
 	m_eInput.SetFont(&m_fFont);
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
@@ -279,6 +276,14 @@ LRESULT CMetis3View::OnReloadCfg(WPARAM w, LPARAM l)
 		g_sSettings.GetRGBPort()
 		);
 	m_lcUsers.SetBkColor(g_sSettings.GetRGBBg());
+	if(g_sSettings.GetHiliteUsers()){
+
+		m_lcUsers.SetHiLite();
+	}
+	else{
+
+		m_lcUsers.SetHiLite(FALSE);
+	}
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
 	m_rSys.Init();
 	m_rSys.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
@@ -355,17 +360,22 @@ void CMetis3View::OnDestroy()
 {
 	
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.RemoveButton(this);
-	KillTimer(TIMER_PING);
+	m_lcUsers.SaveColumnInfo();
 
-	if(g_sSettings.GetSoundFX()){
+	for(int i = 0; i < g_aPlugins.GetSize() && m_bHasJoined; i++){
+
+		PLUGIN->OnLeaveChannel((DWORD)m_hWnd);
+	}
+
+	KillTimer(TIMER_PING);
+	m_mxClient.Disconnect();
+
+	if(g_sSettings.GetSoundFX() && m_bHasJoined){
 
 		PlaySound(g_sSettings.GetSfxPart(), NULL, SND_FILENAME|SND_ASYNC);
 	}
 
 	CFormView::OnDestroy();
-	
-	m_mxClient.Disconnect();
-	DeleteEmoticons();
 }
 
 void CMetis3View::OnTimer(UINT nIDEvent) 
@@ -397,7 +407,7 @@ void CMetis3View::WriteSystemMsg(CString strMsg, COLORREF crText)
 	CString strTime;
 	strTime.Format("[%s]", GetMyLocalTime());
 	
-	m_rSys.SetText(strTime, g_sSettings.GetRGBBg(), crText);
+	m_rSys.SetText(strTime, g_sSettings.GetRGBTime(), crText);
 	m_rSys.SetText(" " + strMsg + "\n", crText, g_sSettings.GetRGBBg());
 
 	if(crText == g_sSettings.GetRGBErr() && g_sSettings.GetSoundFX()){
@@ -406,48 +416,40 @@ void CMetis3View::WriteSystemMsg(CString strMsg, COLORREF crText)
 	}
 }
 
-void CMetis3View::RemoveUser(CString strUser)
+void CMetis3View::RemoveUser(const CString strUser, const CString strIP, WORD wPort)
 {
 
 	LVFINDINFO fi;
-	fi.flags = LVFI_STRING;
+	fi.flags = LVFI_STRING|LVFI_WRAP;
 	fi.psz = strUser;
 
 	int nPos = m_lcUsers.FindItem(&fi, -1);
 
-	if(nPos >= 0){
+	while(nPos >= 0){
 
-		m_lcUsers.DeleteItem(nPos);
+		if((m_lcUsers.GetItemText(nPos, 0) == strUser) &&
+			(m_lcUsers.GetItemText(nPos, 4) == Util::FormatInt(wPort)) &&
+			(m_lcUsers.GetItemText(nPos, 3) == strIP)){
+
+
+			m_lcUsers.DeleteItem(nPos);
+			m_lcUsers.Sort();
+			break;
+		}
+
 	}
 }
 
 void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort)
 {
 
-	//int nPos = m_lcUsers.GetItemCount();
-	CString strTmp;
-	int nPos = m_lcUsers.InsertItem(0, strUsername, 0);
+	CString strFiles, strLine, strPort;
+	strFiles.Format("%d", dwFiles);
+	strLine = Util::FormatLine(wLine);
+	strPort.Format("%d", wNodePort);
 
-	strTmp.Format("%03d", dwFiles);
-	m_lcUsers.SetItemText(nPos, 1, strTmp);
-
-	if((wLine >= 0) && (wLine < NUM_LINES)){
-		
-		strTmp = line_types[wLine];
-	}
-	else{
-
-		strTmp = "N/A";
-	}
-
-	m_lcUsers.SetItemText(nPos, 2, strTmp);
-
-	
-	m_lcUsers.SetItemText(nPos, 3, strNodeIP);
-
-	strTmp.Format("%d", wNodePort);
-	m_lcUsers.SetItemText(nPos, 4, strTmp);
-
+	m_lcUsers.AddItem(strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strNodeIP, (LPCTSTR)strPort);
+	m_lcUsers.Sort();
 }
 
 
@@ -462,7 +464,7 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 
 		CString strTime;
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBTopic());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBTopic());
 	}
 
 	m_rChat.SetText(" Topic: " + strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
@@ -484,7 +486,7 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 
 		CString strTime;
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBMotd());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBMotd());
 	}
 
 	m_rChat.SetText(" " + strMotd + "\n", g_sSettings.GetRGBMotd(), g_sSettings.GetRGBBg());
@@ -518,17 +520,17 @@ LRESULT CMetis3View::OnAddUser(WPARAM wParam, LPARAM lParam)
 	}
 	int nA = 0, nB = 0, nC = 0, nD = 0;
 	
-	nA = axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
-	nB = axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
-	nC = axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
-	nD = axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
+	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
+	nB = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
+	nC = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
+	nD = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
 
 	user.strNodeIP.Format("%d.%d.%d.%d", nD, nC, nB, nA);
 	memcpy(&user.wNodePort,  pUserInfo+nLen+4, 2);
 	memcpy(&user.wLineType,  pUserInfo+nLen+6, 2);
 	memcpy(&user.dwNumFiles, pUserInfo+nLen+8, 4);
 	m_aUsers.Add(user);
-	m_aUsers.Add(user);
+	//m_aUsers.Add(user);
 	
 	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort);
 
@@ -540,62 +542,39 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 	char* pUserInfo = (char*)lParam;
 	WORD  wLen		= (WORD)wParam;
-	//User-Join notification (Server)
-	//0x006E][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
-	CString strUser = pUserInfo, strTmp;
-	int nLen = strUser.GetLength()+1;
-	
-	if(nLen >= wLen) return 0;
 
 	MX_USERINFO user;
-	user.strUser = strUser;
+	//User-Join notification (Server)
+	//0x006E][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
+	DWORD dwIP;
+	LPSTR lpUser;
+	CString strUser;
+	if(Util::ScanMessage(pUserInfo, wLen, "SDWWD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles) != 5){
 
-	DWORD dwTest;
-	memcpy(&dwTest,   pUserInfo+nLen,   4);
-	strTmp.Format("%X", dwTest);
-	if(strTmp.GetLength() < 8){
-	
-		strTmp.Insert(0, "0");
+		TRACE("Error decoding join notification packet\n");
+		return 0;
 	}
-	int nA = 0, nB = 0, nC = 0, nD = 0;
-	
-	nA = axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
-	nB = axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
-	nC = axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
-	nD = axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
+	strUser = lpUser;
+	user.strUser = strUser;
+	user.strNodeIP = Util::FormatIP(dwIP);
 
-	user.strNodeIP.Format("%d.%d.%d.%d", nD, nC, nB, nA);
-	memcpy(&user.wNodePort,  pUserInfo+nLen+4, 2);
-	memcpy(&user.wLineType,  pUserInfo+nLen+6, 2);
-	memcpy(&user.dwNumFiles, pUserInfo+nLen+8, 4);
 	m_aUsers.Add(user);
-	
-	
+
 	strUser.Replace("\\rtf", "#rtf");
 	
 	CString strJoin;
-	if((user.wLineType >= 0) && (user.wLineType< NUM_LINES)){
-		
-		strTmp = line_types[user.wLineType];
-	}
-	else{
-
-		strTmp = "N/A";
-	}
 
 	if(g_sSettings.GetPrintTime()){
 
 		CString strTime;
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBJoin());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBJoin());
 	}
 
-	//strJoin.Format(" >>> Joins: %s (%d Files, %s)\n", strUser, user.dwNumFiles, strTmp);
 	strJoin = g_sSettings.GetJoin();
 	strJoin.Replace("%NAME%", strUser);
-	strJoin.Replace("%LINE%", strTmp);
-	strTmp.Format("%d", user.dwNumFiles);
-	strJoin.Replace("%FILES%", strTmp);
+	strJoin.Replace("%LINE%", Util::FormatLine(user.wLineType));
+	strJoin.Replace("%FILES%", Util::FormatInt(user.dwNumFiles));
 	m_rChat.SetText(" " + strJoin + "\n", g_sSettings.GetRGBJoin(), g_sSettings.GetRGBBg());
 
 	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort);
@@ -606,9 +585,18 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 			InputWelcome();
 			m_bHasJoined = TRUE;
+
+			for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+				PLUGIN->OnJoinChannel((DWORD)m_hWnd, GetDocument()->m_strRoom, &m_aUsers);
+			}
 		}
 	}
 
+	for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+		PLUGIN->OnJoin((DWORD)m_hWnd, &user);
+	}
 	OnUpdate(this, 0, 0);
 	return 1;
 }
@@ -622,78 +610,72 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	//0x0070]
 	//[Name:N][00:1][IP-Address:4][UDP-Port:2] // old
 	//[Name:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4] // new
-	CString strOldname = pRenameInfo;
-	DWORD   dwOldIP, dwNewIP, dwFiles;
-	WORD    wOldPort, wNewPort, wLine;
-	int nLen = strOldname.GetLength();
-
-	if(nLen+7 >= wLen) return 0; // error
+	//CString strOldname = pRenameInfo;
+	LPSTR   lpOldName = 0, lpNewName = 0;
+	DWORD   dwOldIP = 0, dwNewIP = 0, dwFiles = 0;
+	WORD    wOldPort = 0, wNewPort = 0, wLine = 0;
 	
-	memcpy(&dwOldIP, (pRenameInfo+nLen+1), 4);
-	memcpy(&wOldPort, (pRenameInfo+nLen+5), 2);
+	if(Util::ScanMessage(pRenameInfo, wLen, "SDWSDWWD", 
+								&lpOldName, &dwOldIP, &wOldPort,
+								&lpNewName, &dwNewIP, &wNewPort, &wLine, &dwFiles) != 8){
 
-	nLen+=7;
-		
-	CString strNewname = (pRenameInfo+nLen);
-	nLen+= strNewname.GetLength();
+		TRACE("Error decoding rename notification packet\n");
+		return 0;
+	}
 
-	if(nLen+7 > wLen) return 0; // error
-
-	memcpy(&dwNewIP, (pRenameInfo+nLen+1), 4);
-	memcpy(&wNewPort, (pRenameInfo+nLen+5), 2);
-	memcpy(&wLine, (pRenameInfo+nLen+7), 2);
-	memcpy(&dwFiles, (pRenameInfo+nLen+9), 4);
+	//CString strOldName;
+	//strOldName.Format("%s", lpOldName);
 
 	LVFINDINFO fi;
-	fi.flags = LVFI_STRING;
-	fi.psz = strOldname;
+	fi.flags = LVFI_STRING|LVFI_WRAP;
+	fi.psz = lpOldName;
 
 	int nPos = m_lcUsers.FindItem(&fi, -1);
-	
-	CString strTmp;
+
+	MX_USERINFO oldUser, newUser;
+
 	if(nPos >= 0){
 
+		// Find user...
 		for(int i = 0; i < m_aUsers.GetSize(); i++){
 
-			if(m_aUsers[i].strUser == strOldname) break;
+			TRACE("%s %s\n", m_aUsers[i].strUser, lpOldName);
+			if(m_aUsers[i].strUser.Compare(lpOldName) == 0) break;
 		}
+		if(i >= m_aUsers.GetSize()){
 
-		m_lcUsers.SetItemText(nPos, 0, strNewname); // name
+			CString strMsg;
+			strMsg.Format("Error during User-Rename handling: User %s does not exist\n", lpOldName);
+			WriteSystemMsg(strMsg, g_sSettings.GetRGBErr());
+			return 0;
+		}
+		oldUser = m_aUsers[i];
+		newUser = oldUser;
+
+		newUser.strUser = lpNewName;
+		newUser.wLineType = wLine;
+		newUser.wNodePort = wNewPort;
+		newUser.dwNumFiles = dwFiles;
+		newUser.strNodeIP = Util::FormatIP(dwNewIP);
 		
-		strTmp.Format("%03d", dwFiles);
-		m_lcUsers.SetItemText(nPos, 1, strTmp); // files
-		m_aUsers[i].strUser = strNewname;
+		m_aUsers.SetAt(i, newUser);
+		m_lcUsers.SetItemText(nPos, 0, newUser.strUser); // name
+		m_lcUsers.SetItemText(nPos, 1, Util::FormatInt(newUser.dwNumFiles)); // files
+		m_lcUsers.SetItemText(nPos, 2, Util::FormatLine(newUser.wLineType)); // line
+		m_lcUsers.SetItemText(nPos, 3, newUser.strNodeIP); // nodeip
+		m_lcUsers.SetItemText(nPos, 4, Util::FormatInt(newUser.wNodePort)); // nodeport
+		m_lcUsers.Sort();
+	}
+	else{
 
-		if((wLine >= 0) && (wLine < NUM_LINES)){
-			
-			strTmp = line_types[wLine];
-		}
-		else{
+		CString strErr;
+		strErr.Format("Debug Assertion Failed: Could not locate '%s' in the userlist. Please report this error. CListCtrl::FindItem returned %d\n", lpOldName, nPos);
+		WriteSystemMsg(strErr, g_sSettings.GetRGBErr());
+		return 0;
+	}
+	for(int i = 0; i < g_aPlugins.GetSize(); i++){
 
-			strTmp = "N/A";
-		}
-		m_lcUsers.SetItemText(nPos, 2, strTmp); // line
-		m_aUsers[i].wLineType = wLine;
-
-		strTmp.Format("%X", dwNewIP);
-		if(strTmp.GetLength() < 8){
-		
-			strTmp.Insert(0, "0");
-		}
-		int nA = 0, nB = 0, nC = 0, nD = 0;
-		
-		nA = axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
-		nB = axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
-		nC = axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
-		nD = axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
-
-		strTmp.Format("%d.%d.%d.%d", nD, nC, nB, nA);
-		m_lcUsers.SetItemText(nPos, 3, strTmp); // nodeip
-		m_aUsers[i].strNodeIP = strTmp;
-
-		strTmp.Format("%d", wNewPort);
-		m_lcUsers.SetItemText(nPos, 4, strTmp); // nodeport
-		m_aUsers[i].wNodePort = wNewPort;
+		PLUGIN->OnRename((DWORD)m_hWnd, &oldUser, &newUser);
 	}
 
 	OnUpdate(this, 0, 0);
@@ -706,7 +688,37 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 	//User-Part notification (Server)
 	//0x0073][Username:N][00:1][IP-Address:4][UDP-Port:2]
 
-	CString strUser = (LPCSTR)lParam;
+	//CString strUser = (LPCSTR)lParam;
+	char* pPart = (char*)lParam;
+	WORD  wLen  = (WORD)wParam;
+	
+	DWORD dwIP = 0;
+	WORD wPort = 0;
+	LPSTR lpUser = 0;
+
+	if(Util::ScanMessage(pPart, wLen, "SDW", &lpUser, &dwIP, &wPort) != 3){
+
+		TRACE("Error decoding Part notification packet\n");
+		return 0;
+	}
+
+	CString strIP   = Util::FormatIP(dwIP);
+	CString strUser = lpUser;
+	MX_USERINFO user;
+
+	for(int i = 0; i < m_aUsers.GetSize(); i++){
+
+		if((m_aUsers[i].strUser == strUser) && 
+			(m_aUsers[i].strNodeIP == strIP) &&
+			 (m_aUsers[i].wNodePort == wPort)) break;
+	}
+
+	if(i < m_aUsers.GetSize()){
+
+		user = m_aUsers[i];
+		m_aUsers.RemoveAt(i);
+		RemoveUser(strUser, strIP, wPort);
+	}
 
 	strUser.Replace("\\rtf", "#rtf");
 	
@@ -714,7 +726,7 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 	if(g_sSettings.GetPrintTime()){
 
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBPart());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBPart());
 	}
 	
 	strPart = g_sSettings.GetPart();
@@ -722,9 +734,11 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 
 	m_rChat.SetText(" " + strPart + "\n", g_sSettings.GetRGBPart(), g_sSettings.GetRGBBg());
 
-	RemoveUser(strUser);
-	
-	OnUpdate(this, 0, 0);
+	for(i = 0; i < g_aPlugins.GetSize(); i++){
+
+		PLUGIN->OnPart((DWORD)m_hWnd, &user);
+	}
+	//OnUpdate(this, 0, 0);
 	return 1;
 }
 
@@ -757,18 +771,25 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
-	
+
+	for(i = 0; i < g_aPlugins.GetSize(); i++){
+
+		PLUGIN->OnMessage((DWORD)m_hWnd, &strName, &strMsg, FALSE);
+	}
+	if(strMsg.IsEmpty()) return 1;
+
 	if(g_sSettings.GetPrintTime()){
 
 
 		CString strTime;
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBNormalName());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBNormalName());
 	}
 	m_rChat.SetText(" " + g_sSettings.GetBrMsgFront(), g_sSettings.GetRGBBrMessage(), g_sSettings.GetRGBBg());
 	m_rChat.SetText(strName, g_sSettings.GetRGBNormalName(), g_sSettings.GetRGBBg());
 	m_rChat.SetText(g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBBrMessage(), g_sSettings.GetRGBBg());
 	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+	HandleHiLite();
 
 	if(g_sSettings.GetSfxChatSfx()){
 
@@ -812,20 +833,27 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 			return 1;
 	}
 
+
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
+
+	for(i = 0; i < g_aPlugins.GetSize(); i++){
+
+		PLUGIN->OnMessage((DWORD)m_hWnd, &strName, &strMsg, TRUE);
+	}
 	
 	if(g_sSettings.GetPrintTime()){
 
 
 		CString strTime;
 		strTime.Format("[%s]", GetMyLocalTime());
-		m_rChat.SetText(strTime, g_sSettings.GetRGBBg(), g_sSettings.GetRGBActionMsg());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBActionMsg());
 	}
-	m_rChat.SetText(" " + g_sSettings.GetBrMsgFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(" " + g_sSettings.GetBrActionFront(), g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
 	m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
-	m_rChat.SetText(g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
+	m_rChat.SetText(g_sSettings.GetBrActionEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
 	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
+	HandleHiLite();
 
 	if(g_sSettings.GetSfxChatSfx()){
 
@@ -838,8 +866,6 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 			}
 		}
 	}
-
-
 	return 1;
 }
 
@@ -856,10 +882,10 @@ LRESULT CMetis3View::OnUnknown(WPARAM wParam, LPARAM lParam)
 	{
 
 		c = (unsigned char)pCmd[i];
-		if(c == '\0') strCmd+="[00]";
+		if(c == '\0') strCmd+="0";
 		else strCmd.Insert(i, c);
 	}
-	strOut.Format("Unknown Command 0x%X len=%d cmd=%s", wType, wLen, strCmd);
+	strOut.Format("Fixme: Unknown Command 0x%X len=%d cmd=%s", wType, wLen, strCmd);
 	WriteSystemMsg(strOut);
 
 	return 1;
@@ -913,7 +939,7 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 	else if(m_strInput.Find("/all ", 0) == 0){
 
 		m_strInput = m_strInput.Mid(5);
-		((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.BroadcastMessage(UWM_INPUT, 1, (LPARAM)(LPTSTR)(LPCTSTR)m_strInput);
+		((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.InputAll(m_strInput);
 		m_strInput = "";
 		UpdateData(FALSE);
 		return 1;
@@ -926,10 +952,17 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 		m_rChat.ReplaceSel("");
 	}
 
-	m_mxClient.SendMessage(m_strInput, m_strInput.GetLength(), bAction);
-	UpdateAverageLag();
+	for(int i = 0; i < g_aPlugins.GetSize(); i++){
 
-	m_strInput = "";
+		PLUGIN->OnInputHook((DWORD)m_hWnd, &m_strInput);
+	}
+
+	if(!m_strInput.IsEmpty()){
+
+		m_mxClient.SendMessage(m_strInput, m_strInput.GetLength(), bAction);
+		UpdateAverageLag();
+		m_strInput = "";
+	}
 	UpdateData(FALSE);
 	OnUpdate(0,0,0);
 	return 1;
@@ -958,64 +991,6 @@ void CMetis3View::OnRename()
 		GetDocument()->m_strName = dlg.m_strName;
 		GetDocument()->m_wLine   = dlg.m_nLine;
 		GetDocument()->SetTitle(GetDocument()->m_strRoom);
-	}
-}
-
-void CMetis3View::LoadEmoticons()
-{
-
-	fstream f;
-	char szFileName[1024];
-	char szActivationText[64];
-
-	f.open("emoticons.ini", ios::in);
-
-	if (f.eof()) 
-		return;
-
-	while (!f.eof())
-	{
-		f.getline(szActivationText, sizeof(szActivationText));
-
-		if (f.eof())
-			return;
-
-		f.getline(szFileName, sizeof(szFileName));
-
-		AddEmoticon(szFileName, szActivationText);
-	}
-}
-
-void CMetis3View::AddEmoticon(char *szFileName, char *szActivationText)
-{
-
-	EMOTICON *eEmoticon = new EMOTICON;
-
-	strcpy(eEmoticon->szActivationText, szActivationText);
-	strcpy(eEmoticon->szFileName, szFileName);
-
-	eEmoticon->hBitmap = (HBITMAP)::LoadImage(NULL, szFileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_DEFAULTCOLOR);
-
-	if (!eEmoticon->hBitmap)
-	{
-		delete eEmoticon;
-		return;
-	}
-
-	m_lEmoticons.AddTail(eEmoticon);
-}
-
-void CMetis3View::DeleteEmoticons()
-{
-
-	POSITION pos;
-	pos = m_lEmoticons.GetHeadPosition();
-	while (pos)
-	{
-		EMOTICON *eEmoticon = m_lEmoticons.GetNext(pos);
-		FreeResource(eEmoticon->hBitmap);
-		m_lEmoticons.RemoveAt(m_lEmoticons.Find(eEmoticon));
-		delete eEmoticon;
 	}
 }
 
@@ -1189,7 +1164,7 @@ LRESULT CMetis3View::OnRclickChat(WPARAM w, LPARAM l)
 void CMetis3View::OnUserlistSendmessage() 
 {
 
-	AfxMessageBox("Sorry. This feature has not been implemented yet.");
+	AfxMessageBox("Not implemented\n");
 }
 
 void CMetis3View::OnUserlistRedirect() 
@@ -1402,6 +1377,12 @@ void CMetis3View::OnUserlistIgnore()
 				return;
 		}
 		g_aIgnored.Add(strUser);
+		if(GetKeyState(VK_SHIFT) < 0){
+
+			CString strIgnored;
+			strIgnored.Format("ignored user '%s'", strUser);
+			m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), TRUE);
+		}
 	}	
 }
 
@@ -1420,8 +1401,16 @@ void CMetis3View::OnUserlistUnignore()
 		}
 		for(int i = 0; i < g_aIgnored.GetSize(); i++){
 
-			if(g_aIgnored[i] == strUser)
+			if(g_aIgnored[i] == strUser){
+
 				g_aIgnored.RemoveAt(i);
+				if(GetKeyState(VK_SHIFT) < 0){
+
+					CString strIgnored;
+					strIgnored.Format("un-ignored user '%s'", strUser);
+					m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), TRUE);
+				}
+			}
 		}
 	}	
 }
@@ -1940,15 +1929,33 @@ void CMetis3View::OnChatroomAsciiartdesign()
 	}
 }
 
-
-void CMetis3View::OnLinkChat(NMHDR* pNMHDR, LRESULT* pResult) 
+void CMetis3View::OnEnLinkChat(NMHDR *pNMHDR, LRESULT *pResult)
 {
-	ENLINK *pEnPLink = reinterpret_cast<ENLINK *>(pNMHDR);
-	// TODO: The control will not send this notification unless you override the
-	// CFormView::OnInitDialog() function to send the EM_SETEVENTMASK message
-	// to the control with the ENM_PROTECTED flag ORed into the lParam mask.
-	TRACE("Boom\n");
-	// TODO: Add your control notification handler code here
+	ENLINK *pEnLink = reinterpret_cast<ENLINK *>(pNMHDR);
 	
+	AfxMessageBox(":-)");
 	*pResult = 0;
+}
+
+LRESULT CMetis3View::OnEchoText(WPARAM wParam, LPARAM lParam)
+{
+
+	m_rChat.SetText(((EXT_MSG_STRUCT*)lParam)->lpszMsg, (COLORREF)((EXT_MSG_STRUCT*)lParam)->wParam, (COLORREF)((EXT_MSG_STRUCT*)lParam)->lParam);
+	return 1;
+}
+
+LRESULT CMetis3View::OnEchoSysText(WPARAM wParam, LPARAM lParam)
+{
+
+	m_rSys.SetText(((EXT_MSG_STRUCT*)lParam)->lpszMsg, (COLORREF)((EXT_MSG_STRUCT*)lParam)->wParam, (COLORREF)((EXT_MSG_STRUCT*)lParam)->lParam);
+	return 1;
+}
+
+void CMetis3View::HandleHiLite(void)
+{
+
+	if(GetApp()->GetMainFrame()->MDIGetActive() != GetParentFrame()){
+
+		GetApp()->GetMainFrame()->m_wndDocSelector.SetHiLite(this);
+	}
 }

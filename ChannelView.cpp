@@ -22,6 +22,8 @@
 #include "ChannelView.h"
 #include "MainFrm.h"
 #include "Settings.h"
+#include "Clipboard.h"
+#include ".\channelview.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,6 +32,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 extern CSettings g_sSettings;
+
 extern UINT UWM_LOAD_SETTINGS;
 
 /////////////////////////////////////////////////////////////////////////////
@@ -44,6 +47,8 @@ CChannelView::CChannelView()
 {
 	m_pThis = this;
 	m_bNoScroll = FALSE;
+	m_nPerc = 0;
+	m_bInit = FALSE;
 }
 
 CChannelView::~CChannelView()
@@ -52,14 +57,14 @@ CChannelView::~CChannelView()
 
 void CChannelView::DoDataExchange(CDataExchange* pDX) 
 {
-	
+
 	CFormView::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CChannelView)
 	DDX_Control(pDX, IDC_CHANNELS, m_lcList);
 	DDX_Text(pDX, IDC_SEARCH, m_strSearch);
-	DDX_Text(pDX, IDC_STATIC_MESSAGES, m_strMsg);
 	DDX_Check(pDX, IDC_SELECTION_NOSCROLL, m_bNoScroll);
 	//}}AFX_DATA_MAP
+	DDX_Control(pDX, IDC_STATUS, m_pgStatus);
 }
 
 BEGIN_MESSAGE_MAP(CChannelView, CFormView)
@@ -74,6 +79,9 @@ BEGIN_MESSAGE_MAP(CChannelView, CFormView)
 	ON_NOTIFY(NM_RCLICK, IDC_CHANNELS, OnRclickChannels)
 	ON_NOTIFY(NM_DBLCLK, IDC_CHANNELS, OnDblclkChannels)
 	ON_BN_CLICKED(IDC_SELECTION_NOSCROLL, OnSelectionNoscroll)
+	ON_COMMAND(ID_POPUP_LOOPBACKJOIN, OnPopupLoopbackjoin)
+	ON_COMMAND(ID_POPUP_COPYTOPIC, OnPopupCopytopic)
+	ON_COMMAND(ID_POPUP_COPYROOMNAME, OnPopupCopyroomname)
 	//}}AFX_MSG_MAP
 	ON_REGISTERED_MESSAGE(UWM_LOAD_SETTINGS, OnReloadCfg)
 END_MESSAGE_MAP()
@@ -115,13 +123,22 @@ void CChannelView::OnInitialUpdate()
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_LIST );
 
-	m_lcList.InsertColumn(0, "Room", LVCFMT_LEFT, 300);
-	m_lcList.InsertColumn(1, "Users", LVCFMT_RIGHT, 50);
-	m_lcList.InsertColumn(2, "Limit", LVCFMT_RIGHT, 40);
-	m_lcList.InsertColumn(3, "Topic", LVCFMT_LEFT, 300);
 	ListView_SetExtendedListViewStyle(m_lcList.m_hWnd, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
-	m_lcList.SetColors(g_sSettings.GetRGBNormalMsg(), RGB(0, 128, 0), RGB(128, 0, 0), RGB(0, 64, 128), RGB(0, 64, 128));
+
+	m_lcList.SetHeadings("Room,300;Users,50;Limit,50;Topic,300");
+	m_lcList.LoadColumnInfo();
+
+	m_lcList.SetColors(
+		g_sSettings.GetRGBNormalMsg(),
+		g_sSettings.GetRGBFiles(),
+		g_sSettings.GetRGBLine(),
+		g_sSettings.GetRGBIP(),
+		g_sSettings.GetRGBPort()
+		);
 	m_lcList.SetBkColor(g_sSettings.GetRGBBg());
+	m_lcList.SetHiLite();
+
+	m_pgStatus.SetRange(0, 100);
 
 	m_mxClient.SetCallBackProck(CChannelView::ClientCallback, (DWORD)this);
 	m_mxClient.Connect(NULL, "ROBOMX000", 0, 6699);
@@ -130,7 +147,13 @@ void CChannelView::OnInitialUpdate()
 LRESULT CChannelView::OnReloadCfg(WPARAM w, LPARAM l)
 {
 
-	m_lcList.SetColors(g_sSettings.GetRGBNormalMsg(), RGB(0, 128, 0), RGB(128, 0, 0), RGB(0, 64, 128), RGB(0, 64, 128));
+	m_lcList.SetColors(
+		g_sSettings.GetRGBNormalMsg(),
+		g_sSettings.GetRGBFiles(),
+		g_sSettings.GetRGBLine(),
+		g_sSettings.GetRGBIP(),
+		g_sSettings.GetRGBPort()
+		);
 	m_lcList.SetBkColor(g_sSettings.GetRGBBg());
 
 	Invalidate();
@@ -141,12 +164,13 @@ LRESULT CChannelView::OnReloadCfg(WPARAM w, LPARAM l)
 void CChannelView::OnDestroy() 
 {
 
+	m_bInit = FALSE;
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.RemoveButton(this);
-
+	m_lcList.SaveColumnInfo();
 	m_mxClient.Disconnect();
-	CFormView::OnDestroy();
 	((CMainFrame*)GetApp()->m_pMainWnd)->m_bChannelList = FALSE;
 	((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom.Empty();
+	CFormView::OnDestroy();
 }
 
 void CChannelView::OnSize(UINT nType, int cx, int cy) 
@@ -199,41 +223,43 @@ BOOL CChannelView::ClientCallback(DWORD dwParam, WPARAM wParam, LPARAM lParam)
 		case CLN_ERROR :
 			switch(lParam){
 				case CLNC_WPNCONNECTFAILED :
-					m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "Could not connect to WPN");
+					m_pThis->SetPaneStatus("Could not connect to WPN");
 					return TRUE;
 
 				case CLNC_WPNGETPARENTFAILED :
-					m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "Connection to Parent Node failed.");
+					m_pThis->SetPaneStatus("Connection to Parent Node failed.");
 					return TRUE;
 				}
 			break;		
 
 		case CLN_WPNCONNECTSTART :
-			m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "Connecting to WPN");
+			m_pThis->SetPaneStatus("Connecting to WPN");
 			return TRUE; 
 
 		case CLN_WPNCONNECTED :
-			m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "Loading channel list...");
+			m_pThis->SetPaneStatus("Loading channel list...");
 			m_pThis->m_nLastItem = GetTickCount();
 			m_pThis->m_mxClient.SendQueStatus(1, 1, 0);
 			m_pThis->m_mxClient.SendFormatMessage(WPN_ENUMCHATROOMS, "D", 0);
 			m_pThis->SetTimer(TIMER_LOAD, 500, 0);
+			m_pThis->m_tTime.ReInit();
+			m_pThis->m_pgStatus.SetPos(0);
 			return TRUE;
 
 		case CLN_CHANGEPARENTSTART :
-			m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "");
+			m_pThis->m_pStatusBar->SetPaneText(0, "");
 			return TRUE;
 		
 		case CLN_CHANGEPARENTCOMP :
-			m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "");
+			m_pThis->m_pStatusBar->SetPaneText(0, "");
 			return TRUE;
 
 		case CLN_PARENTDISCONNECTED :
-			m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "Parent node closed connection");
+			m_pThis->SetPaneStatus("Parent node closed connection");
 			return TRUE;	
 
 		case CLN_WPNDISCONNECTED :
-			m_pThis->SetDlgItemText(IDC_STATIC_MESSAGES, "WPN Disconnected");
+			m_pThis->SetPaneStatus("WPN Disconnected");
 			return TRUE;
 		
 		case CLN_CHATROOMINFO : {
@@ -256,16 +282,15 @@ void CChannelView::UpdateRoomItem(LPCTSTR lpszRoomName, WORD wUsers, WORD wLimit
 	lvi.psz   = lpszRoomName;
 	if(m_lcList.FindItem(&lvi, -1) == -1){
 
-		CString strTmp;
-		int nPos = m_lcList.InsertItem(m_lcList.GetItemCount(), lpszRoomName);
-		strTmp.Format("%d", wUsers);
-		m_lcList.SetItemText(nPos, 1, strTmp);
-		strTmp.Format("%d", wLimit);
-		m_lcList.SetItemText(nPos, 2, strTmp);
-		m_lcList.SetItemText(nPos, 3, lpszTopic);
-
-		strTmp.Format("%04d Rooms", m_lcList.GetItemCount());
-		GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strTmp);
+		CString strNum, strMax;
+		strNum.Format("%d", wUsers);
+		strMax.Format("%d", wLimit);
+		m_lcList.AddItem(lpszRoomName, (LPCTSTR)strNum, (LPCTSTR)strMax, lpszTopic);
+		//m_nPerc = (int)((float)m_lcList.GetItemCount() / 1500.f * 100.f);
+		//m_pgStatus.SetPos(m_nPerc);
+		//m_tTime.Calculate(m_nPerc);
+		//strNum.Format("%04d Rooms (ETA: %s, %s, %s)", m_lcList.GetItemCount(), m_tTime.GetRemainingString(), m_tTime.GetElapsedString(), m_tTime.GetEstimateString());
+		//GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strNum);
 		if(m_bNoScroll){
 
 			int n = m_lcList.GetNextItem(-1, LVNI_SELECTED);
@@ -283,14 +308,23 @@ void CChannelView::OnTimer(UINT nIDEvent)
 
 	if(nIDEvent == TIMER_LOAD){
 
+		m_bInit = TRUE;
 		if((GetTickCount() - m_nLastItem) >= 10000){
 
 			m_mxClient.Disconnect();
 			GetDlgItem(IDC_REFRESH)->EnableWindow(TRUE);
 			GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(TRUE);
-			SetDlgItemText(IDC_STATIC_MESSAGES, "Finished.");
+			m_pStatusBar->SetPaneText(0, "Finished.");
 			KillTimer(TIMER_LOAD);
 		}
+		
+		CString strNum;
+		m_nPerc = (int)((float)m_lcList.GetItemCount() / 1500.f * 100.f);
+		m_pgStatus.SetPos(m_nPerc);
+		m_tTime.Calculate(m_nPerc);
+		strNum.Format("%04d Rooms (ETA: %s, %s, %s)", m_lcList.GetItemCount(), m_tTime.GetRemainingString(), m_tTime.GetElapsedString(), m_tTime.GetEstimateString());
+		GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strNum);
+
 		if(m_pStatusBar){
 
 			if(((CMainFrame*)GetApp()->m_pMainWnd)->GetActiveFrame() == GetParentFrame()){
@@ -314,12 +348,11 @@ void CChannelView::OnChangeSearch()
 	m_nLastItem = GetTickCount();
 	LVFINDINFO lvi;
 
-	lvi.flags = LVFI_STRING|LVFI_PARTIAL;
+	lvi.flags = LVFI_STRING|LVFI_PARTIAL|LVFI_WRAP;
 	lvi.psz   = m_strSearch;
 	int n = m_lcList.FindItem(&lvi, -1);
 	if(n != -1){
 
-		//m_lcList.SetSelectionMark(n);
 		m_lcList.SetItemState(n, LVNI_SELECTED, LVNI_SELECTED);
 		m_lcList.EnsureVisible(n, FALSE);
 	}
@@ -364,15 +397,63 @@ void CChannelView::OnDblclkChannels(NMHDR* pNMHDR, LRESULT* pResult)
 
 	if(pNMListView->iItem >= 0){
 
-		m_lcList.GetItemText(pNMListView->iItem, 0);
 		((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom = m_lcList.GetItemText(pNMListView->iItem, 0);
 		((CMainFrame*)GetApp()->m_pMainWnd)->JoinChannel();
 	}
 	*pResult = 0;
 }
 
+void CChannelView::OnPopupLoopbackjoin() 
+{
+
+	int nSel = m_lcList.GetNextItem(-1, LVNI_SELECTED);
+	if(nSel >= 0){
+		
+		CString strRoom = m_lcList.GetItemText(nSel, 0);
+		nSel = strRoom.ReverseFind('_');
+		if(nSel > 0){
+
+			CString strTmp = strRoom.Mid(nSel + 9);
+			strRoom = strRoom.Left(nSel) + "_0100007F" + strTmp;
+		}
+		((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom = strRoom;
+		((CMainFrame*)GetApp()->m_pMainWnd)->JoinChannel();
+	}
+	
+}
+
+void CChannelView::OnPopupCopytopic() 
+{
+
+	int nSel = m_lcList.GetNextItem(-1, LVNI_SELECTED);
+	if(nSel >= 0){
+
+		CClipboard::SetText((LPTSTR)(LPCTSTR)m_lcList.GetItemText(nSel, 3));
+	}	
+}
+
+void CChannelView::OnPopupCopyroomname() 
+{
+
+	int nSel = m_lcList.GetNextItem(-1, LVNI_SELECTED);
+	if(nSel >= 0){
+
+		CClipboard::SetText((LPTSTR)(LPCTSTR)m_lcList.GetItemText(nSel, 0));
+	}	
+}
+
 void CChannelView::OnSelectionNoscroll() 
 {
 
 	UpdateData(TRUE);
+}
+
+
+void CChannelView::SetPaneStatus(const CString strText)
+{
+	
+	/*if(m_bInit && m_pStatusBar && ::IsWindow(m_hWnd)){
+
+		m_pStatusBar->SetPaneText(0, strText);
+	}*/
 }

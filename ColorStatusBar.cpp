@@ -62,6 +62,7 @@ void CColorStatusBar::SetLagColor(COLORREF cr, CString strLag)
 void CColorStatusBar::SetPaneText(DWORD dwIndex, CString strText, COLORREF cr)
 {
 
+	if(!::IsWindow(m_hWnd)) return;
 	CStatusBar::SetPaneText(dwIndex, strText, TRUE);
 
 	if(dwIndex == 2){

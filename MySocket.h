@@ -44,7 +44,7 @@ public:
 	BOOL Connect(LPCTSTR lpszIP, WORD wPort, int nWait = 0, int nProtocol = IPPROTO_TCP);
 	BOOL Connect(DWORD dwIP, WORD wPort, int nWait = 0, int nProtocol = IPPROTO_TCP);
 
-	SOCKET Accept();
+	SOCKET Accept(sockaddr_in* from = NULL);
 	
 	int Recv(char *pBuff, int nLen, int nWait = 0);
 	int RecvOnce(char *pBuff, int nMaxLen, int nWait = 0);
@@ -62,6 +62,8 @@ public:
 
 	SOCKET m_sSocket;			
 	DWORD  m_dwLastError;
+	int Listen(u_short uPort);
+	void SetSocket(SOCKET sSocket);
 };
 
 #endif // !defined(AFX_MYSOCKET_H__56B83F29_B3D6_4BF4_BC85_5DD89C6DE20C__INCLUDED_)

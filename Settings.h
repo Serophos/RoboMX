@@ -59,6 +59,8 @@ public:
 	void	SetFilterXtrem(BOOL bValue){ m_bFilterXtrem = bValue; }
 	void	SetFilterIgnore(BOOL bValue){ m_bFilterIgnore = bValue; }
 	void	SetFilterNormal(BOOL bValue){ m_bFilterNormal = bValue; }
+	void	SetEmoticons(BOOL bValue){ m_bEmoticons = bValue; }
+	void	SetHiliteUsers(BOOL bValue){ m_bHiliteUsers = bValue; }
 
 	void	SetDefaulFormat(CHARFORMAT2 cfValue){ m_cfDefault = cfValue; }
 	void	SetRGBNormalName(COLORREF crValue){ m_crNick = crValue; }
@@ -79,6 +81,9 @@ public:
 	void	SetRGBOK(COLORREF crValue){  m_crOK = crValue; }
 	void	SetRGBErr(COLORREF crValue){  m_crErr = crValue; }
 	void	SetRGBFocus(COLORREF crValue){ m_crFocus = crValue; }
+	void    SetRGBTime(COLORREF crValue){ m_crTime = crValue; }
+	void    SetRGBHiLite(COLORREF crValue){ m_crHiLite = crValue; }
+	void	SetRGBDocHiLite(COLORREF crValue){ m_crDocHiLite = crValue; }
 
 	void    SetUseImage(BOOL bValue){ m_bImage = bValue; }
 	void	SetImage(CString strValue){ m_strImage = strValue; }
@@ -102,6 +107,13 @@ public:
 	void	SetPing(BOOL bValue){ m_bPing = bValue; }
 	void	SetTimeFmt(int nValue){ m_nTimeFormat = nValue; }
 	void	SetFocus(BOOL bValue){ m_bFocus = bValue; }
+
+	// Serve shit
+	void	SetServerIP(DWORD dwValue){  m_dwIP = dwValue; }
+	void	SetServerPort(DWORD dwValue){  m_dwPort = dwValue; }
+	void	SetServerAuto(BOOL bValue){ m_bAutoStart = bValue; }
+	void	SetPMAcceptAll(BOOL bValue){  m_bAcceptAll = bValue; }
+	void	SetSavePath(CString strValue){ m_strSavePath = strValue; }
 
 	// Sound stuff
 	void    SetSfxJoin(CString strValue){ m_strSfxJoin = strValue; }
@@ -129,6 +141,8 @@ public:
 	BOOL	GetFilterXtrem(){ return m_bFilterXtrem; }
 	BOOL	GetFilterIgnore(){ return m_bFilterIgnore; }
 	BOOL	GetFilterNormal(){ return m_bFilterNormal; }
+	BOOL	GetEmoticons(){ return m_bEmoticons; }
+	BOOL	GetHiliteUsers(){ return m_bHiliteUsers; }
 
 	BOOL	GetMessageItalic(){ return m_bMsItalic; }
 	BOOL	GetMessageLine(){ return m_bMsLine; }
@@ -156,6 +170,7 @@ public:
 
 
 	CHARFORMAT2& GetDefaultFormat(){ return m_cfDefault; }
+	COLORREF	GetRGBTime(){ return m_crTime; }
 	COLORREF	GetRGBNormalName(){ return m_crNick; }
 	COLORREF	GetRGBNormalMsg(){ return m_crMessage; }
 	COLORREF	GetRGBActionMsg(){ return m_crAction; }
@@ -174,6 +189,9 @@ public:
 	COLORREF	GetRGBOK(){ return m_crOK; }
 	COLORREF	GetRGBErr(){ return m_crErr; }
 	COLORREF	GetRGBFocus(){ return m_crFocus; }
+	COLORREF	GetRGBHiLite(){ return m_crHiLite; }
+	COLORREF	GetRGBDocHiLite() { return m_crDocHiLite; }
+
 	CString		GetBrActionFront(){ return m_FA; }
 	CString		GetBrMsgFront(){ return m_FM; }
 	CString		GetBrActionEnd(){ return m_EA; }
@@ -201,6 +219,16 @@ public:
 	BOOL		GetSfxChatSfx(){ return m_bChatSfx; }
 	BOOL		GetSoundFX(){ return m_bSoundFX; }
 
+	// Serve shit
+	DWORD      GetServerIP(){ return m_dwIP; }
+	DWORD	   GetServerPort(){ return m_dwPort; }
+	BOOL	   GetServerAuto(){ return m_bAutoStart; }
+	BOOL	   GetPMAcceptAll(){ return m_bAcceptAll; }
+	CString	   GetSavePath(){ return m_strSavePath; }
+
+public: // public attributes
+	CStringArray m_aHilite;
+
 protected:
 	CString m_strWd;
 
@@ -218,7 +246,7 @@ protected:
 	int     m_bHistory;// = TRUE;
 	int		m_nMaxLines;// = 300;
 	int     m_nTimeFormat;
-
+	
 	BOOL	m_bBlockHttp;
 	BOOL	m_bBlockMotd;
 	BOOL	m_bBlockPrivate;
@@ -232,7 +260,8 @@ protected:
 	BOOL	m_bImage;
 	BOOL    m_bMiniTray;
 	BOOL	m_bFocus;
-
+	BOOL	m_bHiliteUsers;
+	BOOL	m_bEmoticons;
 
 	CHARFORMAT2	m_cfDefault;
 	COLORREF	m_crFocus;
@@ -253,6 +282,9 @@ protected:
 	COLORREF	m_crOK;
 	COLORREF	m_crErr;
 	COLORREF	m_crBg;
+	COLORREF    m_crTime;
+	COLORREF    m_crHiLite;
+	COLORREF	m_crDocHiLite;
 
 	CString		m_FA;
 	CString		m_FM;
@@ -279,6 +311,14 @@ protected:
 	BOOL		m_bChatSfx;
 	BOOL		m_bSoundFX;
 	
+	// Serve shit
+	DWORD      m_dwIP;
+	DWORD	   m_dwPort;
+	BOOL	   m_bAutoStart;
+	BOOL	   m_bAcceptAll;
+	CString	   m_strSavePath;
+public:
+	void LoadHiLite(void);
 };
 
 #endif // !defined(AFX_SETTINGS_H__25ADA47A_C2DF_42B2_B3AE_6C12BA658D11__INCLUDED_)

@@ -22,6 +22,7 @@
 
 #include "Metis3Doc.h"
 #include "ConnectionDlg.h"
+#include ".\metis3doc.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW

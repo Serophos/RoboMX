@@ -28,16 +28,7 @@
 #pragma comment(lib, "MXSock")
 
 
-
-typedef struct TAG_MXCHATUSERINFO{
-
-	CString strUser;
-	CString strNodeIP;
-	WORD    wNodePort;
-	WORD    wLineType;
-	DWORD	dwNumFiles;
-} MX_USERINFO, *PMX_USERINFO;
-
+#include "RoboEx.h"
 
 #define MXCHAT_LOGIN		0x0064
 #define MXCHAT_LOGINGRANTED 0x0066
@@ -76,6 +67,7 @@ public:
 	DWORD   m_dwClientIP;
 	DWORD   m_dwFiles;
 	
+
 	// Crypt Shit
 	DWORD m_dwUPKey;
 	DWORD m_dwDWKey;

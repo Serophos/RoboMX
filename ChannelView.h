@@ -31,6 +31,8 @@
 #include "ListClient.h"
 #include "ColorStatusBar.h"
 #include "MyListCtrl.h"
+#include "afxcmn.h"
+#include "TimeStatus.h"
 
 class CChannelView : public CFormView
 {
@@ -90,8 +92,17 @@ protected:
 	afx_msg void OnRclickChannels(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnDblclkChannels(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnSelectionNoscroll();
+	afx_msg void OnPopupLoopbackjoin();
+	afx_msg void OnPopupCopytopic();
+	afx_msg void OnPopupCopyroomname();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	CProgressCtrl m_pgStatus;
+	int 		  m_nPerc;
+	CTimeStatus   m_tTime;
+	BOOL          m_bInit;
+	void SetPaneStatus(const CString strText);
 };
 
 

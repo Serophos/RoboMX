@@ -20,6 +20,7 @@
 #include "stdafx.h"
 #include "Metis3.h"
 #include "CfgDlg.h"
+#include ".\cfgdlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -76,4 +77,12 @@ void CCfgDlg::OnOK()
 void CCfgDlg::OnCancel()
 {
 
+}
+
+BOOL CCfgDlg::OnInitDialog(void)
+{
+
+	CDialog::OnInitDialog();
+
+	return TRUE;
 }

@@ -29,7 +29,7 @@
 // CSfxCfg dialog
 #include "CfgDlg.h"
 
-typedef struct{
+typedef struct TAG_MXSOUND{
 
 	CString strTrigger;
 	CString strSound;
@@ -86,6 +86,14 @@ protected:
 	virtual BOOL OnInitDialog();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedPlayConnected();
+	afx_msg void OnBnClickedPlayDisconnected();
+	afx_msg void OnBnClickedPlayTopic();
+	afx_msg void OnBnClickedPlayMotd();
+	afx_msg void OnBnClickedPlayRedirected();
+	afx_msg void OnBnClickedPlayStart();
+	afx_msg void OnBnClickedPlayError();
 };
 
 //{{AFX_INSERT_LOCATION}}

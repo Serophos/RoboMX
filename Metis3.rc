@@ -1,4 +1,4 @@
-//Microsoft Developer Studio generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -27,18 +27,18 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // TEXTINCLUDE
 //
 
-1 TEXTINCLUDE DISCARDABLE 
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE DISCARDABLE 
+2 TEXTINCLUDE 
 BEGIN
     "#include ""afxres.h""\r\n"
     "\0"
 END
 
-3 TEXTINCLUDE DISCARDABLE 
+3 TEXTINCLUDE 
 BEGIN
     "#define _AFX_NO_SPLITTER_RESOURCES\r\n"
     "#define _AFX_NO_OLE_RESOURCES\r\n"
@@ -66,35 +66,39 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDR_MAINFRAME           ICON    DISCARDABLE     "res\\Metis3.ico"
-IDR_CHANNEL             ICON    DISCARDABLE     "res\\metistyp.ico"
-IDR_LIST                ICON    DISCARDABLE     "res\\list.ico"
-IDR_SERVER              ICON    DISCARDABLE     "res\\idr_serv.ico"
+IDR_MAINFRAME           ICON                    "res\\Metis3.ico"
+IDR_SETTINGS            ICON                    "res\\icon1.ico"
+IDR_CHANNEL             ICON                    "res\\metistyp.ico"
+IDR_LIST                ICON                    "res\\list.ico"
+IDR_SERVER              ICON                    "res\\idr_serv.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP  MOVEABLE PURE   "res\\channel.bmp"
-IDR_FULLSCREEN          BITMAP  DISCARDABLE     "res\\toolbar1.bmp"
-IDB_TOOLBAR256          BITMAP  DISCARDABLE     "res\\Toolbar_256.bmp"
-IDB_TOOLBAR256_DEACT    BITMAP  DISCARDABLE     "res\\toolbar2.bmp"
-IDB_MENU_BUTTON         BITMAP  DISCARDABLE     "res\\bitmap1.bmp"
-IDB_PREF                BITMAP  DISCARDABLE     "res\\pref.bmp"
+IDR_MAINFRAME           BITMAP                  "res\\channel.bmp"
+IDR_FULLSCREEN          BITMAP                  "res\\toolbar1.bmp"
+IDB_MENU_BUTTON         BITMAP                  "res\\bitmap1.bmp"
+IDB_PREF                BITMAP                  "res\\pref.bmp"
+IDB_ROBOMX              BITMAP                  "res\\RoboMX.bmp"
+IDB_ABOUTBG             BITMAP                  "res\\about.bmp"
+IDB_TOOLBAR256_DEACT    BITMAP                  "res\\toolbar2.bmp"
+IDB_TOOLBAR256          BITMAP                  "res\\Toolbar_256.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Toolbar
 //
 
-IDR_MAINFRAME TOOLBAR DISCARDABLE  16, 16
+IDR_MAINFRAME TOOLBAR  16, 16
 BEGIN
     BUTTON      ID_MYFILE_NEW
     BUTTON      ID_RECONNECT
     BUTTON      ID_FILE_CLOSE
     SEPARATOR
     BUTTON      ID_CHANNEL_CHANNELLIST
+    BUTTON      IDR_START_NODESERVER
     SEPARATOR
     BUTTON      ID_RENAME
     SEPARATOR
@@ -103,7 +107,7 @@ BEGIN
     BUTTON      ID_APP_ABOUT
 END
 
-IDR_FULLSCREEN TOOLBAR DISCARDABLE  16, 15
+IDR_FULLSCREEN TOOLBAR  16, 15
 BEGIN
     BUTTON      ID_VIEW_FULL_SCREEN
 END
@@ -114,7 +118,7 @@ END
 // Menu
 //
 
-IDR_MAINFRAME MENU PRELOAD DISCARDABLE 
+IDR_MAINFRAME MENU 
 BEGIN
     POPUP "&RoboMX"
     BEGIN
@@ -123,7 +127,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER, GRAYED
+        MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
@@ -137,11 +141,11 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Metis3...",            ID_APP_ABOUT
+        MENUITEM "&About RoboMX...",            ID_APP_ABOUT
     END
 END
 
-IDR_CHANNEL MENU PRELOAD DISCARDABLE 
+IDR_CHANNEL MENU 
 BEGIN
     POPUP "&RoboMX"
     BEGIN
@@ -150,7 +154,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Channellist\tCtrl+L",        ID_CHANNEL_CHANNELLIST
         MENUITEM SEPARATOR
-        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
+        MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
         MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
         MENUITEM SEPARATOR
@@ -248,11 +252,11 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Metis3...",            ID_APP_ABOUT
+        MENUITEM "&About RoboMX...",            ID_APP_ABOUT
     END
 END
 
-IDR_LIST MENU PRELOAD DISCARDABLE 
+IDR_LIST MENU 
 BEGIN
     POPUP "&RoboMX"
     BEGIN
@@ -261,7 +265,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
+        MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
@@ -285,19 +289,23 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "&About Metis3...",            ID_APP_ABOUT
+        MENUITEM "&About RoboMX...",            ID_APP_ABOUT
     END
 END
 
-IDR_LISTRMENU MENU DISCARDABLE 
+IDR_LISTRMENU MENU 
 BEGIN
     POPUP "POPUP"
     BEGIN
         MENUITEM "&Join",                       ID_MYFILE_NEW
+        MENUITEM "&Loopback Join",              ID_POPUP_LOOPBACKJOIN
+        MENUITEM SEPARATOR
+        MENUITEM "Copy &Roomname",              ID_POPUP_COPYROOMNAME
+        MENUITEM "Copy &Topic",                 ID_POPUP_COPYTOPIC
     END
 END
 
-IDR_USER MENU DISCARDABLE 
+IDR_USER MENU 
 BEGIN
     POPUP "Userlist"
     BEGIN
@@ -326,7 +334,7 @@ BEGIN
     END
 END
 
-IDR_CHAT MENU DISCARDABLE 
+IDR_CHAT MENU 
 BEGIN
     POPUP "Chatroom"
     BEGIN
@@ -377,7 +385,7 @@ BEGIN
     END
 END
 
-IDR_AWAY MENU DISCARDABLE 
+IDR_AWAY MENU 
 BEGIN
     POPUP "Away Control"
     BEGIN
@@ -399,13 +407,118 @@ BEGIN
     END
 END
 
+IDR_SERVER MENU 
+BEGIN
+    POPUP "&RoboMX"
+    BEGIN
+        MENUITEM "Connect &New Channel\tCtrl+N", ID_MYFILE_NEW
+        MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
+        MENUITEM SEPARATOR
+        MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Full Screen",                ID_VIEW_FULL_SCREEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Channelbar",                 ID_VIEW_CHANNELBAR
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Options",                    ID_VIEW_OPTIONS
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Next",                       AFX_IDS_SCNEXTWINDOW
+        MENUITEM SEPARATOR
+        MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
+        MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
+        MENUITEM "&Arrange",                    ID_WINDOW_ARRANGE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About RoboMX...",            ID_APP_ABOUT
+    END
+END
+
+IDR_SYSTRAY MENU 
+BEGIN
+    POPUP "SYSTRAY"
+    BEGIN
+        MENUITEM "&Restore",                    ID_SYSTRAY_RESTORE
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+END
+
+IDR_SETTINGS MENU 
+BEGIN
+    POPUP "&RoboMX"
+    BEGIN
+        MENUITEM "Connect &New Channel\tCtrl+N", ID_MYFILE_NEW
+        MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
+        MENUITEM SEPARATOR
+        MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       ID_APP_EXIT
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Full Screen",                ID_VIEW_FULL_SCREEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Channelbar",                 ID_VIEW_CHANNELBAR
+        MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
+        MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
+        MENUITEM SEPARATOR
+        MENUITEM "&Options",                    ID_VIEW_OPTIONS
+    END
+    POPUP "&Window"
+    BEGIN
+        MENUITEM "&Next",                       AFX_IDS_SCNEXTWINDOW
+        MENUITEM SEPARATOR
+        MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
+        MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
+        MENUITEM "&Arrange",                    ID_WINDOW_ARRANGE
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About RoboMX...",            ID_APP_ABOUT
+    END
+END
+
+IDM_DOCMAN MENU 
+BEGIN
+    POPUP "Context Menu"
+    BEGIN
+        POPUP "&Transparency"
+        BEGIN
+            MENUITEM "&0%",                         32845
+            MENUITEM "&10%",                        ID_TRANSPARENCY_10
+            MENUITEM "&20%",                        ID_TRANSPARENCY_20
+            MENUITEM "&30%",                        ID_TRANSPARENCY_30
+            MENUITEM "&40%",                        ID_TRANSPARENCY_40
+            MENUITEM "&50%",                        ID_TRANSPARENCY_50
+            MENUITEM "&60%",                        ID_TRANSPARENCY_60
+            MENUITEM "&70%",                        ID_TRANSPARENCY_70
+            MENUITEM "&80%",                        ID_TRANSPARENCY_80
+            MENUITEM "&90%",                        ID_TRANSPARENCY_90
+            MENUITEM "100&%",                       ID_TRANSPARENCY_100
+        END
+        MENUITEM "&Close",                      ID_CONTEXTMENU_CLOSE
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
 //
 
-IDR_MAINFRAME ACCELERATORS PRELOAD MOVEABLE PURE 
+IDR_MAINFRAME ACCELERATORS 
 BEGIN
     "L",            ID_CHANNEL_CHANNELLIST, VIRTKEY, CONTROL, NOINVERT
     "N",            ID_MYFILE_NEW,          VIRTKEY, CONTROL, NOINVERT
@@ -424,64 +537,48 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// 24
-//
-
-1                       24      MOVEABLE PURE   "RoboMX.exe.manifest"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG DISCARDABLE  0, 0, 325, 201
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_ABOUTBOX DIALOGEX 0, 0, 325, 223
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About RoboMX [:]"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,7,7,20,20
-    CTEXT           "RoboMX 0.1 ALPHA",IDC_STATIC,109,7,106,8,SS_NOPREFIX
-    CTEXT           "Copyright (C) 2004 by Thees Christian Winkler",
-                    IDC_STATIC,56,17,212,8
-    DEFPUSHBUTTON   "OK",IDOK,137,180,50,14,WS_GROUP
-    LTEXT           "Graphics (Logo and Emoticons) by Sabine Schwab",
-                    IDC_STATIC,82,28,161,8
-    LTEXT           "This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2.0 of the License, or (at your option) any later version.",
-                    IDC_STATIC,11,88,302,25
-    LTEXT           "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.",
-                    IDC_STATIC,11,116,303,27
-    LTEXT           "You should have received a copy of the GNU General Public License along with this library; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA",
-                    IDC_STATIC,12,145,300,27
-    GROUPBOX        "",IDC_STATIC,7,79,311,97
-    LTEXT           "Email: Bender979@yahoo.com --- Home: http://mxcontrol.sourceforge.net",
-                    IDC_STATIC,46,62,233,8
-    LTEXT           "Warning - This is a test version. It is not fit for general usage.",
-                    IDC_STATIC,67,71,190,8
-    LTEXT           "Parts of this program are based on BendMX 3.0",
-                    IDC_STATIC,87,45,150,8
+    DEFPUSHBUTTON   "OK",IDOK,137,202,50,14,WS_GROUP
+    LTEXT           "RoboMX is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2.0 of the License, or (at your option) any later version.",
+                    IDC_STATIC,11,112,302,25
+    LTEXT           "RoboMX is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.",
+                    IDC_STATIC,11,140,303,27
+    LTEXT           "You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA",
+                    IDC_STATIC,12,169,300,27
+    GROUPBOX        "",IDC_STATIC,7,103,311,97
+    CONTROL         "",IDC_ABOUTCTRL,"Static",SS_BLACKFRAME,7,7,311,98
 END
 
 IDD_METIS3_FORM DIALOGEX 0, 0, 458, 235
-STYLE DS_3DLOOK | WS_CHILD
-FONT 8, "MS Sans Serif"
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
     EDITTEXT        IDC_INPUT,1,219,403,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
     CONTROL         "List1",IDC_USERLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SORTASCENDING | WS_BORDER | 
                     WS_TABSTOP,296,2,161,215
-    PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
-    CONTROL         "",IDC_STATIC_SYSOUT,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,2,293,52
-    CONTROL         "",IDC_STATIC_CHAT,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,57,293,160
+    CONTROL         "",IDC_SYS,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
+                    2,293,52
+    CONTROL         "",IDC_CHAT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
+                    57,293,160
     CONTROL         "",IDC_SPLITTER_1,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,294,2,2,215
     CONTROL         "",IDC_SPLITTER_2,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,1,54,293,3
 END
 
-IDD_CONNECT DIALOG DISCARDABLE  0, 0, 339, 118
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_CONNECT DIALOG  0, 0, 339, 118
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Connect to..."
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -504,8 +601,8 @@ BEGIN
     PUSHBUTTON      "Clear Room History",IDC_CLEAR,255,70,71,14
 END
 
-IDD_RENAME DIALOG DISCARDABLE  0, 0, 254, 92
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_RENAME DIALOG  0, 0, 254, 92
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Change User Details..."
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -521,97 +618,105 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,197,71,50,14
 END
 
-IDD_CHANNELLIST DIALOG DISCARDABLE  0, 0, 381, 150
-STYLE WS_CHILD
-FONT 8, "MS Sans Serif"
+IDD_CHANNELLIST DIALOGEX 0, 0, 400, 168
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     CONTROL         "List1",IDC_CHANNELS,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
-                    WS_BORDER | WS_TABSTOP,2,35,377,113
-    PUSHBUTTON      "&Update",IDC_REFRESH,268,2,54,14,WS_DISABLED
-    PUSHBUTTON      "&Reload",IDC_CLEAR_REFRESH,325,2,54,14,WS_DISABLED
+                    WS_BORDER | WS_TABSTOP,2,33,396,133
+    PUSHBUTTON      "&Update",IDC_REFRESH,287,2,54,14,WS_DISABLED
+    PUSHBUTTON      "&Reload",IDC_CLEAR_REFRESH,344,2,54,14,WS_DISABLED
     LTEXT           "Search:",IDC_STATIC_SEARCH,2,5,41,8
-    EDITTEXT        IDC_SEARCH,47,2,217,14,ES_AUTOHSCROLL
-    LTEXT           "",IDC_STATIC_MESSAGES,2,20,134,10
-    RTEXT           "",IDC_STATIC_ROOMS,142,21,122,8
+    EDITTEXT        IDC_SEARCH,47,2,234,14,ES_AUTOHSCROLL
+    RTEXT           "",IDC_STATIC_ROOMS,140,21,141,8
     CONTROL         "Lock Scroll on selection",IDC_SELECTION_NOSCROLL,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,268,20,111,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,287,20,111,10
+    CONTROL         "",IDC_STATUS,"msctls_progress32",WS_BORDER,47,18,88,14
+    LTEXT           "Status:",IDC_STATIC_STATUS,2,21,33,8
 END
 
-IDD_SETTINGS DIALOG DISCARDABLE  0, 0, 443, 291
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Configuration"
-FONT 8, "MS Sans Serif"
+IDD_SETTINGS DIALOGEX 0, 0, 443, 291
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     CONTROL         "List1",IDC_CAT,"SysListView32",LVS_SINGLESEL | 
                     LVS_SHOWSELALWAYS | LVS_NOLABELWRAP | LVS_NOSCROLL | 
                     LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | 
                     WS_TABSTOP,7,7,51,277
-    DEFPUSHBUTTON   "OK",IDOK,277,270,50,14
+    DEFPUSHBUTTON   "OK",IDC_OK,277,270,50,14
     PUSHBUTTON      "Apply",IDC_APPLY,331,270,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,386,270,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,386,270,50,14
     LTEXT           "",IDC_STATIC_CLIENT,66,7,370,260,NOT WS_VISIBLE | NOT 
                     WS_GROUP
 END
 
-IDD_GENERAL DIALOG DISCARDABLE  0, 0, 361, 256
-STYLE WS_CHILD
-FONT 8, "MS Sans Serif"
+IDD_GENERAL DIALOGEX 0, 0, 361, 256
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Auto Greet Channels",IDC_STATIC,189,1,171,119
-    EDITTEXT        IDC_CHANNELNAME,194,14,103,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "Add",IDC_ADDCHANNEL,303,14,50,14
-    LISTBOX         IDC_CHANNELLIST,194,28,103,66,LBS_SORT | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Remove",IDC_REMOVECHANNEL,303,42,50,16
-    CONTROL         "All Channels",IDC_ALLCHANNELS,"Button",BS_AUTOCHECKBOX | 
-                    BS_MULTILINE | WS_TABSTOP,303,62,50,29
-    LTEXT           "Greeting:",IDC_STATIC_GREETING,194,95,159,8
-    GROUPBOX        "Language Setup",IDC_STATIC_LANG,1,1,181,30,WS_DISABLED
+    GROUPBOX        "&Language Setup",IDC_STATIC_LANG,1,1,181,30,WS_DISABLED
     COMBOBOX        IDC_LANG,7,12,168,141,CBS_DROPDOWNLIST | CBS_SORT | 
                     WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,33,181,123
-    CONTROL         "Enable History",IDC_ENABLE_HISTORY,"Button",
+    GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,33,181,87
+    CONTROL         "Enable &History",IDC_ENABLE_HISTORY,"Button",
                     BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,7,45,94,10
-    CONTROL         "Limit Chatwindow to ",IDC_LINES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,62,94,9
-    EDITTEXT        IDC_LINESNUM,104,60,40,12,ES_AUTOHSCROLL
     EDITTEXT        IDC_HISTORDEPTH,104,44,40,12,ES_AUTOHSCROLL | 
                     WS_DISABLED
-    CONTROL         "Timestamp for Messages",IDC_TIMESTAMP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,139,168,10
+    CONTROL         "&Limit Chatwindow to ",IDC_LINES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,62,94,9
+    EDITTEXT        IDC_LINESNUM,104,60,40,12,ES_AUTOHSCROLL
+    CONTROL         "Minimize to &tray",IDC_MINITRAY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,73,138,10
+    CONTROL         "Print &PING notification",IDC_PING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,139,10
+    GROUPBOX        "Auto &Greet Channels",IDC_STATIC,189,1,171,119
+    EDITTEXT        IDC_CHANNELNAME,194,14,103,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "&Add",IDC_ADDCHANNEL,303,14,50,14
+    LISTBOX         IDC_CHANNELLIST,194,28,103,66,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Remove",IDC_REMOVECHANNEL,303,42,50,16
+    CONTROL         "All Channe&ls",IDC_ALLCHANNELS,"Button",BS_AUTOCHECKBOX | 
+                    BS_MULTILINE | WS_TABSTOP,303,62,50,29
+    LTEXT           "Gre&eting:",IDC_STATIC_GREETING,194,95,159,8
     EDITTEXT        IDC_GREETING,194,103,159,12,ES_AUTOHSCROLL
-    GROUPBOX        "Plugins",IDC_STATIC_PLUGINS,3,156,357,99,WS_DISABLED
-    CONTROL         "List1",IDC_PLUGINLIST,"SysListView32",LVS_REPORT | 
-                    LVS_NOSORTHEADER | WS_DISABLED | WS_BORDER | WS_TABSTOP,
-                    7,169,289,79
-    PUSHBUTTON      "Uninstall",IDC_REMOVE,304,234,50,14,WS_DISABLED
-    PUSHBUTTON      "Reload All",IDC_RELOAD_ALL,304,194,50,14,WS_DISABLED
-    PUSHBUTTON      "Unload All",IDC_UNLOAD_ALL,304,215,50,14,WS_DISABLED
-    PUSHBUTTON      "&Configure",IDC_CONFIGURE,304,169,50,14,WS_DISABLED
-    CONTROL         "Minimize to tray",IDC_MINITRAY,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,76,138,10
-    GROUPBOX        "Timeformat:",IDC_STATIC_TIMEFORMAT,190,124,170,32
+    GROUPBOX        "Time",IDC_STATIC_TIMEFORMAT,1,124,359,32
+    CONTROL         "Print Time&stamp in front of messages",IDC_TIMESTAMP,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,139,168,10
     COMBOBOX        IDC_TIME,194,137,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    CONTROL         "Print PING notification",IDC_PING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,88,139,10
+    GROUPBOX        "Plugins",IDC_STATIC_PLUGINS,3,156,357,99
+    CONTROL         "List1",IDC_PLUGINLIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,169,289,79
+    PUSHBUTTON      "&Configure",IDC_CONFIGURE,304,169,50,14
+    CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,93,160,10
+    CONTROL         "Use &Keyword Higlightning for Userlist too",
+                    IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
+                    103,164,10
+    PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,304,234,50,14
+    PUSHBUTTON      "&Rescan",IDC_RESCAN,304,217,50,14
 END
 
 IDD_COLORS DIALOGEX 0, 0, 363, 242
-STYLE WS_CHILD
-FONT 8, "MS Sans Serif"
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Message",IDC_STATIC_MESSAGE,1,1,116,75
-    LTEXT           "Enclosement",IDC_STATIC_NICKENC_MSG,5,11,47,8
-    LTEXT           "Front:",IDC_STATIC_FRONT_MSG,5,27,19,8
+    LTEXT           "&Enclosement",IDC_STATIC_NICKENC_MSG,5,11,47,8
+    LTEXT           "&Front:",IDC_STATIC_FRONT_MSG,5,27,19,8
     EDITTEXT        IDC_MSG_FRONT,29,25,23,12,ES_AUTOHSCROLL
-    LTEXT           "End:",IDC_STATIC_END_MSG,5,43,16,8
+    LTEXT           "&End:",IDC_STATIC_END_MSG,5,43,16,8
     EDITTEXT        IDC_MSG_END,29,41,23,12,ES_AUTOHSCROLL
-    LTEXT           "Message Color",IDC_STATIC_NICKNAME_MSG,57,41,48,8
     PUSHBUTTON      "Color",IDC_ENC_MSG_COLOR,5,56,21,14
     LTEXT           "",IDC_STATIC_COLOR_ENC_MSG_PREV,29,56,23,14,0,
                     WS_EX_STATICEDGE
+    LTEXT           "&Nickname Color",IDC_STATIC_NAME,58,11,51,8
+    PUSHBUTTON      "Color",IDC_COLOR_NAME,56,25,24,14
+    LTEXT           "",IDC_STATIC_COLOR_NAME_PREV,88,25,24,13,0,
+                    WS_EX_STATICEDGE
+    LTEXT           "Message Color",IDC_STATIC_MSG,57,42,48,8
     PUSHBUTTON      "Color",IDC_COLOR_MESSAGE,57,56,24,14
     LTEXT           "",IDC_STATIC_COLOR_MSG_PREV,89,56,24,13,0,
                     WS_EX_STATICEDGE
@@ -621,13 +726,23 @@ BEGIN
     EDITTEXT        IDC_ACTION_FRONT,155,24,23,12,ES_AUTOHSCROLL
     LTEXT           "End:",IDC_STATIC_END_ACTION,131,42,16,8
     EDITTEXT        IDC_ACTION_END,155,40,23,12,ES_AUTOHSCROLL
-    LTEXT           "Action Color",IDC_STATIC_NICKNAME_ACTION,183,42,39,8
     PUSHBUTTON      "Color",IDC_ENC_ACTION_COLOR,131,55,21,14
     LTEXT           "",IDC_STATIC_COLOR_ENG_ACTION_PREV,155,56,23,14,0,
                     WS_EX_STATICEDGE
+    LTEXT           "Action Color",IDC_STATIC_NICKNAME_ACTION,183,42,39,8
     PUSHBUTTON      "Color",IDC_COLOR_ACTION,183,55,24,14
     LTEXT           "",IDC_STATIC_COLOR_ACTION_PREV,209,56,24,13,0,
                     WS_EX_STATICEDGE
+    GROUPBOX        "Userlist / Channellist",IDC_STATIC_USERLIST,245,1,116,
+                    75
+    PUSHBUTTON      "Line",IDC_LINE,251,22,24,14
+    LTEXT           "",IDC_STATIC_LINE,277,23,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Files",IDC_FILES,251,39,24,14
+    LTEXT           "",IDC_STATIC_FILES,277,40,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "IP",IDC_NODEIP,304,22,24,14
+    LTEXT           "",IDC_STATIC_NODEIP,330,22,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Port",IDC_PORT,304,39,24,14
+    LTEXT           "",IDC_STATIC_NODEPORT,330,40,22,12,0,WS_EX_STATICEDGE
     GROUPBOX        "Channel",IDC_STATIC_MISCCOLOR,1,78,116,92
     PUSHBUTTON      "Topic",IDC_TOPIC,5,90,24,14
     LTEXT           "",IDC_STATIC_TOPIC,31,91,22,12,0,WS_EX_STATICEDGE
@@ -639,53 +754,50 @@ BEGIN
     LTEXT           "",IDC_STATIC_PART,84,108,22,12,0,WS_EX_STATICEDGE
     PUSHBUTTON      "Background",IDC_BACKG,31,125,50,14
     LTEXT           "",IDC_STATIC_BG,83,126,22,13,0,WS_EX_STATICEDGE
-    GROUPBOX        "Font",IDC_STATIC_FONT,245,78,117,92
-    COMBOBOX        IDC_FONT,251,88,100,79,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
-    LTEXT           "Size",IDC_STATIC_SIZE,251,127,43,8
-    EDITTEXT        IDC_FONTSIZE,299,125,48,12,ES_AUTOHSCROLL
-    COMBOBOX        IDC_ENCODING,251,109,100,76,CBS_DROPDOWNLIST | 
-                    WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Bold",IDC_BOLD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
-                    251,143,43,10
-    CONTROL         "Italic",IDC_ITALIC,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,299,143,60,10
-    CONTROL         "Underline",IDC_UNDERLINE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,251,155,108,10
-    GROUPBOX        "Userlist / Channellist",IDC_STATIC_USERLIST,245,1,116,
-                    75
-    PUSHBUTTON      "Line",IDC_LINE,251,22,24,14
-    LTEXT           "",IDC_STATIC_LINE,277,23,22,12,0,WS_EX_STATICEDGE
-    PUSHBUTTON      "Files",IDC_FILES,251,39,24,14
-    LTEXT           "",IDC_STATIC_FILES,277,40,22,12,0,WS_EX_STATICEDGE
-    PUSHBUTTON      "IP",IDC_NODEIP,304,22,24,14
-    LTEXT           "",IDC_STATIC_NODEIP,330,22,22,12,0,WS_EX_STATICEDGE
-    PUSHBUTTON      "Port",IDC_PORT,304,39,24,14
-    LTEXT           "",IDC_STATIC_NODEPORT,330,40,22,12,0,WS_EX_STATICEDGE
     CONTROL         "Color Name in Actions",IDC_COLORACTIONNAME,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,11,146,85,10
-    GROUPBOX        "System",IDC_STATIC_SYSTEM,123,78,117,92
+                    BS_AUTOCHECKBOX | WS_TABSTOP,8,155,85,10
+    GROUPBOX        "System / Misc",IDC_STATIC_SYSTEM,123,78,117,92
     PUSHBUTTON      "Pending",IDC_PENDING,131,90,50,14
     LTEXT           "",IDC_STATIC_PENDING,183,91,22,13,0,WS_EX_STATICEDGE
     PUSHBUTTON      "Success",IDC_SUCCESS,131,107,50,14
     LTEXT           "",IDC_STATIC_SUCCESS,183,108,22,13,0,WS_EX_STATICEDGE
     PUSHBUTTON      "Error",IDC_ERROR,131,124,50,14
     LTEXT           "",IDC_STATIC_ERROR,183,126,22,13,0,WS_EX_STATICEDGE
+    GROUPBOX        "Font",IDC_STATIC_FONT,245,78,117,92
+    COMBOBOX        IDC_FONT,251,88,100,79,CBS_DROPDOWNLIST | CBS_SORT | 
+                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_ENCODING,251,109,100,76,CBS_DROPDOWNLIST | 
+                    WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Size",IDC_STATIC_SIZE,251,127,43,8
+    EDITTEXT        IDC_FONTSIZE,299,125,48,12,ES_AUTOHSCROLL
+    CONTROL         "Bold",IDC_BOLD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,
+                    251,143,43,10
+    CONTROL         "Italic",IDC_ITALIC,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,299,143,60,10
+    CONTROL         "Underline",IDC_UNDERLINE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,251,155,108,10
+    GROUPBOX        "Input Focus Color",IDC_STATIC_HILIGHT,1,173,116,68
+    CONTROL         "Change color if focus",IDC_FOCUSCLR,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,9,190,83,10
+    PUSHBUTTON      "Focus Color",IDC_COLORFOCUS,9,204,58,14
+    LTEXT           "",IDC_STATIC_FOCUS,84,205,22,12,0,WS_EX_STATICEDGE
     GROUPBOX        "Background Image",IDC_STATIC_BGIMAGE,123,173,238,68
     CONTROL         "Enable Background Image",IDC_USE_BGIMAGE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,131,188,100,10
-    PUSHBUTTON      "Change",IDC_SELECT_IMAGE,131,204,50,14
+    PUSHBUTTON      "&Change",IDC_SELECT_IMAGE,131,204,50,14
     LTEXT           "",IDC_STATIC_IMAGEPATH,185,205,169,13,SS_CENTERIMAGE,
                     WS_EX_STATICEDGE
-    GROUPBOX        "Input Focus Color",IDC_STATIC_HILIGHT,1,173,116,68
-    PUSHBUTTON      "Focus Color",IDC_COLORFOCUS,9,204,58,14
-    LTEXT           "",IDC_STATIC_FOCUS,84,205,22,12,0,WS_EX_STATICEDGE
-    CONTROL         "Change color if focus",IDC_FOCUSCLR,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,9,190,83,10
+    PUSHBUTTON      "Time",IDC_TIME,131,141,50,14
+    LTEXT           "",IDC_STATIC_TIME,183,142,22,13,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Hilight",IDC_HILITE,251,55,24,14
+    LTEXT           "",IDC_STATIC_HILITE,277,57,22,12,0,WS_EX_STATICEDGE
+    PUSHBUTTON      "Edit Hilight",IDC_EDITHILITE,301,55,50,14
+    PUSHBUTTON      "Look@me :-)",IDC_DOCHI,31,141,50,14
+    LTEXT           "",IDC_STATIC_DOCHI,83,142,22,13,0,WS_EX_STATICEDGE
 END
 
-IDD_MESSAGES DIALOG DISCARDABLE  0, 0, 357, 233
-STYLE WS_CHILD
+IDD_MESSAGES DIALOG  0, 0, 357, 233
+STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif"
 BEGIN
     GROUPBOX        "Quick Messages",IDC_STATIC_QUICK,2,1,354,74
@@ -715,33 +827,33 @@ BEGIN
                     IDC_STATIC_VARS,8,205,343,21
 END
 
-IDD_SOUND DIALOG DISCARDABLE  0, 0, 360, 261
-STYLE WS_CHILD
-FONT 8, "MS Sans Serif"
+IDD_SOUND DIALOGEX 0, 0, 360, 261
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Sound Effects",IDC_STATIC_SFX,1,1,354,133
     CONTROL         "Enable Soundeffects",IDC_ENABLE_SFX,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,9,11,82,10
     PUSHBUTTON      "&Connected",IDC_CONNECTED,9,21,50,14
-    LTEXT           "",IDC_STATIC_CONNECT,65,21,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_CONNECT,88,21,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "&Disconnected",IDC_DISCONNECTED,9,37,50,14
-    LTEXT           "",IDC_STATIC_DISCONNECTED,65,37,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_DISCONNECTED,88,37,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "&Topic",IDC_TOPIC,9,52,50,14
-    LTEXT           "",IDC_STATIC_TOPIC,65,52,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_TOPIC,88,52,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "&Motd",IDC_MOTD,9,69,50,14
-    LTEXT           "",IDC_STATIC_MOTD,65,69,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_MOTD,88,69,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "&Redirected",IDC_REDIRECTED,9,85,50,14
-    LTEXT           "",IDC_STATIC_REDIRECTED,65,85,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_REDIRECTED,88,85,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "Start&up",IDC_STARTUP,9,101,50,14
-    LTEXT           "",IDC_STATIC_STARTUP,65,101,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_STARTUP,88,101,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     PUSHBUTTON      "E&rror",IDC_SYSERROR,9,117,50,14
-    LTEXT           "",IDC_STATIC_SYSERROR,65,117,286,14,SS_CENTERIMAGE | 
+    LTEXT           "",IDC_STATIC_SYSERROR,88,117,263,14,SS_CENTERIMAGE | 
                     SS_SUNKEN
     GROUPBOX        "Chat Sounds",IDC_STATIC_CHATSOUNDS,1,140,358,120
     CONTROL         "Enable Chat Sounds",IDC_ENABLE_CSFX,"Button",
@@ -751,12 +863,20 @@ BEGIN
     PUSHBUTTON      "&Delete",IDC_DELETE,9,196,29,14
     PUSHBUTTON      "&Play",IDC_PLAY,9,213,29,14
     CONTROL         "List1",IDC_SOUNDLIST,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SORTASCENDING | LVS_NOLABELWRAP | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,43,163,312,93
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    LVS_NOLABELWRAP | LVS_NOSORTHEADER | WS_BORDER | 
+                    WS_TABSTOP,43,163,312,93
+    PUSHBUTTON      "Play",IDC_PLAY_CONNECTED,62,21,23,14
+    PUSHBUTTON      "Play",IDC_PLAY_DISCONNECTED,62,37,23,14
+    PUSHBUTTON      "Play",IDC_PLAY_TOPIC,62,52,23,14
+    PUSHBUTTON      "Play",IDC_PLAY_MOTD,62,69,23,14
+    PUSHBUTTON      "Play",IDC_PLAY_REDIRECTED,62,85,23,14
+    PUSHBUTTON      "Play",IDC_PLAY_START,62,101,23,14
+    PUSHBUTTON      "Play",IDC_PLAY_ERROR,62,117,23,14
 END
 
-IDD_SFX_EDIT DIALOG DISCARDABLE  0, 0, 356, 84
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_SFX_EDIT DIALOG  0, 0, 356, 84
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Sound Editor"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -771,8 +891,8 @@ BEGIN
     PUSHBUTTON      "Play &Sound",IDC_PLAY,147,63,50,14
 END
 
-IDD_INPUT_REQUEST DIALOG DISCARDABLE  0, 0, 350, 118
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+IDD_INPUT_REQUEST DIALOG  0, 0, 350, 118
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Input Request"
 FONT 8, "MS Sans Serif"
 BEGIN
@@ -786,8 +906,55 @@ BEGIN
                     IDC_STATIC,13,19,196,8
 END
 
+IDD_FUN DIALOGEX 0, 0, 348, 253
+STYLE DS_SETFONT | WS_CHILD
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    LTEXT           "Configure your name randomizer lists here. (Doubleclick on an item to remove it from the list)",
+                    IDC_STATIC_RANDOMIZER,2,3,342,8,SS_ENDELLIPSIS
+    GROUPBOX        "Vendors",IDC_STATIC_VENDORS,2,14,111,104
+    EDITTEXT        IDC_VENDOR_ADD,7,28,68,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_BTN_VENDOR_ADD,81,28,25,14
+    CONTROL         "",IDC_VENDORS,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    LVS_NOLABELWRAP | LVS_AUTOARRANGE | LVS_ALIGNLEFT | 
+                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | 
+                    WS_TABSTOP,7,46,99,68
+    GROUPBOX        "Names",IDC_STATIC_NAMES,117,14,111,104
+    EDITTEXT        IDC_NAME_ADD,123,28,68,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_BTN_NAME_ADD,197,28,25,14
+    CONTROL         "",IDC_NAMES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | 
+                    LVS_SHOWSELALWAYS | LVS_SORTASCENDING | LVS_NOLABELWRAP | 
+                    LVS_AUTOARRANGE | LVS_ALIGNLEFT | LVS_NOCOLUMNHEADER | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,123,46,99,68
+    GROUPBOX        "Suffixes",IDC_STATIC_SUFFIXES,233,14,111,104
+    EDITTEXT        IDC_SUFFIX_ADD,239,28,68,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_BTN_SUFFIX_ADD,313,28,25,14
+    CONTROL         "",IDC_SUFFIXES,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    LVS_NOLABELWRAP | LVS_AUTOARRANGE | LVS_ALIGNLEFT | 
+                    LVS_NOCOLUMNHEADER | LVS_NOSORTHEADER | WS_BORDER | 
+                    WS_TABSTOP,239,46,99,68
+    GROUPBOX        "Emoticons",IDC_STATIC_EMOTICONS,2,122,342,128
+    LTEXT           "Activation Text:",IDC_STATIC,7,134,76,8
+    EDITTEXT        IDC_ACTTEXT,93,131,189,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Select Image",IDC_SELECTBMP,7,147,74,14
+    EDITTEXT        IDC_BMP,93,147,189,14,ES_AUTOHSCROLL
+    CONTROL         "",IDC_EMOTICONLIST,"SysListView32",LVS_REPORT | 
+                    LVS_SHOWSELALWAYS | LVS_ALIGNLEFT | LVS_NOSORTHEADER | 
+                    WS_BORDER | WS_TABSTOP,7,164,275,78
+    PUSHBUTTON      "Remove",IDC_DELETE_EMOTICON,288,164,50,14
+    PUSHBUTTON      "Add",IDC_ADD_EMOTICON,288,147,50,14
+END
 
-#ifndef _MAC
+IDD_PAGERCFG DIALOGEX 0, 0, 333, 237
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Placeholder",IDC_STATIC,148,102,36,8
+END
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // Version
@@ -810,18 +977,13 @@ BEGIN
     BEGIN
         BLOCK "040904b0"
         BEGIN
-            VALUE "Comments", "\0"
-            VALUE "CompanyName", "\0"
-            VALUE "FileDescription", "RoboMX\0"
-            VALUE "FileVersion", "1, 0, 0, 1\0"
-            VALUE "InternalName", "RoboMX\0"
-            VALUE "LegalCopyright", "Copyright (C) 2004\0"
-            VALUE "LegalTrademarks", "\0"
-            VALUE "OriginalFilename", "RoboMX.exe\0"
-            VALUE "PrivateBuild", "\0"
-            VALUE "ProductName", "RoboMX\0"
-            VALUE "ProductVersion", "1, 0, 0, 1\0"
-            VALUE "SpecialBuild", "\0"
+            VALUE "FileDescription", "RoboMX"
+            VALUE "FileVersion", "1, 0, 0, 1"
+            VALUE "InternalName", "RoboMX"
+            VALUE "LegalCopyright", "Copyright (C) 2004"
+            VALUE "OriginalFilename", "RoboMX.exe"
+            VALUE "ProductName", "RoboMX"
+            VALUE "ProductVersion", "1, 0, 0, 1"
         END
     END
     BLOCK "VarFileInfo"
@@ -830,8 +992,6 @@ BEGIN
     END
 END
 
-#endif    // !_MAC
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -839,7 +999,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO DISCARDABLE 
+GUIDELINES DESIGNINFO 
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
@@ -847,7 +1007,7 @@ BEGIN
         RIGHTMARGIN, 318
         VERTGUIDE, 162
         TOPMARGIN, 7
-        BOTTOMMARGIN, 194
+        BOTTOMMARGIN, 216
     END
 
     IDD_METIS3_FORM, DIALOG
@@ -895,12 +1055,12 @@ BEGIN
     IDD_CHANNELLIST, DIALOG
     BEGIN
         LEFTMARGIN, 2
-        RIGHTMARGIN, 379
-        VERTGUIDE, 264
-        VERTGUIDE, 268
-        VERTGUIDE, 322
+        RIGHTMARGIN, 398
+        VERTGUIDE, 47
+        VERTGUIDE, 281
+        VERTGUIDE, 287
         TOPMARGIN, 2
-        BOTTOMMARGIN, 148
+        BOTTOMMARGIN, 166
         HORZGUIDE, 9
         HORZGUIDE, 25
     END
@@ -937,6 +1097,7 @@ BEGIN
     BEGIN
         LEFTMARGIN, 1
         RIGHTMARGIN, 362
+        VERTGUIDE, 56
         VERTGUIDE, 117
         VERTGUIDE, 123
         VERTGUIDE, 131
@@ -948,7 +1109,6 @@ BEGIN
         HORZGUIDE, 78
         HORZGUIDE, 97
         HORZGUIDE, 114
-        HORZGUIDE, 151
         HORZGUIDE, 170
         HORZGUIDE, 173
         HORZGUIDE, 211
@@ -968,12 +1128,20 @@ BEGIN
         RIGHTMARGIN, 359
         VERTGUIDE, 9
         VERTGUIDE, 38
-        VERTGUIDE, 65
+        VERTGUIDE, 62
+        VERTGUIDE, 88
         VERTGUIDE, 351
         VERTGUIDE, 355
         TOPMARGIN, 1
         BOTTOMMARGIN, 260
         HORZGUIDE, 16
+        HORZGUIDE, 28
+        HORZGUIDE, 44
+        HORZGUIDE, 59
+        HORZGUIDE, 76
+        HORZGUIDE, 92
+        HORZGUIDE, 108
+        HORZGUIDE, 124
     END
 
     IDD_SFX_EDIT, DIALOG
@@ -993,6 +1161,43 @@ BEGIN
         BOTTOMMARGIN, 111
         HORZGUIDE, 95
         HORZGUIDE, 104
+    END
+
+    IDD_FUN, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 344
+        VERTGUIDE, 7
+        VERTGUIDE, 93
+        VERTGUIDE, 106
+        VERTGUIDE, 123
+        VERTGUIDE, 191
+        VERTGUIDE, 239
+        VERTGUIDE, 247
+        VERTGUIDE, 282
+        VERTGUIDE, 288
+        VERTGUIDE, 338
+        TOPMARGIN, 3
+        BOTTOMMARGIN, 250
+        HORZGUIDE, 14
+        HORZGUIDE, 35
+        HORZGUIDE, 46
+        HORZGUIDE, 118
+        HORZGUIDE, 122
+        HORZGUIDE, 138
+        HORZGUIDE, 154
+        HORZGUIDE, 164
+    END
+
+    IDD_PAGERCFG, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 329
+        VERTGUIDE, 8
+        VERTGUIDE, 322
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 233
+        HORZGUIDE, 32
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1107,21 +1312,23 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// RT_MANIFEST
+//
+
+1                       RT_MANIFEST             "RoboMX.exe.manifest"
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
-STRINGTABLE PRELOAD DISCARDABLE 
-BEGIN
-    IDR_MAINFRAME           "RoboMX [:]\n\nRoboMX [:]\n\n\nRoboMX.Document\nRoboMX Document"
-END
-
-STRINGTABLE PRELOAD DISCARDABLE 
+STRINGTABLE 
 BEGIN
     AFX_IDS_APP_TITLE       "RoboMX [:]"
     AFX_IDS_IDLEMESSAGE     "Ready"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_INDICATOR_EXT        "EXT"
     ID_INDICATOR_CAPS       "CAP"
@@ -1131,7 +1338,7 @@ BEGIN
     ID_INDICATOR_REC        "REC"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_FILE_NEW             "Connect to a new Channel\nConnec to New Channel"
     ID_FILE_OPEN            "Open an existing document\nOpen"
@@ -1140,13 +1347,13 @@ BEGIN
     ID_FILE_SAVE_AS         "Save the active document with a new name\nSave As"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_APP_ABOUT            "Display program information, version number and copyright\nAbout"
     ID_APP_EXIT             "Quit the application; prompts to save documents\nQuite RoboMX"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_FILE_MRU_FILE1       "Open this document"
     ID_FILE_MRU_FILE2       "Open this document"
@@ -1166,13 +1373,13 @@ BEGIN
     ID_FILE_MRU_FILE16      "Open this document"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
     ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_WINDOW_NEW           "Open another window for the active document\nNew Window"
     ID_WINDOW_ARRANGE       "Arrange icons at the bottom of the window\nArrange Icons"
@@ -1181,7 +1388,7 @@ BEGIN
     ID_WINDOW_SPLIT         "Split the active window into panes\nSplit"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_EDIT_CLEAR           "Erase the selection\nErase"
     ID_EDIT_CLEAR_ALL       "Erase everything\nErase All"
@@ -1196,13 +1403,13 @@ BEGIN
     ID_EDIT_REDO            "Redo the previously undone action\nRedo"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_VIEW_TOOLBAR         "Show or hide the toolbar\nToggle ToolBar"
     ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle StatusBar"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     AFX_IDS_SCSIZE          "Change the window size"
     AFX_IDS_SCMOVE          "Change the window position"
@@ -1213,13 +1420,13 @@ BEGIN
     AFX_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     AFX_IDS_SCRESTORE       "Restore the window to normal size"
     AFX_IDS_SCTASKLIST      "Activate Task List"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_RENAME               "Change User details\nChange User details"
     ID_EXIT                 "Disconnect from channel\nDisconnect"
@@ -1235,7 +1442,7 @@ BEGIN
     ID_USERLIST_KICK        "Kick the user (RCMS)"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_USERLIST_KICKBAN     "Kick and Ban the user (RCMS)"
     ID_USERLIST_BAN         "Ban the user (RCMS)"
@@ -1253,7 +1460,7 @@ BEGIN
     ID_CHATROOM_COPY        "Copy selected text to clipboard"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_CHATROOM_SEARCHONGOOGLE "Search selected text on Google.com"
     ID_CHATROOM_QUOTE       "Quote selected text"
@@ -1262,7 +1469,7 @@ BEGIN
     ID_NEXT                 "Next Window\nNext Window"
     ID_PREV                 "Switch to previous Window\nPrevious Window"
     ID_RECONNECT            "Reconnect to channel\nReconnect to channel"
-    IDR_START_NODESERVER    "Starts a Nodeserver. Enables you to send and recieve PMs in channels\nStart Nodeserver"
+    IDR_START_NODESERVER    "Start Server console to create a PM server or to host a chatroom\nStart Serverconsole"
     ID_VIEW_FULL_SCREEN     "Toggles Full Screen mode on/off"
     ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME 
                             "Display how long your Windows has been running in channel\nSystem Uptime"
@@ -1272,14 +1479,67 @@ BEGIN
                             "Displays the average Lag between what you type and when you see it in the channel\nAverage Lag"
 END
 
-STRINGTABLE DISCARDABLE 
+STRINGTABLE 
 BEGIN
     ID_VIEW_CHANNELBAR      "Show or hide the channelbar\nToggle Channel Bar"
     ID_CHATROOM_ASCIIARTDESIGN 
                             "Opens a dialog where you can edit ASCII art pictures in and then paste it into the channel"
 END
 
+STRINGTABLE 
+BEGIN
+    ID_POPUP_LOOPBACKJOIN   "Joins the room but changes the room IP to 127.0.0.1 so you can join your own room when you have a loopback problem"
+    ID_POPUP_COPYROOMNAME   "Copy the room name"
+    ID_POPUP_COPYTOPIC      "Copies the room topic"
+END
+
+STRINGTABLE 
+BEGIN
+    IDR_PRIVATECHAT_TMPL    "PrivateChat\nPrivateChat\nPrivateChat\nPrivateChat Files (*.pri)\npri\nPrivateChat.Document\nPrivateChat Document"
+END
+
 #endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Neutral (Sys. Default) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUSD)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_SYS_DEFAULT
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDR_TEST                BITMAP                  "res\\mainfram.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Toolbar
+//
+
+IDR_TEST TOOLBAR  16, 16
+BEGIN
+    BUTTON      ID_MYFILE_NEW
+    BUTTON      ID_RECONNECT
+    BUTTON      ID_FILE_CLOSE
+    SEPARATOR
+    BUTTON      ID_CHANNEL_CHANNELLIST
+    BUTTON      IDR_START_NODESERVER
+    SEPARATOR
+    BUTTON      ID_RENAME
+    SEPARATOR
+    BUTTON      AFX_IDS_SCNEXTWINDOW
+    SEPARATOR
+    BUTTON      ID_APP_ABOUT
+END
+
+#endif    // Neutral (Sys. Default) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

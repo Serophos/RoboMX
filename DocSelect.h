@@ -36,6 +36,7 @@ public:
 	void				RemoveAll();
 	BOOL				RemoveButton(CWnd* wnd);
 	CSwitcherButton*	GetButtonFromID(int id);
+	CPtrArray	m_Buttons;
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -63,7 +64,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 
 
-	CPtrArray	m_Buttons;
 	int			m_iNextButtonStart;
 	int			m_iButtonWidth;
 	int			m_iSelectedButton;
@@ -72,6 +72,11 @@ protected:
 	virtual void OnUpdateCmdUI(CFrameWnd* pTarget, BOOL bDisableIfNoHndler);
 	virtual CSize CalcFixedLayout(BOOL bStretch, BOOL bHorz);
 	// End Yogesh Jagota
+public:
+	UINT DeliverMessage(DWORD dwID, UINT uMsg, WPARAM wParam, LPARAM lParam);
+	void UpdateTitle(CWnd* pWnd, CString strTitle);
+	void SetHiLite(CView* pView);
+	void InputAll(CString strText);
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -21,6 +21,9 @@
 #include "Metis3.h"
 #include "GeneralCfg.h"
 #include "Settings.h"
+#include ".\generalcfg.h"
+#include "RoboEx.h"
+#include "MainFrm.h"
 
 extern CSettings g_sSettings;
 extern CStringArray g_aRooms;
@@ -34,9 +37,12 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CGeneralCfg dialog
 
+extern CPtrArray g_aPlugins;
 
 CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 	: CCfgDlg(CGeneralCfg::IDD, pParent)
+	, m_bEmoticons(FALSE)
+	, m_bHiliteUsers(FALSE)
 {
 	//{{AFX_DATA_INIT(CGeneralCfg)
 	m_strLanguage = _T("");
@@ -58,7 +64,6 @@ CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(CGeneralCfg)
 	DDX_Control(pDX, IDC_PLUGINLIST, m_lcPlugins);
 	DDX_Control(pDX, IDC_CHANNELLIST, m_lbChannels);
 	DDX_Control(pDX, IDC_LANG, m_cbLang);
@@ -74,7 +79,8 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_CBIndex(pDX, IDC_TIME, m_nTime);
 	DDX_Check(pDX, IDC_PING, m_bPing);
 	DDX_Check(pDX, IDC_MINITRAY, m_bMiniTray);
-	//}}AFX_DATA_MAP
+	DDX_Check(pDX, IDC_EMOTICONS, m_bEmoticons);
+	DDX_Check(pDX, IDC_USERHILITE, m_bHiliteUsers);
 }
 
 
@@ -84,6 +90,9 @@ BEGIN_MESSAGE_MAP(CGeneralCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_ADDCHANNEL, OnAddchannel)
 	ON_BN_CLICKED(IDC_REMOVECHANNEL, OnRemovechannel)
 	//}}AFX_MSG_MAP
+	ON_BN_CLICKED(IDC_CONFIGURE, OnBnClickedConfigure)
+	ON_BN_CLICKED(IDC_RESCAN, OnBnClickedRescan)
+	ON_BN_CLICKED(IDC_UNINSTALL, OnBnClickedUninstall)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -110,6 +119,8 @@ BOOL CGeneralCfg::OnInitDialog()
 	m_nTime		   = g_sSettings.GetTimeFmt();
 	m_bPing		   = g_sSettings.GetPing();
 	m_bMiniTray    = g_sSettings.GetMiniTray();
+	m_bEmoticons   = g_sSettings.GetEmoticons();
+	m_bHiliteUsers = g_sSettings.GetHiliteUsers();
 
 	CFileFind finder;
 	BOOL bResult = finder.FindFile(g_sSettings.GetWorkingDir() + "\\languages\\*.txt");
@@ -132,6 +143,14 @@ BOOL CGeneralCfg::OnInitDialog()
 	LoadRooms();
 	OnAllchannels();
 	
+	int i = 0, j = 0;
+	for(i = 0; i < g_aPlugins.GetSize(); i++){
+
+		j = m_lcPlugins.InsertItem(0, ((CRoboEx*)g_aPlugins[i])->m_strName, 0);
+		m_lcPlugins.SetItemText(j, 1, ((CRoboEx*)g_aPlugins[i])->m_strDescription);
+		m_lcPlugins.SetItemText(j, 2, ((CRoboEx*)g_aPlugins[i])->m_strAuthor);
+	}
+
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
@@ -222,6 +241,9 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetPing(m_bPing);
 	g_sSettings.SetTimeFmt(m_nTime);
 	g_sSettings.SetMiniTray(m_bMiniTray);
+	g_sSettings.SetEmoticons(m_bEmoticons);
+	g_sSettings.SetHiliteUsers(m_bHiliteUsers);
+
 	SaveRooms();
 	LoadRooms();
 }
@@ -243,5 +265,50 @@ void CGeneralCfg::OnRemovechannel()
 	if(m_lbChannels.GetCurSel() != -1){
 
 		m_lbChannels.DeleteString(m_lbChannels.GetCurSel());
+	}
+}
+
+void CGeneralCfg::OnBnClickedConfigure()
+{
+
+	int nSel = m_lcPlugins.GetNextItem(-1, LVNI_SELECTED);
+	if(nSel >= 0){
+
+		CString strName = m_lcPlugins.GetItemText(nSel, 0);
+		for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+			if(((CRoboEx*)g_aPlugins[i])->m_strName == strName){
+
+				((CRoboEx*)g_aPlugins[i])->Configure();
+			}
+		}
+	}
+	else{
+
+		AfxMessageBox("You need to select a plugin first.", MB_ICONINFORMATION);
+	}
+}
+
+void CGeneralCfg::OnBnClickedRescan()
+{
+
+	((CMainFrame*)GetApp()->m_pMainWnd)->ReloadPlugins();
+}
+
+void CGeneralCfg::OnBnClickedUninstall()
+{
+
+	int nSel = m_lcPlugins.GetNextItem(-1, LVNI_SELECTED);
+	if(nSel >= 0){
+
+		CString strName = m_lcPlugins.GetItemText(nSel, 0);
+
+		if(AfxMessageBox("Remove Plugin '" + strName + "'?", MB_ICONQUESTION+MB_YESNO) == IDYES){
+
+			if(!((CMainFrame*)GetApp()->m_pMainWnd)->DeletePlugin(strName)){
+
+				AfxMessageBox("Error: Could not delete Plugin " + strName, MB_ICONSTOP);
+			}
+		}
 	}
 }

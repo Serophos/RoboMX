@@ -21,13 +21,17 @@
 #include "Metis3.h"
 #include "MainFrm.h"
 #include "ChannelDoc.h"
+#include "ChildFrm.h"
 #include "ChannelView.h"
-#include "ServerDoc.h"
-#include "ServerView.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
 #include "SettingsDlg.h"
 #include "Settings.h"
+#include <mmsystem.h>
+#include "Tokenizer.h"
+
+#include "RoboEx.h"
+#include ".\mainfrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -36,17 +40,28 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 extern CSettings g_sSettings;
+extern CArray<SOUND, SOUND> g_aSounds;
+
+CPtrArray g_aPlugins;
+
+#define WM_ECHOTEXT WM_APP+1
+#define WM_ECHOSYSTEXT WM_APP+2
+#define WM_INPUT WM_APP+3
+#define WM_INCOMMING WM_APP+10
+
+extern UINT UWM_INPUT;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
+
 CStringArray g_aRCMSCommands;
 extern CStringArray g_aQuick;
+extern CStringArray g_aRooms;
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
-	//{{AFX_MSG_MAP(CMainFrame)
 	ON_WM_CLOSE()
 	ON_WM_CREATE()
 	ON_COMMAND(ID_VIEW_OPTIONS, OnViewOptions)
@@ -55,15 +70,18 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_COMMAND(ID_CHANNEL_CHANNELLIST, OnChannelChannellist)
 	ON_UPDATE_COMMAND_UI(ID_CHANNEL_CHANNELLIST, OnUpdateChannelChannellist)
 	ON_COMMAND(ID_FILE_NEW, OnFileNew)
-	ON_COMMAND(IDR_START_NODESERVER, OnStartNodeserver)
-	ON_UPDATE_COMMAND_UI(IDR_START_NODESERVER, OnUpdateStartNodeserver)
 	ON_COMMAND(ID_VIEW_FULL_SCREEN, OnViewFullScreen)
 	ON_UPDATE_COMMAND_UI(ID_VIEW_FULL_SCREEN, OnUpdateViewFullScreen)
 	ON_COMMAND(AFX_IDS_SCNEXTWINDOW, OnIdsScnextwindow)
+	ON_UPDATE_COMMAND_UI(ID_VIEW_CHANNELBAR, OnUpdateViewChannelBar)
 	ON_COMMAND(ID_VIEW_CHANNELBAR, OnViewChannelbar)
 	ON_COMMAND(ID_MYFILE_NEW, OnFileNew)
-	//}}AFX_MSG_MAP
 	ON_MESSAGE(WM_TRAY_ICON_NOTIFY_MESSAGE,OnTrayNotify)
+	ON_MESSAGE(WM_INPUT, OnPluginInput)
+	ON_MESSAGE(WM_ECHOTEXT, OnPluginEcho)
+	ON_MESSAGE(WM_ECHOSYSTEXT, OnPluginSysEcho)
+	ON_COMMAND(IDR_START_NODESERVER, OnStartNodeserver)
+	ON_COMMAND(ID_SYSTRAY_RESTORE, OnSystrayRestore)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -86,37 +104,30 @@ CMainFrame::CMainFrame()
 	// TODO: add member initialization code here
 	m_bChannelList    = FALSE;
 	m_bFullScreenMode = FALSE;
-	m_bPager		  = FALSE;
+	m_bSettings       = FALSE;
 }
 
 CMainFrame::~CMainFrame()
 {
+
+	UnloadPlugins();
+	DeleteEmoticons();
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
+
 	if (CMDIFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
 	
-	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
+
+	if (!m_wndToolBarStd.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
 		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
-		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
+		!m_wndToolBarStd.LoadToolBar(IDR_MAINFRAME))
 	{
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // fail to create
 	}
-
-	if (!m_wndStatusBar.Create(this) ||
-		!m_wndStatusBar.SetIndicators(indicators,
-		  sizeof(indicators)/sizeof(UINT)))
-	{
-		TRACE0("Failed to create status bar\n");
-		return -1;      // fail to create
-	}
-
-	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
-	EnableDocking(CBRS_ALIGN_ANY);
-	DockControlBar(&m_wndToolBar);
 
 	if((::GetDeviceCaps(GetDC()->m_hDC,BITSPIXEL) > 8)) 
 	{
@@ -129,7 +140,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		bitmap.LoadMappedBitmap(IDB_TOOLBAR256);
 		imageList.Create(16, 16, ILC_COLORDDB|ILC_MASK, 7, 1);
 		imageList.Add(&bitmap, RGB(255,0,255));
-		m_wndToolBar.SendMessage(TB_SETIMAGELIST, 0, (LPARAM)imageList.m_hImageList);
+		m_wndToolBarStd.SendMessage(TB_SETIMAGELIST, 0, (LPARAM)imageList.m_hImageList);
 		imageList.Detach();
 		bitmap.Detach();
 
@@ -137,17 +148,28 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		bitmap.LoadMappedBitmap(IDB_TOOLBAR256_DEACT);
 		imageList.Create(16, 16, ILC_COLORDDB|ILC_MASK, 7, 1);
 		imageList.Add(&bitmap, RGB(255,0,255));
-		m_wndToolBar.SendMessage( TB_SETDISABLEDIMAGELIST, 0, (LPARAM)imageList.m_hImageList);
+		m_wndToolBarStd.SendMessage( TB_SETDISABLEDIMAGELIST, 0, (LPARAM)imageList.m_hImageList);
 		imageList.Detach();
 		bitmap.Detach();
 	}
 
+	if (!m_wndStatusBar.Create(this) ||
+		!m_wndStatusBar.SetIndicators(indicators,
+		  sizeof(indicators)/sizeof(UINT)))
+	{
+		TRACE0("Failed to create status bar\n");
+		return -1;      // fail to create
+	}
+	
+
+	m_wndToolBarStd.EnableDocking(CBRS_ALIGN_ANY);
+	EnableDocking(CBRS_ALIGN_ANY);
+	DockControlBar(&m_wndToolBarStd);
+
 	m_wndDocSelector.Create(NULL, NULL, WS_VISIBLE | WS_CHILD | WS_CLIPSIBLINGS | CBRS_TOP,
 		         CRect(0,0,0,0), this, AFX_IDW_STATUS_BAR);
 
-	m_wndDocSelector.SetBarStyle(CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC);
-	m_wndDocSelector.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
-	DockControlBar(&m_wndDocSelector);
+	m_wndDocSelector.SetBarStyle(CBRS_ALIGN_ANY);
 
 	m_wndStatusBar.SetPaneInfo(0,ID_SEPARATOR,SBPS_STRETCH,120);
     m_wndStatusBar.SetPaneInfo(1,ID_SEPARATOR,SBPS_NORMAL,240);
@@ -157,28 +179,51 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	m_hIcon = (HICON)LoadImage(GetApp()->m_hInstance, MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR );
 
+	//m_wndDocSelector.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
+	
 
+	//DockControlBar(&m_wndDocSelector);
+	RecalcLayout();
+
+	m_cmSystray.LoadMenu(IDR_SYSTRAY);
 	LoadToTray(
 		m_hWnd,
 		WM_TRAY_ICON_NOTIFY_MESSAGE, 
-		"RoboMX [:]", 
+		GetApp()->m_strAppTitle, 
 		"",
-		"RoboMX [:]", 
+		GetApp()->m_strAppTitle, 
 		1, 
 		m_hIcon,
 		NIIF_INFO
 	); 
-	
+
+	SetWindowText(GetApp()->m_pszAppName);
+
+	if(g_sSettings.GetSoundFX()){
+
+		PlaySound(g_sSettings.GetSfxStart(), 0, SND_FILENAME|SND_ASYNC);
+	}
 	LoadRCMS();
+	LoadEmoticons();
+	LoadRooms();
+	LoadPlugins();
 	return 0;
 }
+
 
 BOOL CMainFrame::PreCreateWindow(CREATESTRUCT& cs)
 {
 	if( !CMDIFrameWnd::PreCreateWindow(cs) )
 		return FALSE;
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
+
+	CRect rect;
+	GetDesktopWindow()->GetWindowRect(rect);
+	if(rect.Width() >= 1024){
+
+		cs.cx = 800;
+		cs.cy = 700;
+	}
+
 
 	return TRUE;
 }
@@ -201,21 +246,6 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame message handlers
-
-//DEL void CMainFrame::OnAppExit()
-//DEL {
-//DEL 
-//DEL 	OnClose();
-//DEL }
-
-void CMainFrame::OnViewOptions() 
-{
-
-	CSettingsDlg  dlgSet;
-
-	dlgSet.DoModal();
-
-}
 
 // dwIcon may be
 // - NIIF_ERROR     An error icon. 
@@ -258,7 +288,6 @@ void CMainFrame::LoadToTray(HWND hWnd, UINT uCallbackMessage, CString strInfoTit
 	m_nIconData.uCallbackMessage = uCallbackMessage;  
 	m_nIconData.uTimeout         = uTimeout * 1000;
 	m_nIconData.hIcon		   	 = icon;
-
 	strcpy( m_nIconData.szInfoTitle, strInfoTitle );
 	strcpy( m_nIconData.szInfo,      strInfo      );
 	strcpy( m_nIconData.szTip,       strTip       );
@@ -292,6 +321,8 @@ LRESULT CMainFrame::OnTrayNotify(WPARAM wParam, LPARAM lParam)
 	case WM_RBUTTONDOWN:
 	case WM_CONTEXTMENU:
 		GetCursorPos(&pt);
+		m_cmSystray.GetSubMenu(0)->TrackPopupMenu(TPM_BOTTOMALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,pt.x,pt.y,this);
+		m_cmSystray.GetSubMenu(0)->SetDefaultItem(0,TRUE);
 		break;
     } 
 	return 1;
@@ -323,42 +354,15 @@ void CMainFrame::OnSysCommand(UINT nID, LPARAM lParam)
 		}
 		this->ShowWindow(SW_HIDE);
 	}
- 	if((nID & 0xFFF0) == SC_MAXIMIZE)
-	{
-		
-		if(GetActiveFrame()->GetStyle() & WS_MAXIMIZE){
-
-			MDIRestore(GetActiveFrame());
-			MDIMaximize(GetActiveFrame());
-		}
-	}
 }
 
-void CMainFrame::OnStartNodeserver() 
-{
-	
-	if(!m_bPager){
-
-		POSITION pos = GetApp()->GetFirstDocTemplatePosition();
-		CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
-		pTemplate = GetApp()->GetNextDocTemplate(pos);
-		pTemplate = GetApp()->GetNextDocTemplate(pos);
-		pTemplate->OpenDocumentFile(NULL);
-		m_bChannelList = TRUE;
-	}
-}
-
-void CMainFrame::OnUpdateStartNodeserver(CCmdUI* pCmdUI) 
-{
-	
-	pCmdUI->Enable(FALSE);
-}
 
 void CMainFrame::OnChannelChannellist() 
 {
 	
 	if(!m_bChannelList){
 
+		// Create a new ChannelListClient (only one allowed)
 		POSITION pos = GetApp()->GetFirstDocTemplatePosition();
 		CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
 		pTemplate->OpenDocumentFile(NULL);
@@ -377,13 +381,43 @@ void CMainFrame::OnUpdateChannelChannellist(CCmdUI* pCmdUI)
 void CMainFrame::OnFileNew() 
 {
 
+	// Create a new ChatClientDocument
 	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
 	CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
-
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
-	pTemplate->OpenDocumentFile(NULL);  // creates the second document
+	pTemplate->OpenDocumentFile(NULL); 
 	
 }
+
+
+void CMainFrame::OnStartNodeserver()
+{
+
+	// Create a new ChatServerDocument
+	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
+	CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
+	pTemplate = GetApp()->GetNextDocTemplate(pos);
+	pTemplate = GetApp()->GetNextDocTemplate(pos);
+	pTemplate = GetApp()->GetNextDocTemplate(pos);
+	pTemplate->OpenDocumentFile(NULL);
+}
+
+
+void CMainFrame::OnViewOptions() 
+{
+
+	// Create a new SettingsDocument
+	if(!m_bSettings){
+
+		POSITION pos = GetApp()->GetFirstDocTemplatePosition();
+		CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
+		pTemplate = GetApp()->GetNextDocTemplate(pos);
+		pTemplate = GetApp()->GetNextDocTemplate(pos);
+		pTemplate->OpenDocumentFile(NULL); 
+		m_bSettings = TRUE;
+	}
+}
+
 
 void CMainFrame::JoinChannel()
 {
@@ -394,7 +428,7 @@ void CMainFrame::JoinChannel()
 void CMainFrame::LoadRCMS()
 {
 
-	CString strIniFile = "RCMS.ini";
+	CString strIniFile = g_sSettings.GetWorkingDir() + "\\RCMS.ini";
 	CStdioFile ini;
 	CString strBuffer;
 	g_aRCMSCommands.RemoveAll();
@@ -451,8 +485,8 @@ void CMainFrame::FullScreenModeOn()
 	CMDIChildWnd* pChild=MDIGetActive();
 	if(!pChild) return;
 
-	m_bToolBarWasVisible=(m_wndToolBar.IsWindowVisible()!=0);
-	m_wndToolBar.ShowWindow(SW_HIDE);
+	m_bToolBarWasVisible=(m_wndToolBarStd.IsWindowVisible()!=0);
+	m_wndToolBarStd.ShowWindow(SW_HIDE);
 	// first create the new toolbar
 	// this will contain the full-screen off button
 	m_pwndFullScreenBar=new CToolBar;
@@ -503,9 +537,7 @@ void CMainFrame::FullScreenModeOff()
 	style|=WS_CAPTION;
 	::SetWindowLong(m_hWnd,GWL_STYLE,style);
 	if(m_bToolBarWasVisible)
-		m_wndToolBar.ShowWindow(SW_SHOW);
-	if(m_bStatusBarWasVisible)
-		m_wndStatusBar.ShowWindow(SW_SHOW);
+		m_wndToolBarStd.ShowWindow(SW_SHOW);
 	MoveWindow(&m_mainRect);
 	RecalcLayout();
 	CMDIChildWnd* pChild=MDIGetActive();
@@ -558,6 +590,364 @@ void CMainFrame::OnIdsScnextwindow()
 void CMainFrame::OnViewChannelbar() 
 {
 
-	m_wndDocSelector.ShowWindow(SW_HIDE);
+	m_wndDocSelector.ShowWindow(m_wndDocSelector.IsWindowVisible() ? SW_HIDE : SW_SHOW);
+	RecalcLayout();
 }
 
+void CMainFrame::OnUpdateViewChannelBar(CCmdUI* pCmdUI)
+{
+
+	pCmdUI->SetCheck(m_wndDocSelector.IsWindowVisible());
+}
+
+void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
+{
+
+	if ((GetStyle() & FWS_ADDTOTITLE) == 0)
+		return; // leave child window alone!
+
+	CDocument* pDocument = GetActiveDocument();
+	
+	if (bAddToTitle){
+
+		TCHAR szText[256+_MAX_PATH];
+		CString strTitle;
+
+		strTitle = AfxGetApp()->m_pszAppName;
+
+		if (pDocument == NULL)
+		lstrcpy(szText, m_strTitle);
+		else
+		lstrcpy(szText, pDocument->GetTitle());
+	
+		if (m_nWindow > 0)
+		wsprintf(szText + lstrlen(szText), _T(":%d"), m_nWindow);
+
+		// set title if changed, but don't remove completely
+		SetWindowText(szText);
+		//lstrcat(szText, " - ");
+		lstrcat(szText, (char *)((LPCTSTR) strTitle));
+		AfxGetMainWnd()->SetWindowText(szText);
+	}
+}
+void CMainFrame::LoadEmoticons(void)
+{
+
+	CString strIniFile = g_sSettings.GetWorkingDir() + "\\emoticons.ini";
+	BOOL bReturn = TRUE;
+	CStdioFile ini;
+	CString strActivationText, strFilename;
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while((ini.ReadString(strActivationText) != NULL) && (ini.ReadString(strFilename) != NULL)){
+		
+			AddEmoticon((LPTSTR)(LPCTSTR)strFilename, (LPTSTR)(LPCTSTR)strActivationText);
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		char error[512];
+		e->GetErrorMessage((char*)&error, 512, 0);
+		AfxMessageBox(error, MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
+}
+
+void CMainFrame::AddEmoticon(char* szFileName, char* szActivationText)
+{
+
+	Emoticon *eEmoticon = new Emoticon();
+
+	strcpy(eEmoticon->szActivationText, szActivationText);
+	strcpy(eEmoticon->szFileName, szFileName);
+
+	// Create temp CImage Object for conversion
+
+	CImage iImage;
+	if(iImage.Load(szFileName) == E_FAIL){
+
+		delete eEmoticon;
+		return;
+	}
+
+	eEmoticon->hBitmap = iImage.Detach();
+
+	if(eEmoticon->hBitmap == NULL){
+
+		delete eEmoticon;
+		return;
+	}
+	
+	m_lEmoticons.AddTail(eEmoticon);
+}
+
+void CMainFrame::DeleteEmoticons(void)
+{
+	POSITION pos;
+	pos = m_lEmoticons.GetHeadPosition();
+	while (pos)
+	{
+		Emoticon *eEmoticon = m_lEmoticons.GetNext(pos);
+		DeleteObject(eEmoticon->hBitmap);
+		//eEmoticon->iImage.Destroy();
+		m_lEmoticons.RemoveAt(m_lEmoticons.Find(eEmoticon));
+		delete eEmoticon;
+	}
+}
+
+void CMainFrame::LoadPlugins(void)
+{
+
+	int i = 0;
+	CString strFilename;
+	CFileFind finder;
+
+	BOOL bResult = finder.FindFile(g_sSettings.GetWorkingDir() + _T("\\Add-Ons\\*.rEx"));
+	while(bResult){
+
+		bResult = finder.FindNextFile();
+		strFilename = finder.GetFilePath();
+
+		HINSTANCE hDLL = LoadLibrary(strFilename);
+		if(hDLL == NULL){
+		
+			AfxMessageBox("Failed to load Plugin " + strFilename, MB_ICONSTOP);
+			continue;
+		}
+		
+		REGISTERPLUGIN pRegister = (REGISTERPLUGIN)GetProcAddress(hDLL, "RegisterExtension");
+
+		if(pRegister == NULL){
+		
+			AfxMessageBox(finder.GetFileName() + " is not a valid RoboMX extension.", MB_ICONSTOP);
+			continue;
+		}
+	
+		CRoboEx* pEx = pRegister();
+
+		if(pEx == NULL){
+
+			AfxMessageBox(finder.GetFileName() + ": Error loading API object.", MB_ICONSTOP);
+			continue;
+		}
+		
+		pEx->Init();
+		g_aPlugins.Add(pEx);
+		m_aMods.Add(hDLL);
+	}
+}
+
+void CMainFrame::UnloadPlugins(void)
+{
+
+	for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+		((CRoboEx*)g_aPlugins[i])->Quit();
+	}
+	g_aPlugins.RemoveAll();
+
+	for(i = 0; i < m_aMods.GetSize(); i++){
+
+		FreeLibrary(m_aMods[i]);
+	}
+	m_aMods.RemoveAll();
+}
+
+BOOL CMainFrame::DeletePlugin(CString strName)
+{
+	
+	for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+		if(((CRoboEx*)g_aPlugins[i])->m_strName == strName){
+
+			((CRoboEx*)g_aPlugins[i])->Quit();
+			g_aPlugins.RemoveAt(i, 1);
+			FreeLibrary(m_aMods[i]);
+			m_aMods.RemoveAt(i);
+			TRY{
+
+				CFile::Remove(g_sSettings.GetWorkingDir() + "\\Add-Ons\\" + strName);
+			}
+			CATCH(CFileException, e){
+
+				return 0;
+			}END_CATCH;
+
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
+void CMainFrame::ReloadPlugins(void)
+{
+
+	UnloadPlugins();
+	LoadPlugins();
+	if(g_aPlugins.GetSize() == 0) return;
+
+	for(int i = 0; i < m_wndDocSelector.m_Buttons.GetSize(); i++){
+
+		if(((CSwitcherButton*)m_wndDocSelector.m_Buttons[i])->m_bIsChatClient){
+
+			for(int j = 0; j < g_aPlugins.GetSize(); j++){
+
+				((CRoboEx*)g_aPlugins[j])->OnJoinChannel((DWORD)((CSwitcherButton*)m_wndDocSelector.m_Buttons[i])->m_AttachedView->m_hWnd, 
+						((CMetis3View*)((CSwitcherButton*)m_wndDocSelector.m_Buttons[i])->m_AttachedView)->GetDocument()->m_strRoom,
+						&((CMetis3View*)((CSwitcherButton*)m_wndDocSelector.m_Buttons[i])->m_AttachedView)->m_aUsers
+						);
+					
+			}
+		}
+	}
+}
+
+
+LRESULT CMainFrame::OnPluginInput(WPARAM wParam, LPARAM lParam)
+{
+
+	m_wndDocSelector.DeliverMessage((DWORD)wParam, UWM_INPUT, 1, (LPARAM)((EXT_MSG_STRUCT*)lParam)->lpszMsg);
+	return 0;
+}
+
+LRESULT CMainFrame::OnPluginEcho(WPARAM wParam, LPARAM lParam)
+{
+
+	m_wndDocSelector.DeliverMessage((DWORD)wParam, WM_ECHOTEXT, 0, lParam);
+	return 0;
+}
+
+LRESULT CMainFrame::OnPluginSysEcho(WPARAM wParam, LPARAM lParam)
+{
+
+	m_wndDocSelector.DeliverMessage((DWORD)wParam, WM_ECHOSYSTEXT, 0, lParam);
+	return 0;
+}
+
+void CMainFrame::LoadRooms(void)
+{
+
+	CString strIniFile = g_sSettings.GetWorkingDir() + "\\rooms.ini";
+	BOOL bReturn = TRUE;
+	CStdioFile ini;
+	CString strBuffer;
+	g_aRooms.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				g_aRooms.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
+
+}
+
+void CMainFrame::ActivateFrame(int nCmdShow)
+{
+
+	TRACE("Activate Frame %d\n", nCmdShow);
+
+	CMDIFrameWnd::ActivateFrame(nCmdShow);
+}
+
+void CMainFrame::LoadSounds(void)
+{
+
+	CString strIniFile = g_sSettings.GetWorkingDir() + "\\MXSound.ini";
+
+	CStdioFile ini;
+	CString strBuffer;
+	int nMode = -1;
+	
+	g_aSounds.RemoveAll();
+
+	CString strSection;
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText);
+
+		while(ini.ReadString(strBuffer)){
+
+			strBuffer.TrimLeft();
+			strBuffer.TrimRight();
+
+			if(strBuffer.Left(2) == "//") continue;
+			if(strBuffer.Find("[Sounds]", 0) == 0){
+				
+				nMode = 0;
+				continue;
+			}
+			if(strBuffer.Left(1) == "#"){
+				
+				strBuffer = strBuffer.Mid(1);
+				if(strBuffer.IsEmpty() || (nMode != 0)){
+
+					continue;
+				}
+
+				CString strEvent, strResp;
+				
+				CTokenizer token(strBuffer, "¨");
+
+				if(!token.Next(strEvent) || !token.Next(strResp)) continue;
+					
+				if(nMode == 0){
+				
+					
+					strEvent.MakeLower();
+					if(strResp.GetLength() < 8){
+
+						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
+					}
+					else if(strResp.GetAt(1) != ':'){
+
+						strResp = g_sSettings.GetWorkingDir() + "\\" + strResp;
+					}
+
+					SOUND s;
+					s.strTrigger = strEvent;
+					s.strSound = strResp;
+					g_aSounds.Add(s);
+
+				}
+				else{
+
+					TRACE("HELP\n");
+
+				}
+
+			}
+		}
+		ini.Close();
+	}
+	CATCH(CFileException, e){
+
+		AfxMessageBox("Error during file operation!", MB_OK+MB_ICONSTOP);
+
+	}END_CATCH;
+}
+
+void CMainFrame::OnSystrayRestore()
+{
+
+	ShowWindow(SW_RESTORE);
+}

@@ -37,6 +37,8 @@ public:
 	// Yogesh Jagota
 	BOOL			m_bLBtnDown;
 	BOOL			m_bPainted;
+	BOOL			m_bHiLited;
+	BOOL			m_bIsChatClient;
 	CWnd*			m_AttachedView;
 	CFrameWnd*		m_FrameWnd;
 	CToolTipCtrl	m_ToolTip;
@@ -49,12 +51,13 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CSwitcherButton)
     virtual BOOL PreTranslateMessage (MSG * pMsg);
+	virtual BOOL OnCommand(WPARAM wParam, LPARAM lParam);
 	//}}AFX_VIRTUAL
 
 // Implementation
 public:
 	CFont	m_fNormal;
-//	CFont	m_fBold; // Yogesh Jagota
+	CFont	m_fBold;
 	CWnd*	m_wndParent;
 	HICON	m_iIcon;
 	UINT	m_nState;
@@ -74,11 +77,14 @@ protected:
 	//{{AFX_MSG(CSwitcherButton)
 	afx_msg void OnPaint();
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
 	afx_msg void OnTimer(UINT nIDEvent);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	void SetHiLite(void);
 };
 
 /////////////////////////////////////////////////////////////////////////////

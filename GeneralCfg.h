@@ -45,14 +45,15 @@ public:
 	CListBox	m_lbChannels;
 	CComboBox	m_cbLang;
 	CString	m_strLanguage;
-	int		m_nHistory;
+
 	BOOL	m_bHistory;
 	BOOL	m_bAllChannels;
+	BOOL	m_bLimit;
+	BOOL	m_bTimeStamp;
+	int		m_nHistory;
 	CString	m_strChannel;
 	CString	m_strGreeting;
-	BOOL	m_bLimit;
 	int		m_nLimit;
-	BOOL	m_bTimeStamp;
 	int		m_nTime;
 	BOOL	m_bPing;
 	BOOL	m_bMiniTray;
@@ -77,6 +78,13 @@ protected:
 	afx_msg void OnRemovechannel();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	afx_msg void OnBnClickedReloadAll();
+	afx_msg void OnBnClickedConfigure();
+	BOOL m_bEmoticons;
+	BOOL m_bHiliteUsers;
+	afx_msg void OnBnClickedRescan();
+	afx_msg void OnBnClickedUninstall();
 };
 
 //{{AFX_INSERT_LOCATION}}

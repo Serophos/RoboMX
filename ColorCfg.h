@@ -57,6 +57,7 @@ public:
 	CColorStatic	m_stTopic;
 	CColorStatic	m_stActEnc;
 	CColorStatic	m_stAction;
+	CColorStatic	m_stDocHi;
 	CComboBox		m_cbFont;
 	CComboBox		m_cbEncoding;
 	CString	m_strActionEnd;
@@ -109,6 +110,15 @@ protected:
 	afx_msg void OnColorfocus();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	CColorStatic m_stName;
+	afx_msg void OnBnClickedColorName();
+	CColorStatic m_stTime;
+	afx_msg void OnBnClickedTime();
+	afx_msg void OnBnClickedHilite();
+	CColorStatic m_stHiLite;
+	afx_msg void OnBnClickedEdithilite();
+	afx_msg void OnBnClickedDochi();
 };
 
 //{{AFX_INSERT_LOCATION}}

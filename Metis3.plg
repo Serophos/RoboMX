@@ -6,56 +6,13 @@
 --------------------Configuration: Metis3 - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
-Creating command line "rc.exe /l 0x409 /fo"Release/Metis3.res" /d "NDEBUG" /d "_AFXDLL" "C:\projects\RoboMX\Metis3.rc"" 
-Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP34.tmp" with contents
+Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP277.tmp" with contents
 [
 /nologo /MD /W3 /GX /Zd /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /Fp"Release/Metis3.pch" /Yu"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
-"C:\projects\RoboMX\CfgDlg.cpp"
-"C:\projects\RoboMX\ChannelDoc.cpp"
-"C:\projects\RoboMX\ChannelView.cpp"
-"C:\projects\RoboMX\ChatClient.cpp"
-"C:\projects\RoboMX\ChildFrm.cpp"
-"C:\projects\RoboMX\Clipboard.cpp"
-"C:\projects\RoboMX\ColorCfg.cpp"
-"C:\projects\RoboMX\ColorStatic.cpp"
-"C:\projects\RoboMX\ColorStatusBar.cpp"
-"C:\projects\RoboMX\ConnectionDlg.cpp"
-"C:\projects\RoboMX\DocSelect.cpp"
-"C:\projects\RoboMX\GeneralCfg.cpp"
-"C:\projects\RoboMX\ImageDataObject.cpp"
-"C:\projects\RoboMX\Ini.cpp"
-"C:\projects\RoboMX\InputRequest.cpp"
-"C:\projects\RoboMX\ListClient.cpp"
 "C:\projects\RoboMX\MainFrm.cpp"
-"C:\projects\RoboMX\MenuButton.cpp"
-"C:\projects\RoboMX\MessageCfg.cpp"
-"C:\projects\RoboMX\Metis3.cpp"
-"C:\projects\RoboMX\Metis3Doc.cpp"
-"C:\projects\RoboMX\Metis3View.cpp"
-"C:\projects\RoboMX\MyEdit.cpp"
-"C:\projects\RoboMX\MyListCtrl.cpp"
-"C:\projects\RoboMX\MySocket.cpp"
-"C:\projects\RoboMX\RenameDlg.cpp"
-"C:\projects\RoboMX\RichEditExCtrl.cpp"
-"C:\projects\RoboMX\ServerDoc.cpp"
-"C:\projects\RoboMX\ServerView.cpp"
-"C:\projects\RoboMX\Settings.cpp"
-"C:\projects\RoboMX\SettingsDlg.cpp"
-"C:\projects\RoboMX\SfxCfg.cpp"
-"C:\projects\RoboMX\SfxEdit.cpp"
-"C:\projects\RoboMX\SplitterControl.cpp"
-"C:\projects\RoboMX\SwitcherButton.cpp"
-"C:\projects\RoboMX\SystemInfo.cpp"
-"C:\projects\RoboMX\Tokenizer.cpp"
 ]
-Creating command line "cl.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP34.tmp" 
-Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP35.tmp" with contents
-[
-/nologo /MD /W3 /GX /Zd /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_AFXDLL" /Fp"Release/Metis3.pch" /Yc"stdafx.h" /Fo"Release/" /Fd"Release/" /FD /c 
-"C:\projects\RoboMX\StdAfx.cpp"
-]
-Creating command line "cl.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP35.tmp" 
-Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP36.tmp" with contents
+Creating command line "cl.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP277.tmp" 
+Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP278.tmp" with contents
 [
 winmm.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/RoboMX.pdb" /map:"Release/RoboMX.map" /machine:I386 /out:"Release/RoboMX.exe" /MAPINFO:LINES /MAPINFO:EXPORTS 
 .\Release\CfgDlg.obj
@@ -69,6 +26,7 @@ winmm.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/RoboMX.pdb" /
 .\Release\ColorStatusBar.obj
 .\Release\ConnectionDlg.obj
 .\Release\DocSelect.obj
+.\Release\FunCfg.obj
 .\Release\GeneralCfg.obj
 .\Release\ImageDataObject.obj
 .\Release\Ini.obj
@@ -98,61 +56,16 @@ winmm.lib /nologo /subsystem:windows /incremental:no /pdb:"Release/RoboMX.pdb" /
 .\Release\Tokenizer.obj
 .\Release\Metis3.res
 ]
-Creating command line "link.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP36.tmp"
+Creating command line "link.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP278.tmp"
 <h3>Output Window</h3>
-Compiling resources...
 Compiling...
-StdAfx.cpp
-Compiling...
-CfgDlg.cpp
-ChannelDoc.cpp
-ChannelView.cpp
-ChatClient.cpp
-ChildFrm.cpp
-Clipboard.cpp
-ColorCfg.cpp
-ColorStatic.cpp
-ColorStatusBar.cpp
-ConnectionDlg.cpp
-DocSelect.cpp
-GeneralCfg.cpp
-ImageDataObject.cpp
-Ini.cpp
-InputRequest.cpp
-ListClient.cpp
 MainFrm.cpp
-MenuButton.cpp
-MessageCfg.cpp
-Metis3.cpp
-Generating Code...
-Compiling...
-Metis3Doc.cpp
-Metis3View.cpp
-MyEdit.cpp
-C:\projects\RoboMX\MyEdit.cpp(130) : warning C4018: '>=' : signed/unsigned mismatch
-C:\projects\RoboMX\MyEdit.cpp(160) : warning C4018: '>=' : signed/unsigned mismatch
-C:\projects\RoboMX\MyEdit.cpp(232) : warning C4018: '>=' : signed/unsigned mismatch
-MyListCtrl.cpp
-MySocket.cpp
-RenameDlg.cpp
-RichEditExCtrl.cpp
-ServerDoc.cpp
-ServerView.cpp
-Settings.cpp
-SettingsDlg.cpp
-SfxCfg.cpp
-SfxEdit.cpp
-SplitterControl.cpp
-SwitcherButton.cpp
-SystemInfo.cpp
-Tokenizer.cpp
-Generating Code...
 Linking...
 
 
 
 <h3>Results</h3>
-RoboMX.exe - 0 error(s), 3 warning(s)
+RoboMX.exe - 0 error(s), 0 warning(s)
 </pre>
 </body>
 </html>

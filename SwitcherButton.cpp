@@ -64,8 +64,13 @@
 #include "stdafx.h"
 #include "SwitcherButton.h"
 #include "docselect.h"
-
+#include "resource.h"
 #include <winuser.h>
+#include "settings.h"
+#include ".\switcherbutton.h"
+#include "SystemInfo.h"
+
+extern CSystemInfo  g_sSystem;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -75,6 +80,8 @@ static char THIS_FILE[] = __FILE__;
 
 /////////////////////////////////////////////////////////////////////////////
 // CSwitcherButton
+
+extern CSettings g_sSettings;
 
 CSwitcherButton::CSwitcherButton()
 {
@@ -86,7 +93,9 @@ CSwitcherButton::CSwitcherButton()
 	// Yogesh Jagota
 	m_bPainted		= FALSE; 
 	m_bLBtnDown		= FALSE;
+	m_bHiLited		= FALSE;
 	m_AttachedView	= NULL;
+	m_bIsChatClient = FALSE;
 	// End Yogesh Jagota
 
 	// Win95/98 balks at creating & deleting the font in OnPaint
@@ -101,26 +110,26 @@ CSwitcherButton::CSwitcherButton()
 	}
 	// End Yogesh Jagota
 
-//	Yogesh Jagota
-//	m_fBold.CreateFont(10,0,0,0,FW_BOLD,0,0,0,DEFAULT_CHARSET,OUT_DEFAULT_PRECIS,CLIP_DEFAULT_PRECIS,DEFAULT_QUALITY,DEFAULT_QUALITY|FF_DONTCARE,"MS Sans Serif");
+	m_fBold.CreateFont(13, 0, 0, 0, FW_BOLD, 0,
+		0, 0, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY, DEFAULT_QUALITY|FF_DONTCARE, "Tahoma");
 //	End Yogesh Jagota
 }
 
 CSwitcherButton::~CSwitcherButton()
 {
 	m_fNormal.DeleteObject();
-//	m_fBold.DeleteObject(); // Yogesh Jagota
+	m_fBold.DeleteObject();
 }
 
 
 BEGIN_MESSAGE_MAP(CSwitcherButton, CWnd)
-	//{{AFX_MSG_MAP(CSwitcherButton)
 	ON_WM_PAINT()
 	ON_WM_LBUTTONDOWN()
+	ON_WM_RBUTTONDOWN()
 	ON_WM_LBUTTONUP()
 	ON_WM_MOUSEMOVE()
 	ON_WM_TIMER()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
@@ -142,7 +151,7 @@ void CSwitcherButton::OnPaint()
 	GetWindowText(text);
 
 	dc.SetBkMode(TRANSPARENT);
-	dc.SetTextColor(::GetSysColor(COLOR_BTNTEXT));
+	dc.SetTextColor(m_bHiLited ? g_sSettings.GetRGBDocHiLite() : ::GetSysColor(COLOR_BTNTEXT));
 
 	CBrush brush;
 
@@ -223,7 +232,7 @@ void CSwitcherButton::OnPaint()
 //			dc.SelectObject(&m_fBold);
 //		else
 //		End Yogesh Jagota
-		dc.SelectObject(&m_fNormal);
+		dc.SelectObject((m_bHiLited ? &m_fBold : &m_fNormal));
 
 		dc.DrawText(text, &rect, DT_END_ELLIPSIS|DT_VCENTER);
 	}
@@ -232,6 +241,21 @@ void CSwitcherButton::OnPaint()
 		::DrawIconEx(dc.GetSafeHdc(), 4, icontop, m_iIcon, 16, 16, 0, (HBRUSH)brush, DI_NORMAL);
 
 	brush.DeleteObject();
+}
+
+void CSwitcherButton::OnRButtonDown(UINT nFlags, CPoint point) 
+{
+
+/*	CWnd::OnRButtonDown(nFlags, point);
+	CMenu mContextMenu;
+	mContextMenu.LoadMenu(IDM_DOCMAN);
+	POINT point1;
+	GetCursorPos(&point1);
+
+	mContextMenu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+											point1.x,
+											point1.y,
+											this);*/
 }
 
 void CSwitcherButton::OnLButtonDown(UINT nFlags, CPoint point) 
@@ -243,6 +267,7 @@ void CSwitcherButton::OnLButtonDown(UINT nFlags, CPoint point)
 		SetCapture();
 		m_nState = SWITCHBUTTON_DOWN;
 		HasCapture = true;
+		m_bHiLited = FALSE;
 		Invalidate();
 	}
 
@@ -349,6 +374,10 @@ BOOL CSwitcherButton::DoCreate(CWnd *parent, int x, int y, int cx, int cy, CStri
 
 void CSwitcherButton::SetText(CString text)
 {
+	CRect rct;
+	GetClientRect(rct);
+	m_ToolTip.DelTool(this);
+	m_ToolTip.AddTool(this, text, rct, 1);
 	SetWindowText(text);
 	Invalidate();
 	return;
@@ -375,6 +404,7 @@ void CSwitcherButton::Select()
 
 	m_nState = SWITCHBUTTON_SELECTED;
 	m_bLBtnDown = TRUE; // Yogesh Jagota
+	m_bHiLited = FALSE;
 	Invalidate();
 }
 
@@ -388,6 +418,7 @@ void CSwitcherButton::Unselect()
 
 	m_bLBtnDown = FALSE; // Yogesh Jagota
 	m_nState = SWITCHBUTTON_UP;
+	m_bHiLited = FALSE;
 	Invalidate();
 }
 
@@ -437,4 +468,61 @@ BOOL CSwitcherButton::PreTranslateMessage( MSG *pMsg )
 	m_ToolTip.RelayEvent( pMsg );
 
 	return CWnd::PreTranslateMessage( pMsg );
+}
+
+void CSwitcherButton::SetHiLite(void)
+{
+
+	m_bHiLited = TRUE;
+	Invalidate();
+}
+
+BOOL CSwitcherButton::OnCommand(WPARAM wParam, LPARAM lParam)
+{
+/*
+	if((wParam >= ID_TRANSPARENCY_0) && (wParam <= ID_TRANSPARENCY_100 ) && g_sSystem.IsWindowsNT()){
+
+		::SetWindowLong(m_AttachedView->m_hWnd, GWL_EXSTYLE,
+						::GetWindowLong(m_AttachedView->m_hWnd, GWL_EXSTYLE)^WS_EX_LAYERED);
+		switch(wParam){
+
+			case ID_TRANSPARENCY_0:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 0, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_10:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*10/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_20:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*20/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_30:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*30/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_40:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*40/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_50:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*50/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_60:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*60/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_70:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*70/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_80:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*80/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_90:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*90/100, LWA_ALPHA);
+				break;
+			case ID_TRANSPARENCY_100:
+				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*100/100, LWA_ALPHA);
+				break;
+			default:
+				ASSERT(FALSE);
+		}
+	}
+*/
+	return CWnd::OnCommand(wParam, lParam);
 }

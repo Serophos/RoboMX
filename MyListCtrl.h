@@ -25,6 +25,14 @@
 // MyListCtrl.h : header file
 //
 
+#include "MyHeaderCtrl.h"
+
+#ifdef _DEBUG
+	#define ASSERT_VALID_STRING(str) ASSERT(!IsBadStringPtr(str, 0xfffff))
+#else
+	#define ASSERT_VALID_STRING(str)((void)0)
+#endif	//	_DEBUG
+
 /////////////////////////////////////////////////////////////////////////////
 // CMyListCtrl window
 
@@ -39,6 +47,18 @@ public:
 
 // Operations
 public:
+	BOOL SetHeadings(UINT uiStringID);
+	BOOL SetHeadings(const CString& strHeadings);
+
+	int AddItem(LPCTSTR pszText, ...);
+	BOOL DeleteItem(int nItem);
+	BOOL DeleteAllItems();
+	void LoadColumnInfo();
+	void SaveColumnInfo();
+	BOOL SetItemText(int nItem, int nSubItem, LPCTSTR lpszText);
+	void Sort(int nColumn, BOOL bAscending );
+	BOOL SetItemData(int nItem, DWORD dwData);
+	DWORD GetItemData(int nItem) const;
 
 // Overrides
 	// ClassWizard generated virtual function overrides
@@ -53,18 +73,38 @@ public:
 
 	// Generated message map functions
 protected:
+	virtual void PreSubclassWindow();
+	static int CALLBACK CompareFunction(LPARAM lParam1, LPARAM lParam2, LPARAM lParamData);
+	void FreeItemMemory(const int nItem);
+	BOOL CMyListCtrl::SetTextArray(int nItem, LPTSTR* arrpsz);
+	LPTSTR* CMyListCtrl::GetTextArray(int nItem) const;
+
+	CMyHeaderCtrl m_ctlHeader;
+
+	int  m_nNumColumns;
+	int  m_nSortColumn;
+	BOOL m_bSortAscending;
+	bool m_bInited;
+
 	COLORREF m_cr1;
 	COLORREF m_cr2;
 	COLORREF m_cr3;
 	COLORREF m_cr4;
 	COLORREF m_cr5;
 	COLORREF m_crBg;
+	COLORREF m_crHiLite;
+	BOOL     m_bHiLite;
 	//{{AFX_MSG(CMyListCtrl)
+	afx_msg void OnColumnClick(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnDestroy();
 	afx_msg void OnCustomdrawMyList(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
+public:
+	void SetHiLite(BOOL bHiLite = TRUE);
+	void Sort(void);
 };
 
 /////////////////////////////////////////////////////////////////////////////

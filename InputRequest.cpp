@@ -137,6 +137,8 @@ void CInputRequest::OnOK()
 		break;
 	case 5: // ASCII designer
 		break;
+	case 6: // away control
+		break;
 	default:
 		ASSERT(FALSE);
 	}

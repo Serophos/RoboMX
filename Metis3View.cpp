@@ -71,18 +71,11 @@ extern UINT UWM_RENOTIFY;
 #define WM_ECHOSYSTEXT WM_APP+2
 
 extern CSettings g_sSettings;
-
+CStringArray g_aIgnored;
 extern CPtrArray g_aPlugins;
 #define PLUGIN ((CRoboEx*)g_aPlugins[i])
 
-extern CArray<SOUND, SOUND> g_aSounds;
-extern CStringArray g_aRCMSCommands;
-extern CStringArray g_aWinMXCommands;
-
-CStringArray g_aIgnored;
 CSystemInfo  g_sSystem;
-CStringArray g_aRooms;
-CStringArray g_aGreetings;
 
 UINT UWM_RENAMECL = ::RegisterWindowMessage("UWM_RENAMECL-{494D99C1-03BE-49e3-8A47-D0D17C6D4ACE}");
 
@@ -155,6 +148,8 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_REGISTERED_MESSAGE(UWM_SERVERTYPE, OnSetServerType)
 	ON_REGISTERED_MESSAGE(UWM_RENOTIFY, OnRenNotify)
 	ON_REGISTERED_MESSAGE(UWM_RENAMECL, OnRenameCl)
+	ON_COMMAND_RANGE(ID_AWAYCONTROL_ZZZZZZZZZZZZZZZZ, ID_AWAYCONTROL_ENTERREASON, OnAwayControl)
+	ON_COMMAND_RANGE(ID_BACK_SETBACK, ID_BACK_SETSI8LENTBACK, OnAwayControlBack)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -269,7 +264,7 @@ void CMetis3View::OnInitialUpdate()
 	m_lcUsers.SetFont(&m_fFont);
 	m_eInput.SetFont(&m_fFont);
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
-	m_eInput.SetCommands(&g_aRCMSCommands);
+	m_eInput.SetCommands(&g_sSettings.m_aRCMSCommands);
 
 	// Set up client
 	m_sSplitter1.SetRange(150, 50, -1);
@@ -963,11 +958,11 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 
 	if(g_sSettings.GetSfxChatSfx()){
 
-		for(int i = 0; i < g_aSounds.GetSize(); i++){
+		for(int i = 0; i < g_sSettings.m_aSounds.GetSize(); i++){
 
-			if(strMsg.Find(g_aSounds[i].strTrigger, 0) >= 0){
+			if(strMsg.Find(g_sSettings.m_aSounds[i].strTrigger, 0) >= 0){
 
-				PlaySound(g_aSounds[i].strSound, NULL, SND_FILENAME|SND_ASYNC);
+				PlaySound(g_sSettings.m_aSounds[i].strSound, NULL, SND_FILENAME|SND_ASYNC);
 				break;
 			}
 		}
@@ -1053,11 +1048,11 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 
 	if(g_sSettings.GetSfxChatSfx()){
 
-		for(int i = 0; i < g_aSounds.GetSize(); i++){
+		for(int i = 0; i < g_sSettings.m_aSounds.GetSize(); i++){
 
-			if(strMsg.Find(g_aSounds[i].strTrigger, 0) >= 0){
+			if(strMsg.Find(g_sSettings.m_aSounds[i].strTrigger, 0) >= 0){
 
-				PlaySound(g_aSounds[i].strSound, NULL, SND_FILENAME|SND_ASYNC);
+				PlaySound(g_sSettings.m_aSounds[i].strSound, NULL, SND_FILENAME|SND_ASYNC);
 				break;
 			}
 		}
@@ -1323,11 +1318,22 @@ LRESULT CMetis3View::OnRclickChat(WPARAM w, LPARAM l)
 {
 
 	CMenu mContextMenu;
+	CMenu mAway;
 	mContextMenu.LoadMenu(IDR_CHAT);
 
 	POINT point;
 	GetCursorPos(&point);
 
+	if(((CMainFrame*)GetApp()->m_pMainWnd)->m_bAway){ //user is away, load back menu
+
+		mAway.LoadMenu(IDR_BACK);
+	}
+	else{ // user is not away
+
+		mAway.LoadMenu(IDR_AWAY);
+	}
+
+	mContextMenu.ModifyMenu(IDM_AWAY, MF_POPUP|MF_BYCOMMAND, (UINT)mAway.GetSubMenu(0)->m_hMenu, "&Away Control");
 	mContextMenu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 											point.x,
 											point.y,
@@ -2048,19 +2054,19 @@ void CMetis3View::InputWelcome()
 
 		PlaySound(g_sSettings.GetSfxJoin(), 0, SND_ASYNC|SND_FILENAME);
 	}
-	if(g_sSettings.GetDoEnterMsg() && g_aGreetings.GetSize()){
+	if(g_sSettings.GetDoEnterMsg() && g_sSettings.m_aGreetings.GetSize()){
 		
-		CString strMsg = g_aGreetings[rand() % g_aGreetings.GetSize()];
+		CString strMsg = g_sSettings.m_aGreetings[rand() % g_sSettings.m_aGreetings.GetSize()];
 		ReplaceVars(strMsg);
 		Input(strMsg);
 	}
 	else{
 
-		for(int i = 0; i < g_aRooms.GetSize() && g_aGreetings.GetSize(); i++){
+		for(int i = 0; i < g_sSettings.m_aRooms.GetSize() && g_sSettings.m_aGreetings.GetSize(); i++){
 
-			if(GetDocument()->m_strRoom.Find(g_aRooms[i], 0) >= 0){
+			if(GetDocument()->m_strRoom.Find(g_sSettings.m_aRooms[i], 0) >= 0){
 
-				CString strMsg = g_aGreetings[rand() % g_aGreetings.GetSize()];
+				CString strMsg = g_sSettings.m_aGreetings[rand() % g_sSettings.m_aGreetings.GetSize()];
 				ReplaceVars(strMsg);
 				Input(strMsg);
 				break;
@@ -2185,13 +2191,13 @@ LRESULT CMetis3View::OnSetServerType(WPARAM wParam, LPARAM lParam)
 	switch((int)wParam){
 
 		case SERVER_RCMS:
-			m_eInput.SetCommands(&g_aRCMSCommands);
+			m_eInput.SetCommands(&g_sSettings.m_aRCMSCommands);
 			break;
 		case SERVER_WINMX352:
-			m_eInput.SetCommands(&g_aWinMXCommands);
+			m_eInput.SetCommands(&g_sSettings.m_aWinMXCommands);
 			break;
 		case SERVER_ROBOMX:
-			m_eInput.SetCommands(&g_aWinMXCommands);
+			m_eInput.SetCommands(&g_sSettings.m_aWinMXCommands);
 			break;
 		default:
 			ASSERT(FALSE);
@@ -2210,4 +2216,110 @@ LRESULT CMetis3View::OnRenameCl(WPARAM wParam, LPARAM lParam)
 	m_mxClient.SendRename(GetDocument()->m_strName, GetDocument()->m_dwFiles, GetDocument()->m_wLine);
 
 	return 1;
+}
+
+
+void CMetis3View::OnAwayControl(UINT nID)
+{
+
+	CString strReason, strMessage;
+
+	switch(nID){
+
+		case ID_AWAYCONTROL_ZZZZZZZZZZZZZZZZ:
+			strReason = "zZzZZZZZzzZzZzz";
+			break;
+		case ID_AWAYCONTROL_WORK:
+			strReason = "Work";
+			break;
+		case ID_AWAYCONTROL_SLEEP:
+			strReason = "Sleep";
+			break;
+		case ID_AWAYCONTROL_FRESHAIR:
+			strReason = "Getting Fresh Air";
+			break;
+		case ID_AWAYCONTROL_BATHROOM:
+			strReason = "Bathroom";
+			break;
+		case ID_AWAYCONTROL_SMOKEBREAK:
+			strReason = "Smoke";
+			break;
+		case ID_AWAYCONTROL_FOOD:
+			strReason = "Food";
+			break;
+		case ID_AWAYCONTROL_BEER:
+			strReason = "Beer";
+			break;
+		case ID_AWAYCONTROL_TV:
+			strReason = "Watching TV";
+			break;
+		case ID_AWAYCONTROL_STORE:
+			strReason = "Run to the store";
+			break;
+		case ID_AWAYCONTROL_NONEOFYOURBUISNESS:
+			strReason = "Wont tell you :-P";
+			break;
+		case ID_AWAYCONTROL_ENTERREASON:
+			strReason = GetUserInput();
+			break;
+		default:
+			ASSERT(FALSE);
+	}
+	
+	if(!strReason.IsEmpty()){
+
+		strMessage.Format("/me is AFK, %s", strReason);
+		((CMainFrame*)GetApp()->m_pMainWnd)->m_bAway = TRUE;
+		((CMainFrame*)AfxGetMainWnd())->m_strAway = strReason;
+		((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.InputAll(strMessage);
+		((CMainFrame*)AfxGetMainWnd())->m_uAwayStart = GetTickCount();
+	}
+}
+
+void CMetis3View::OnAwayControlBack(UINT nID)
+{
+/*
+#E033# "/me is now back from »%s«.  %s was away for %s"
+#E034# "You are now back from %s. You have been away for %s"
+*/	
+
+	CString strMessage, strReason, strTime;
+
+	strReason = ((CMainFrame*)AfxGetMainWnd())->m_strAway;
+	
+	DWORD dwAway = GetTickCount() - ((CMainFrame*)AfxGetMainWnd())->m_uAwayStart;
+
+	int nSec = dwAway / 1000;
+	int nMin = dwAway / 60000;
+	int nHour = dwAway / 3600000;
+	strTime.Format("%02dh %02dm %02ds", nHour, nMin - nHour*60, nSec - nMin*60);
+
+	switch(nID){
+
+		case ID_BACK_SETBACK:
+			strMessage.Format("/me is now back from »%s«. %s was away for %s", strReason, GetDocument()->m_strName, strTime);
+			((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.InputAll(strMessage);
+			break;
+		case ID_BACK_SETSI8LENTBACK:
+			strMessage.Format("You are now back from »%s«. You have been away for %s\n", strReason, strTime);
+			m_rChat.SetText(strMessage, g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+			break;
+		default:
+			ASSERT(FALSE);
+	}
+
+	((CMainFrame*)GetApp()->m_pMainWnd)->m_bAway = FALSE;
+	((CMainFrame*)AfxGetMainWnd())->m_strAway.Empty();
+	((CMainFrame*)AfxGetMainWnd())->m_uAwayStart = 0;
+}
+
+CString CMetis3View::GetUserInput(CString strReason)
+{
+	
+	CInputRequest dlg;
+
+	dlg.SetMode(6, &m_fFont);
+	dlg.DoModal();
+	
+	return dlg.m_strInput;
 }

@@ -117,6 +117,9 @@ protected:
 protected:
 	BOOL m_bHasJoined;
 
+	afx_msg void OnAwayControl(UINT nID);
+	afx_msg void OnAwayControlBack(UINT nID);
+
 	afx_msg LRESULT OnEchoText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnEchoSysText(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnInput(WPARAM wParam, LPARAM lParam);
@@ -186,6 +189,8 @@ public:
 
 	void HandleHiLite(void);
 	afx_msg LRESULT OnRenameCl(WPARAM wParam, LPARAM lParam);
+protected:
+	CString GetUserInput(CString strReason = "");
 };
 
 #ifndef _DEBUG  // debug version in Metis3View.cpp

@@ -35,6 +35,7 @@ public:
 	CMyEdit();
 	static int SearchItem(CString strString);
 	int SearchRCMSItem(CString strString);
+	static int SearchHistory(CString strString);
 // Attributes
 public:
 
@@ -54,6 +55,7 @@ public:
 	BOOL m_bEx;
 	void SetBkColor(COLORREF cr);
 	virtual ~CMyEdit();
+
 
 	// Generated message map functions
 protected:

@@ -45,6 +45,7 @@ CConnectionDlg::CConnectionDlg(CWnd* pParent /*=NULL*/)
 	m_dwFiles = 0;
 	m_strName = _T("RoboMX.[:]..");
 	m_strRoom = _T("");
+	m_bOldJoin = FALSE;
 	//}}AFX_DATA_INIT
 }
 
@@ -60,6 +61,7 @@ void CConnectionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_USERNAME, m_strName);
 	DDV_MaxChars(pDX, m_strName, 38);
 	DDX_CBString(pDX, IDC_ROOM, m_strRoom);
+	DDX_Check(pDX, IDC_MXCHATD, m_bOldJoin);
 	//}}AFX_DATA_MAP
 }
 
@@ -192,7 +194,9 @@ void CConnectionDlg::FixRoomName(CString& strRoom)
 {
 
 	CString strAppendix;
-	
+
+	strRoom.TrimRight();
+
 	int n = strRoom.ReverseFind('_');
 	
 	if(n > 0){

@@ -43,6 +43,7 @@ public:
 	DWORD	m_dwFiles;
 	CString	m_strName;
 	CString	m_strRoom;
+	BOOL    m_bOldJoin;
 	//}}AFX_DATA
 
 

@@ -15,6 +15,7 @@ typedef struct TAG_MXCHATUSERINFO{
 	CString strUser;
 	CString strNodeIP;
 	CString strRealIP;   // only seen by admins/ops in winmx 3.52 and later
+	CString strHostname; //	only seen by admins/ops in winmx 3.52 and later
 	WORD	wUserLever;  // operator / uservoice level, only winmx 3.52 and later
 	WORD    wNodePort;
 	WORD    wLineType;
@@ -58,6 +59,9 @@ public:
 	// Called when a user writes a message or action in the channel
 	virtual void OnMessage(DWORD dwID, CString* pUser, CString* pMsg, BOOL bIsAction);
 
+	// Called when a operator writes a message in the channel and the user has permission to see it
+	virtual void OnOpMessage(DWORD dwID, CString* pUser, CString* pMsg);
+
 	// Called when the user types something into the client
 	virtual void OnInputHook(DWORD dwID, CString* pInput);
 
@@ -76,6 +80,11 @@ public:
 
 	// Call this method to write text on the system console of the chat. Do not override this method!
 	void WriteSystemEchoText(DWORD dwID, CString strMsg, COLORREF crText, COLORREF crBg);
+
+	// Call this method to display a tooltip in the RoboMX Systray area
+	// (Note: This only works on Windows 2000/XP and on 98/ME if IE6 is installed)
+	// Timeout: 1 to 10 seconds, dwIcon: 1 = Icon Information, 2 = Warning, 3 = Error
+	void DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon);
 
 	// Call this method to Input text into the chat. Do not override this method
 	void InputMessage(DWORD dwID, CString strMsg);

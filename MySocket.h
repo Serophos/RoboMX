@@ -64,6 +64,7 @@ public:
 	DWORD  m_dwLastError;
 	int Listen(u_short uPort);
 	void SetSocket(SOCKET sSocket);
+	static CString GetHostName(CString strIP);
 };
 
 #endif // !defined(AFX_MYSOCKET_H__56B83F29_B3D6_4BF4_BC85_5DD89C6DE20C__INCLUDED_)

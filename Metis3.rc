@@ -569,12 +569,13 @@ BEGIN
                     WS_VISIBLE,1,54,293,3
 END
 
-IDD_CONNECT DIALOG  0, 0, 339, 118
+IDD_CONNECT DIALOGEX 0, 0, 339, 134
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Connect to..."
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    LTEXT           "&Room",IDC_STATIC_ROOM,12,20,37,8
+    GROUPBOX        "User Info",IDC_STATIC_USERSETUP,7,7,325,82
+    LTEXT           "&Room*",IDC_STATIC_ROOM,12,20,37,8
     COMBOBOX        IDC_ROOM,62,18,264,134,CBS_DROPDOWN | CBS_SORT | 
                     WS_VSCROLL | WS_TABSTOP
     LTEXT           "&Username",IDC_STATIC_USERNAME,12,36,37,8
@@ -584,13 +585,16 @@ BEGIN
     LTEXT           "&Line",IDC_STATIC_LINE,182,52,40,8
     COMBOBOX        IDC_LINE,226,50,100,259,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    DEFPUSHBUTTON   "OK",IDOK,229,97,50,14
-    PUSHBUTTON      "Cancel",IDCANCEL,282,97,50,14
-    ICON            IDR_MAINFRAME,IDC_STATIC,7,91,20,20
-    PUSHBUTTON      "RoboMX [:]",IDC_STATIC,62,97,160,14,WS_DISABLED | NOT 
+    CONTROL         "Room is hosted with &MXChatd",IDC_MXCHATD,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,12,72,236,10
+    PUSHBUTTON      "&Clear Room History",IDC_CLEAR,255,70,71,14
+    DEFPUSHBUTTON   "OK",IDOK,229,113,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,282,113,50,14
+    PUSHBUTTON      "RoboMX [:]",IDC_STATIC,62,113,160,14,WS_DISABLED | NOT 
                     WS_TABSTOP
-    GROUPBOX        "User Info",IDC_STATIC_USERSETUP,7,7,325,82
-    PUSHBUTTON      "Clear Room History",IDC_CLEAR,255,70,71,14
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,107,20,20
+    LTEXT           "* NOTE: you can also join a room with ROOMNAME_<IP>:<PORT>",
+                    IDC_STATIC,12,94,214,8
 END
 
 IDD_RENAME DIALOGEX 0, 0, 254, 92
@@ -651,8 +655,8 @@ FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,1,183,104
     CONTROL         "Enable &History",IDC_ENABLE_HISTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,7,10,85,10
-    EDITTEXT        IDC_HISTORDEPTH,100,9,40,12,ES_AUTOHSCROLL | WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,10,85,10
+    EDITTEXT        IDC_HISTORDEPTH,100,9,40,12,ES_AUTOHSCROLL
     CONTROL         "&Limit Chatwindow to ",IDC_LINES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,7,24,85,9
     EDITTEXT        IDC_LINESNUM,100,22,40,12,ES_AUTOHSCROLL
@@ -800,9 +804,9 @@ BEGIN
     LTEXT           "",IDC_STATIC_OPMSG,183,153,22,13,0,WS_EX_STATICEDGE
 END
 
-IDD_MESSAGES DIALOG  0, 0, 357, 233
+IDD_MESSAGES DIALOGEX 0, 0, 357, 233
 STYLE DS_SETFONT | WS_CHILD
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     GROUPBOX        "Quick Messages",IDC_STATIC_QUICK,2,1,354,74
     EDITTEXT        IDC_MSG_ADD,8,12,288,12,ES_AUTOHSCROLL
@@ -812,23 +816,21 @@ BEGIN
     PUSHBUTTON      "Remove",IDC_QUICKREM,301,28,50,12
     PUSHBUTTON      "Up",IDC_QUICKUP,301,43,50,12
     PUSHBUTTON      "Down",IDC_QUICKDOWN,301,58,50,13
-    GROUPBOX        "Join / Part Messages",IDC_STATIC_JOINPART,2,76,354,65
-    EDITTEXT        IDC_JOIN,54,96,297,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_PART,54,125,297,12,ES_AUTOHSCROLL
-    LTEXT           "Join",IDC_STATIC_JOIN,8,98,40,8
-    LTEXT           "Part",IDC_STATIC_PART,8,127,40,8
-    LTEXT           "Variables in Part Message %NAME% %ROOM%",
-                    IDC_STATIC_PART_VAR,54,114,297,8
-    LTEXT           "Variables for Join Message: %NAME% %LINE% %FILES % ROOM%",
-                    IDC_STATIC_JOIN_VAR,54,86,297,8
+    GROUPBOX        "Join / Part Messages",IDC_STATIC_JOINPART,2,76,354,81
+    EDITTEXT        IDC_JOIN,54,91,297,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_PART,54,106,297,12,ES_AUTOHSCROLL
+    LTEXT           "Join",IDC_STATIC_JOIN,8,93,40,8
+    LTEXT           "Part",IDC_STATIC_PART,8,108,40,8
     GROUPBOX        "MP3 / Video Announcement (F8) [Requires Winamp 2.x or 5.x]",
-                    IDC_STATIC_WINAMP,2,146,354,86
-    LTEXT           "MP3 / Audio:",IDC_STATIC_MUSIC,8,162,46,8
-    EDITTEXT        IDC_NOWLISTENING,54,161,297,12,ES_AUTOHSCROLL
-    LTEXT           "Video:",IDC_STATIC_VIDEO,8,181,40,8
-    EDITTEXT        IDC_NOW_WATCHING,54,179,297,12,ES_AUTOHSCROLL
+                    IDC_STATIC_WINAMP,2,161,354,71
+    LTEXT           "MP3 / Audio:",IDC_STATIC_MUSIC,5,175,46,8
+    EDITTEXT        IDC_NOWLISTENING,54,173,297,12,ES_AUTOHSCROLL
+    LTEXT           "Video:",IDC_STATIC_VIDEO,8,191,40,8
+    EDITTEXT        IDC_NOW_WATCHING,54,189,297,12,ES_AUTOHSCROLL
     LTEXT           "%WA-SONG% %WA-ARTIST% %WA-REMTIME% %WA-ELATIME% %WA-TOTALTIME%\n%WA-BITRATE% %WA-SAMPLERATE% %WA-CHANNELS% %WA-VERSION%",
-                    IDC_STATIC_VARS,8,205,343,21
+                    IDC_STATIC_VARS,8,208,343,19
+    LTEXT           "Variables:\n%NAME%  %FILES%  %LINE%  %IP%  %HOSTNAME%  %NUMUSERS%  %TIME%  %ROOMNAME%\nAnd in the Part message: %STAYTIME%\nPlus all Winamp variables of course",
+                    IDC_STATIC,8,122,343,32
 END
 
 IDD_SOUND DIALOGEX 0, 0, 360, 261
@@ -1037,7 +1039,7 @@ BEGIN
         VERTGUIDE, 62
         VERTGUIDE, 326
         TOPMARGIN, 7
-        BOTTOMMARGIN, 111
+        BOTTOMMARGIN, 127
         HORZGUIDE, 24
         HORZGUIDE, 40
         HORZGUIDE, 56
@@ -1134,8 +1136,14 @@ BEGIN
     BEGIN
         LEFTMARGIN, 1
         RIGHTMARGIN, 356
+        VERTGUIDE, 8
+        VERTGUIDE, 351
         TOPMARGIN, 1
         BOTTOMMARGIN, 232
+        HORZGUIDE, 97
+        HORZGUIDE, 112
+        HORZGUIDE, 179
+        HORZGUIDE, 195
     END
 
     IDD_SOUND, DIALOG
@@ -1371,26 +1379,6 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_FILE_MRU_FILE1       "Open this document"
-    ID_FILE_MRU_FILE2       "Open this document"
-    ID_FILE_MRU_FILE3       "Open this document"
-    ID_FILE_MRU_FILE4       "Open this document"
-    ID_FILE_MRU_FILE5       "Open this document"
-    ID_FILE_MRU_FILE6       "Open this document"
-    ID_FILE_MRU_FILE7       "Open this document"
-    ID_FILE_MRU_FILE8       "Open this document"
-    ID_FILE_MRU_FILE9       "Open this document"
-    ID_FILE_MRU_FILE10      "Open this document"
-    ID_FILE_MRU_FILE11      "Open this document"
-    ID_FILE_MRU_FILE12      "Open this document"
-    ID_FILE_MRU_FILE13      "Open this document"
-    ID_FILE_MRU_FILE14      "Open this document"
-    ID_FILE_MRU_FILE15      "Open this document"
-    ID_FILE_MRU_FILE16      "Open this document"
-END
-
-STRINGTABLE 
-BEGIN
     ID_NEXT_PANE            "Switch to the next window pane\nNext Pane"
     ID_PREV_PANE            "Switch back to the previous window pane\nPrevious Pane"
 END
@@ -1446,32 +1434,28 @@ STRINGTABLE
 BEGIN
     ID_RENAME               "Change User details\nChange User details"
     ID_EXIT                 "Disconnect from channel\nDisconnect"
-    ID_METIS_START          "Start bot\nStart bot"
-    ID_METIS_STOP           "Stop the bot\nStop bot"
-    ID_METIS_RELOADCONFIGURATION 
-                            "Reload Configuration files\nReload Configuartion"
     ID_VIEW_OPTIONS         "Adjust Programs Settings\nOptions"
     ID_CHANNEL_CHANNELLIST  "Connects to WPN and downloads a list of all available Chat-Channels\nGet Channellist"
     ID_MYFILE_NEW           "Connect to a new channel\nConnect"
     ID_USERLIST_SENDMESSAGE "Send a private message to the user\nPM"
     ID_USERLIST_COPYUSERNAME "Copy the username to clopboard"
-    ID_USERLIST_KICK        "Kick the user (RCMS)"
+    ID_USERLIST_KICK        "Kick the user"
 END
 
 STRINGTABLE 
 BEGIN
-    ID_USERLIST_KICKBAN     "Kick and Ban the user (RCMS)"
-    ID_USERLIST_BAN         "Ban the user (RCMS)"
-    ID_USERLIST_REDIRECT    "Redirect the user (RCMS)"
-    ID_USERLIST_ADDADMIN    "Give user adminrights (RCMS)"
+    ID_USERLIST_KICKBAN     "Kick and Ban the user"
+    ID_USERLIST_BAN         "Ban the user"
+    ID_USERLIST_REDIRECT    "Redirect the user"
+    ID_USERLIST_ADDADMIN    "Give user adminrights"
     ID_USERLIST_REMOVEADMIN "Remove Adminrights from user"
-    ID_USERLIST_UNBAN       "Unban the user (RCMS)"
-    ID_USERLIST_PRINTUSERSTAT "Print user statistics (RCMS)"
-    ID_USERLIST_PRINTIP     "Prints users IP Address (RCMS)"
+    ID_USERLIST_UNBAN       "Unban the user"
+    ID_USERLIST_PRINTUSERSTAT "Print user statistics"
+    ID_USERLIST_PRINTIP     "Prints users IP Address"
     ID_USERLIST_IGNORE      "Ignore user"
     ID_USERLIST_UNIGNORE    "Unignore user"
-    ID_USERLIST_CUSTOMIZETHISMENU "Customize the RCMS commands for this room"
-    ID_USERLIST_READUSERMESSAGE "Read user message (RCMS)"
+    ID_USERLIST_CUSTOMIZETHISMENU "Customize the menu commands for this room"
+    ID_USERLIST_READUSERMESSAGE "Read user message"
     ID_CHATROOM_SELECTALL   "Select all text"
     ID_CHATROOM_COPY        "Copy selected text to clipboard"
 END
@@ -1485,7 +1469,7 @@ BEGIN
     ID_NEXT                 "Next Window\nNext Window"
     ID_PREV                 "Switch to previous Window\nPrevious Window"
     ID_RECONNECT            "Reconnect to channel\nReconnect to channel"
-    IDR_START_NODESERVER    "Start Server console to create a PM server or to host a chatroom\nStart Serverconsole"
+    IDR_START_NODESERVER    "Start Server console to create a server or to host a chatroom\nStart Serverconsole"
     ID_VIEW_FULL_SCREEN     "Toggles Full Screen mode on/off"
     ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME 
                             "Display how long your Windows has been running in channel\nSystem Uptime"
@@ -1504,14 +1488,8 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_POPUP_LOOPBACKJOIN   "Joins the room but changes the room IP to 127.0.0.1 so you can join your own room when you have a loopback problem"
     ID_POPUP_COPYROOMNAME   "Copy the room name"
     ID_POPUP_COPYTOPIC      "Copies the room topic"
-END
-
-STRINGTABLE 
-BEGIN
-    IDR_PRIVATECHAT_TMPL    "PrivateChat\nPrivateChat\nPrivateChat\nPrivateChat Files (*.pri)\npri\nPrivateChat.Document\nPrivateChat Document"
 END
 
 #endif    // English (U.S.) resources

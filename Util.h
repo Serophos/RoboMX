@@ -20,4 +20,6 @@ public:
 	static BOOL    IsVideoPlaying();
 	static CString GetUpTime();
 
+	static BOOL CheckRichEdit(_TCHAR *lpszModuleName);
+	static BOOL FileExists(LPCTSTR lpszFile);
 };

@@ -42,10 +42,11 @@ static char THIS_FILE[] = __FILE__;
 
 CPtrArray g_aPlugins;
 
-#define WM_ECHOTEXT WM_APP+1
-#define WM_ECHOSYSTEXT WM_APP+2
-#define WM_INPUT WM_APP+3
-#define WM_INCOMMING WM_APP+10
+#define WM_ECHOTEXT			WM_APP+1
+#define WM_ECHOSYSTEXT		WM_APP+2
+#define WM_INPUT			WM_APP+3
+#define WM_DPLTOOLTIP		WM_APP+4
+#define WM_INCOMMING		WM_APP+10
 
 extern UINT UWM_INPUT;
 extern CSystemInfo  g_sSystem;
@@ -76,6 +77,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_TRAY_ICON_NOTIFY_MESSAGE,OnTrayNotify)
 	ON_MESSAGE(WM_INPUT, OnPluginInput)
 	ON_MESSAGE(WM_ECHOTEXT, OnPluginEcho)
+	ON_MESSAGE(WM_DPLTOOLTIP, OnTooltip)
 	ON_MESSAGE(WM_ECHOSYSTEXT, OnPluginSysEcho)
 	ON_COMMAND(IDR_START_NODESERVER, OnStartNodeserver)
 	ON_COMMAND(ID_SYSTRAY_RESTORE, OnSystrayRestore)
@@ -203,14 +205,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	LoadEmoticons();
-	LoadPlugins();
-
-#ifndef _DEBUG
-	if(g_sSettings.GetUpdate()){
-
-		CheckUpdate();
-	}
-#endif
 	return 0;
 }
 
@@ -779,6 +773,14 @@ void CMainFrame::ReloadPlugins(void)
 	}
 }
 
+LRESULT CMainFrame::OnTooltip(WPARAM wParam, LPARAM lParam)
+{
+
+	EXT_MSG_STRUCT* msg = (EXT_MSG_STRUCT*)lParam;
+	DisplayToolTip(msg->lpszMsg, (UINT)msg->wParam, (DWORD)msg->lParam);
+
+	return 0;
+}
 
 LRESULT CMainFrame::OnPluginInput(WPARAM wParam, LPARAM lParam)
 {

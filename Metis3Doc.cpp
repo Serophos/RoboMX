@@ -55,6 +55,7 @@ CMetis3Doc::CMetis3Doc()
 	m_dwFiles    = 0;
 	m_wLine      = 0x00;
 	m_wUserMode  = 0;
+	m_bOldJoin   = FALSE;
 }
 
 CMetis3Doc::~CMetis3Doc()
@@ -84,6 +85,7 @@ BOOL CMetis3Doc::OnNewDocument()
 		m_wLine   = (WORD)dlg.m_nLine;
 		m_strRoom = dlg.m_strRoom;
 		m_strName = dlg.m_strName;
+		m_bOldJoin = dlg.m_bOldJoin;
 	}
 
 	if (!CDocument::OnNewDocument()){

@@ -12,6 +12,7 @@ CSystemInfo  g_sSystem;
 const char* line_types[] = {"Unknown", "14.4K", "28.8K", "33.3K", "56K", 
                             "64K ISDN", "128K ISDN", "Cable", "DSL", "T1", "T3"};
 
+#pragma comment(lib, "version.lib")
 
 #define NUM_LINES 11
 
@@ -411,4 +412,102 @@ CString Util::GetMySystemInfo()
 			);
 	
 	return strInfo;
+}
+
+BOOL Util::CheckRichEdit(_TCHAR *lpszModuleName)
+{
+
+
+	BOOL bReturn = FALSE;
+    LPBYTE  lpVersionData; 
+    DWORD   dwLangCharset; 
+
+ 	/*_TCHAR lpszModuleName[ MAX_PATH + 1 ] = { '\0',};
+	
+	// Get Comctl32.dll product version
+	GetSystemDirectory( lpszModuleName,	MAX_PATH );
+	
+	_tcscat(lpszModuleName, _T("\\RICHED32.DLL"));	  */
+
+
+	DWORD dwHandle;     
+    DWORD dwDataSize = ::GetFileVersionInfoSize(lpszModuleName, &dwHandle); 
+    if ( dwDataSize == 0 ){
+
+        return FALSE;
+	}
+
+    lpVersionData = new BYTE[dwDataSize]; 
+    if(!::GetFileVersionInfo((LPTSTR)lpszModuleName, dwHandle, dwDataSize, (void**)lpVersionData)){
+
+		delete[] lpVersionData; 
+		lpVersionData = NULL;
+		dwLangCharset = 0;
+
+        return FALSE;
+    }
+
+    UINT nQuerySize;
+    DWORD* pTransTable;
+    if (!::VerQueryValue(lpVersionData, _T("\\VarFileInfo\\Translation"),
+                         (void **)&pTransTable, &nQuerySize)){
+
+		delete[] lpVersionData; 
+		lpVersionData = NULL;
+		dwLangCharset = 0;
+
+        return FALSE;
+    }
+
+    // Swap the words to have lang-charset in the correct format
+    dwLangCharset = MAKELONG(HIWORD(pTransTable[0]), LOWORD(pTransTable[0]));
+
+    // Query version information value
+    LPVOID lpData;
+    CString strVersion, strBlockName;
+
+    strBlockName.Format(_T("\\StringFileInfo\\%08lx\\%s"), dwLangCharset, _T("FileVersion"));
+
+    if(::VerQueryValue((void **)lpVersionData, strBlockName.GetBuffer(0), &lpData, &nQuerySize)){
+
+        strVersion = (LPCTSTR)lpData;
+	}
+
+    strBlockName.ReleaseBuffer();
+
+	float fVersion = 0.0f;
+	_stscanf(strVersion, _T("%f"), & fVersion);
+
+	bReturn = (fVersion >= 5.0f);
+
+	delete[] lpVersionData; 
+	lpVersionData = NULL;
+	dwLangCharset = 0;
+
+	return bReturn;
+}
+
+BOOL Util::FileExists(LPCTSTR lpszFile)
+{
+
+	TRY{
+		
+		CFileStatus rStatus;
+		if(CFile::GetStatus(lpszFile, rStatus)){
+
+			return TRUE;
+		}
+		else{
+
+			return FALSE;
+		}
+	}
+	CATCH(CFileException, e){
+
+		TRACE0("File access exception/violation in Util::FileExist\n");
+		return TRUE;
+	}
+	END_CATCH;
+
+	return FALSE;
 }

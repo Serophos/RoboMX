@@ -33,6 +33,9 @@ static char THIS_FILE[] = __FILE__;
 
 
 extern CSettings g_sSettings;
+
+CStringArray g_aHistory;
+
 /////////////////////////////////////////////////////////////////////////////
 // CMyEdit
 
@@ -40,6 +43,7 @@ UINT UWM_INPUT = ::RegisterWindowMessage("UWM_INPUT-7A14F66B-ABAB-4525-AC01-841C
 
 #define m_aCommandsNUM m_pCommands->GetSize()
 #define g_aQuickNUM g_sSettings.m_aQuick.GetSize() 
+#define g_aHistoryNUM g_aHistory.GetSize()
 
 CMyEdit::CMyEdit()
 {
@@ -83,6 +87,22 @@ int CMyEdit::SearchItem(CString strString)
 	}
 
 	if((nIndex >= g_sSettings.m_aQuick.GetSize())  || g_sSettings.m_aQuick.GetSize() == 0) return 0;
+
+	return nIndex + 1;
+}
+
+int CMyEdit::SearchHistory(CString strString)
+{
+
+	CString strTmp;
+
+	for(int nIndex = 0; nIndex < g_aHistory.GetSize(); nIndex++){
+
+		strTmp = g_aHistory[nIndex];
+		if(strTmp == strString) break;
+	}
+
+	if((nIndex >= g_aHistory.GetSize())  || g_aHistory.GetSize() == 0) return 0;
 
 	return nIndex + 1;
 }
@@ -198,10 +218,91 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			}
 		}
 		///////////////////////////////////////////////////////
+		// Commands CTRL+UP UPARROW or CTRL+MOUSEHWEL UP
+		///////////////////////////////////////////////////////
+		else if(((pMsg->message == WM_KEYDOWN) && (pMsg->wParam == VK_UP)) && (GetKeyState(VK_CONTROL) < 0) && (g_aHistoryNUM != 0) && !m_bEx){
+		
+			TRACE("History UP %d\n",GetKeyState(VK_LCONTROL));
+			SetSel(0,-1);
+			TCHAR szTempStr[1024];
+			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
+		
+				DWORD dwIndex = SearchHistory(szTempStr);
+				if(dwIndex == 0){ // Item was not found
+
+					CString strOut = g_aHistory[g_aHistory.GetSize() - 1];
+					Util::ReplaceVars(strOut);
+					lstrcpy(szTempStr, strOut);
+					ReplaceSel(szTempStr, TRUE);
+					SendMessage(WM_KEYDOWN, VK_END, 0);
+					return TRUE;
+				}
+				else if(dwIndex == 1){ // Item found but we are at no1
+
+					SetWindowText("");
+					//Beep(1000, 50);
+				}
+				else{ // item found 
+
+					CString strOut = g_aHistory[dwIndex - 2];
+					lstrcpy(szTempStr, strOut);
+					ReplaceSel(szTempStr, TRUE);
+					SendMessage(WM_KEYDOWN, VK_END, 0);
+				}
+				return TRUE;
+			}
+			else{
+
+				CString strOut = g_aHistory[g_aHistory.GetSize() - 1];
+				lstrcpy(szTempStr, strOut);
+				ReplaceSel(szTempStr, TRUE);
+				SendMessage(WM_KEYDOWN, VK_END, 0);
+				return TRUE;
+			}
+		}
+		///////////////////////////////////////////////////////
+		// HISTORY down CTRL+DOWNARROW or CTRL+MOUSEWHEEL DOWN
+		///////////////////////////////////////////////////////
+		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DOWN) && (GetKeyState(VK_CONTROL) < 0) && (g_aHistoryNUM != 0) && !m_bEx){
+		
+			TRACE("HistoryUP %d\n",GetKeyState(VK_LCONTROL));
+			SetSel(0,-1);
+			TCHAR szTempStr[1024];
+			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
+				DWORD dwIndex = SearchHistory(szTempStr);
+				if(dwIndex >= g_aHistory.GetSize()){
+
+					SetWindowText("");
+					//Beep(1000, 50);
+				}
+				else{
+
+					CString strOut = g_aHistory[dwIndex];
+
+					lstrcpy(szTempStr, strOut);
+
+					SetWindowText(szTempStr);
+					SendMessage(WM_KEYDOWN, VK_END, 0);
+				}
+				return TRUE;
+			}
+			else{
+
+				CString strOut = g_aHistory[0];
+
+				lstrcpy(szTempStr, strOut);
+				SetWindowText(szTempStr);
+				SendMessage(WM_KEYDOWN, VK_END, 0);
+				return TRUE;
+			}
+		}
+
+		///////////////////////////////////////////////////////
 		// Commands UP UPARROW or MOUSEHWEL UP
 		///////////////////////////////////////////////////////
 		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_UP) && (g_aQuickNUM != 0) && !m_bEx){
 		
+			TRACE("Cmd UP %d\n",GetKeyState(VK_LCONTROL));
 			SetSel(0,-1);
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
@@ -246,6 +347,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_DOWN) && (g_aQuickNUM != 0) && !m_bEx){
 		
+			TRACE("Cmd DOWN %d\n",GetKeyState(VK_LCONTROL));
 			SetSel(0,-1);
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
@@ -278,6 +380,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 				return TRUE;
 			}
 		}
+
 	}
 
 	return CEdit::PreTranslateMessage(pMsg);

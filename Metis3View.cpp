@@ -35,6 +35,7 @@
 #include "RoboEx.h"
 #include "Util.h"
 #include ".\metis3view.h"
+#include "mysocket.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -71,6 +72,8 @@ extern UINT UWM_RENOTIFY;
 extern CSettings g_sSettings;
 CStringArray g_aIgnored;
 extern CPtrArray g_aPlugins;
+extern CStringArray g_aHistory;
+
 #define PLUGIN ((CRoboEx*)g_aPlugins[i])
 
 UINT UWM_RENAMECL = ::RegisterWindowMessage("UWM_RENAMECL-{494D99C1-03BE-49e3-8A47-D0D17C6D4ACE}");
@@ -232,7 +235,14 @@ void CMetis3View::OnInitialUpdate()
 	m_iImageList.Create(16, 16, ILC_COLORDDB|ILC_MASK, 4, 1);
 	m_iImageList.Add(&bitmap, RGB(255,0,255));
 	
-	m_lcUsers.SetHeadings("User,136;Share,60;Speed,80;Node-IP,120;Node-Port,80;IP (Admin/Op),120");
+	if(g_sSettings.GetDisplayNode()){
+
+		m_lcUsers.SetHeadings("User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150;Node-IP,120;Node-Port,80");
+	}
+	else{
+
+		m_lcUsers.SetHeadings("User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150");
+	}
 	m_lcUsers.LoadColumnInfo();
 	
 	m_lcUsers.SetColors(
@@ -279,6 +289,7 @@ void CMetis3View::OnInitialUpdate()
 	m_mxClient.m_dwFiles	= GetDocument()->m_dwFiles;
 	m_mxClient.m_wLineType	= GetDocument()->m_wLine;
 	m_mxClient.m_strUser	= GetDocument()->m_strName;
+	m_mxClient.m_bOldJoin   = GetDocument()->m_bOldJoin;
 
 	m_mxClient.SetRoom(GetDocument()->m_strRoom);
 	WriteSystemMsg("Connecting. Stand by...", g_sSettings.GetRGBPend());
@@ -488,22 +499,33 @@ void CMetis3View::RemoveUser(const CString strUser, const CString strIP, WORD wP
 
 	int nPos = m_lcUsers.FindItem(&fi, -1);
 
-	while(nPos >= 0){
+	if(g_sSettings.GetDisplayNode()){
 
-		if((m_lcUsers.GetItemText(nPos, 0) == strUser) &&
-			(m_lcUsers.GetItemText(nPos, 4) == Util::FormatInt(wPort)) &&
-			(m_lcUsers.GetItemText(nPos, 3) == strIP)){
+		if(nPos >= 0){
 
+			if((m_lcUsers.GetItemText(nPos, 0) == strUser) &&
+				(m_lcUsers.GetItemText(nPos, 6) == Util::FormatInt(wPort)) &&
+				(m_lcUsers.GetItemText(nPos, 5) == strIP)){
 
-			m_lcUsers.DeleteItem(nPos);
-			m_lcUsers.Sort();
-			break;
+				m_lcUsers.DeleteItem(nPos);
+				m_lcUsers.Sort();
+			}
 		}
+	}
+	else{
 
+		if(nPos >= 0){
+
+			if(m_lcUsers.GetItemText(nPos, 0) == strUser){
+
+				m_lcUsers.DeleteItem(nPos);
+				m_lcUsers.Sort();
+			}
+		}
 	}
 }
 
-void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, WORD wUserLevel)
+void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, CString strHost, WORD wUserLevel)
 {
 
 	CString strFiles, strLine, strPort;
@@ -511,7 +533,14 @@ void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CStrin
 	strLine = Util::FormatLine(wLine);
 	strPort.Format("%d", wNodePort);
 
-	m_lcUsers.AddItem(wUserLevel, strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strNodeIP, (LPCTSTR)strPort, (LPCTSTR)strIP);
+	if(g_sSettings.GetDisplayNode()){
+
+		m_lcUsers.AddItem(wUserLevel, strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strIP, (LPCTSTR)strHost, (LPCTSTR)strNodeIP, (LPCTSTR)strPort);
+	}
+	else{
+
+		m_lcUsers.AddItem(wUserLevel, strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strIP, (LPCTSTR)strHost);
+	}
 	m_lcUsers.Sort();
 }
 
@@ -621,11 +650,12 @@ LRESULT CMetis3View::OnAddUser(WPARAM wParam, LPARAM lParam)
 	user.strUser = strUser;
 	user.strNodeIP = Util::FormatIP(dwIP);
 	user.strRealIP = Util::FormatIP(dwRealIP);
+	user.strHostname = CMySocket::GetHostName(user.strRealIP);
 	user.dwJoinTime = GetTickCount();
 
 	m_aUsers.Add(user);
 	
-	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.wUserLever);
+	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.strHostname, user.wUserLever);
 
 	return 1;
 }
@@ -678,11 +708,12 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	strUser = lpUser;
 	user.strUser = strUser;
 	user.strNodeIP = Util::FormatIP(dwIP);
-	user.strRealIP = Util::FormatIP(dwRealIP);
+    user.strRealIP = Util::FormatIP(dwRealIP);
+	user.strHostname = CMySocket::GetHostName(user.strRealIP);
 	user.dwJoinTime = GetTickCount();
 
 	m_aUsers.Add(user);
-	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.wUserLever);
+	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.strHostname, user.wUserLever);
 
 	strUser.Replace("\\rtf", "#rtf");
 	
@@ -700,6 +731,7 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	strJoin.Replace("%LINE%", Util::FormatLine(user.wLineType));
 	strJoin.Replace("%FILES%", Util::FormatInt(user.dwNumFiles));
 	strJoin.Replace("%IP%", user.strRealIP);
+	strJoin.Replace("%HOSTNAME%", user.strHostname);
 	strJoin.Replace("%USERS%", Util::FormatInt(m_lcUsers.GetItemCount()));
 	strJoin.Replace("%ROOMNAME%", GetDocument()->m_strRoomShort);
 	Util::ReplaceVars(strJoin);
@@ -808,13 +840,26 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		newUser.strNodeIP = Util::FormatIP(dwNewIP);
 		newUser.wUserLever = wMode;
 		newUser.strRealIP = Util::FormatIP(dwRealIP);
+		if(oldUser.strRealIP != newUser.strRealIP){
+
+			newUser.strHostname = CMySocket::GetHostName(newUser.strRealIP);
+		}
+		else{
+
+			newUser.strHostname = oldUser.strHostname;
+		}
 		
 		m_aUsers.SetAt(i, newUser);
 		m_lcUsers.DeleteItem(nPos);
 		m_lcUsers.Sort();
-		m_lcUsers.AddItem(newUser.wUserLever, newUser.strUser, (LPCTSTR)Util::FormatInt(newUser.dwNumFiles), (LPCTSTR)Util::FormatLine(newUser.wLineType),
-			(LPCTSTR)newUser.strNodeIP, (LPCTSTR)Util::FormatInt(newUser.wNodePort), (LPCSTR)newUser.strRealIP);
-		m_lcUsers.Sort();
+		AddUser(newUser.strUser, newUser.wLineType, newUser.dwNumFiles, newUser.strNodeIP, newUser.wNodePort, newUser.strRealIP, newUser.strHostname, newUser.wUserLever); 
+
+
+
+
+		/*m_lcUsers.AddItem(newUser.wUserLever, newUser.strUser, (LPCTSTR)Util::FormatInt(newUser.dwNumFiles), (LPCTSTR)Util::FormatLine(newUser.wLineType),
+			(LPCTSTR)newUser.strNodeIP, (LPCTSTR)Util::FormatInt(newUser.wNodePort), (LPCTSTR)newUser.strRealIP, (LPCTSTR)newUser.strHostname, newUser.wUserLever);
+		m_lcUsers.Sort();																																		   */
 	}
 	else{
 
@@ -863,6 +908,12 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 				UpdateAverageLag(FALSE);
 			}
 			
+			for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+				PLUGIN->OnOpMessage((DWORD)m_hWnd, &strName, &strMsg);
+			}
+			if(strMsg.IsEmpty()) return 1;
+
 			m_rChat.SetText(" " + g_sSettings.GetBrMsgFront() +  strName + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
 			m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
 		}
@@ -934,6 +985,7 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 	strPart.Replace("%LINE%", Util::FormatLine(user.wLineType));
 	strPart.Replace("%FILES%", Util::FormatInt(user.dwNumFiles));
 	strPart.Replace("%IP%", user.strRealIP);
+	strPart.Replace("%HOSTNAME%", user.strHostname);
 	Util::ReplaceVars(strPart);
 
 	m_rChat.SetText(" " + strPart + "\n", g_sSettings.GetRGBPart(), g_sSettings.GetRGBBg());
@@ -1153,7 +1205,15 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 		m_strInput = "Sorry, I made a futile attemp to send an RTF exploit to the room. RoboMX outsmarted me though and blocked it. Please kick my butt!";
 	}
 
-	
+	if((CMyEdit::SearchHistory(m_strInput) == 0) && g_sSettings.GetSaveHistory()){
+
+		if((g_aHistory.GetSize() > g_sSettings.GetHistoryDepth()) && g_aHistory.GetSize()){
+
+            g_aHistory.RemoveAt(0);
+		}
+		g_aHistory.Add(m_strInput);	
+	}
+
 	if(m_strInput.Find("/all ", 0) == 0){
 
 		m_strInput = m_strInput.Mid(5);

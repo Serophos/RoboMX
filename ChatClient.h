@@ -75,6 +75,7 @@ public:
 	DWORD   m_dwClientIP;
 	DWORD   m_dwFiles;
 	
+	BOOL    m_bOldJoin;
 
 	// Crypt Shit
 	DWORD m_dwUPKey;

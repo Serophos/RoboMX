@@ -117,6 +117,8 @@ protected:
 	afx_msg LRESULT OnPluginInput(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPluginEcho(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPluginSysEcho(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnTooltip(WPARAM wParam, LPARAM lParam);
+
 	DECLARE_MESSAGE_MAP()
 public:
 	void LoadEmoticons(void);

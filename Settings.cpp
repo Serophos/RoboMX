@@ -65,6 +65,7 @@ CSettings::CSettings()
 	m_bUpdate		= TRUE;
 	m_bAutoList		= TRUE;
 	m_bMaxi			= FALSE;	
+	m_bDisplayNode	= FALSE;
 	m_strFont = "Arial";
 
 	m_dwFiles		= 1;
@@ -136,6 +137,8 @@ void CSettings::Load()
 	m_bImage   = ini.GetValue("Look & Feel", "UseImage", TRUE);
 	m_strImage = ini.GetValue("Look & Feel", "BG-Image", m_strWd + "\\gfx\\robomx.bmp");
 	m_bPing	   = ini.GetValue("Look & Feel", "ShowPing", FALSE);
+	m_bDisplayNode = ini.GetValue("Look & Feel", "DisplayNode", FALSE);
+
 	m_nTimeFormat = ini.GetValue("Look & Feel", "TimeFormat", 0);
 	m_bHiliteUsers = ini.GetValue("Look & Feel", "HiliteUsers", FALSE);
 	m_bEmoticons   = ini.GetValue("Look & Feel", "Emoticons", TRUE);
@@ -321,7 +324,8 @@ void CSettings::Save()
 	ini.SetValue("Look & Feel", "TimeFormat", m_nTimeFormat);
 	ini.SetValue("Look & Feel", "HiliteUsers", m_bHiliteUsers);
 	ini.SetValue("Look & Feel", "Emoticons", m_bEmoticons);
-	
+	ini.SetValue("Look & Feel", "DisplayNode", m_bDisplayNode);
+
 	ini.SetValue("History", "LimitChat", m_bLimit);
 	ini.SetValue("History", "Depth", m_nDepth);
 	ini.SetValue("History", "Enable", m_bHistory);

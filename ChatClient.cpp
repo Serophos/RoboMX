@@ -73,6 +73,7 @@ CChatClient::CChatClient()
 	m_pThread        = 0;
 	m_bListen        = FALSE;
 	m_bWarned		 = FALSE;
+	m_bOldJoin		 = FALSE;
 }
 
 CChatClient::~CChatClient()
@@ -88,6 +89,8 @@ BOOL CChatClient::Connect()
 	m_pThread = AfxBeginThread(RecvProc, (PVOID)this, THREAD_PRIORITY_NORMAL);
 	return TRUE;
 }
+
+//#define _MXCHATD_COMPATIBLE
 
 UINT CChatClient::RecvProc(PVOID pParam)
 {
@@ -167,26 +170,29 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 	// Send new pre-login packet
 	// ED 13 01 00 31	nLen = 5;
-#ifndef _MXCHATD_COMPATIBLE
-	*(WORD*)buffer = 0xED;
-	*(WORD*)(buffer+1) = 0x13;
-	*(WORD*)(buffer+2) = 0x01;
-	*(WORD*)(buffer+3) = 0x00;
-	*(WORD*)(buffer+4) = 0x31;
-	nLen = 5;
-
-	pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
 	
-	if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
+	if(!pClient->m_bOldJoin){
 
-		CString strError;
-		strError.Format("Robo-Panic: Sending WinMX 3.52 pre-login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
-		pClient->m_bListen  = FALSE;
-		pClient->m_eClose.SetEvent();
-		return FALSE;
+		*(WORD*)buffer = 0xED;
+		*(WORD*)(buffer+1) = 0x13;
+		*(WORD*)(buffer+2) = 0x01;
+		*(WORD*)(buffer+3) = 0x00;
+		*(WORD*)(buffer+4) = 0x31;
+		nLen = 5;
+
+		pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
+		
+		if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
+
+			CString strError;
+			strError.Format("Robo-Panic: Sending WinMX 3.52 pre-login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
+			pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
+			pClient->m_bListen  = FALSE;
+			pClient->m_eClose.SetEvent();
+			return FALSE;
+		}
 	}
-#endif
+
 	//Login-Request: (Client)
 	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
 	nLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
@@ -535,6 +541,10 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		break;
 	case 0x0068: // ?
 		WriteMessage("Info: Room is powered by WinMX 3.53.", g_sSettings.GetRGBOp());
+		if(m_bOldJoin){
+
+			WriteMessage("Warning: You used the MXChatd compatible join method to enter this room. Please only use that option for rooms that are actually hosted by MXChatd ;)", RGB(150,0,0));
+		}
 		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX353, 0);
 		break;
 	case 0x012D: // room name changed

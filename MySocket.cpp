@@ -574,3 +574,35 @@ int CMySocket::RecvFrom(char *pBuff, int nLen, int nWait)
 
 	return nRecv;
 }
+
+CString CMySocket::GetHostName(CString strIP)
+{
+
+	if(strIP.IsEmpty() || strIP == "0.0.0.0") return CString();
+
+	CString strHost;
+	HOSTENT *host = NULL;
+	if(inet_addr(strIP)==INADDR_NONE){
+
+		TRACE("Not a valid IP address: %s\n", strIP);
+		return CString();
+	}
+	else{
+
+		unsigned long addr = inet_addr(strIP);
+		host=gethostbyaddr((char*)&addr,sizeof(addr),AF_INET);
+	}
+	if(host == NULL){
+
+		TRACE("Could not resolve hostname of %s\n", strIP);
+		strHost = strIP;
+	}
+	else{
+
+		strHost = host->h_name;
+		TRACE("Hostname: %s %s\n", host->h_name);
+
+	}
+
+	return strHost;
+}

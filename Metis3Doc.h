@@ -60,7 +60,7 @@ public:
 	DWORD   m_dwFiles;
 	WORD    m_wLine;
 	WORD    m_wUserMode;
-
+    BOOL    m_bOldJoin;
 protected:
 
 // Generated message map functions

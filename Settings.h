@@ -159,6 +159,7 @@ public:
 	BOOL	GetHiliteUsers(){ return m_bHiliteUsers; }
 	DWORD	GetFiles(){ return m_dwFiles; }
 	WORD	GetLine(){ return m_wLine; }
+	BOOL	GetDisplayNode(){ return m_bDisplayNode; }
 
 
 	BOOL	GetMessageItalic(){ return m_bMsItalic; }
@@ -302,6 +303,7 @@ protected:
 	BOOL	m_bAutoList;
 	BOOL	m_bMaxi;
 	BOOL    m_bScroller;
+	BOOL	m_bDisplayNode;
 
 	CHARFORMAT2	m_cfDefault;
 	COLORREF	m_crFocus;

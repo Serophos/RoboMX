@@ -69,7 +69,7 @@ public:
 	void DoResize2(int delta);
 	void DoResize1(int delta);
 	void RemoveUser(const CString strUser, const CString strIP, WORD wPort);
-	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, WORD wUserLevel);
+	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, CString strHost, WORD wUserLevel);
 	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0));
 
 	CChatClient m_mxClient;

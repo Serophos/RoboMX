@@ -185,6 +185,8 @@
 #define IDC_LISTCHANNEL                 1128
 #define IDC_OPMSG                       1129
 #define IDC_SCROLLER                    1130
+#define IDC_CHECK1                      1131
+#define IDC_MXCHATD                     1131
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -373,7 +375,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        182
 #define _APS_NEXT_COMMAND_VALUE         32860
-#define _APS_NEXT_CONTROL_VALUE         1131
+#define _APS_NEXT_CONTROL_VALUE         1132
 #define _APS_NEXT_SYMED_VALUE           32920
 #endif
 #endif

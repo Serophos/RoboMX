@@ -36,6 +36,7 @@
 #include "Ini.h"
 #include "aboutctrl.h"
 #include ".\metis3.h"
+#include "util.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -139,6 +140,32 @@ BOOL CMetis3App::InitInstance()
 	SetRegistryKey(_T("RoboMX"));
 	LoadStdProfileSettings(0);  // Load standard INI file options (including MRU)
 
+	_TCHAR lpszModuleName[MAX_PATH + 1] = {'\0',};
+	
+	if(Util::FileExists(g_sSettings.GetWorkingDir(FALSE) + "\\RICHED32.DLL")){
+
+		strcpy(lpszModuleName, g_sSettings.GetWorkingDir(FALSE));
+	}
+	else{
+
+		GetSystemDirectory(lpszModuleName, MAX_PATH);
+	}
+
+	_tcscat(lpszModuleName, _T("\\RICHED32.DLL"));
+
+	if(!Util::CheckRichEdit((_TCHAR*)lpszModuleName)){
+
+		if(AfxMessageBox("Your RICHED32.DLL is too old to run RoboMX. You need at least version 5.0 to run it.\nDo you want to download the necessary files now?", MB_YESNO+MB_ICONQUESTION) == IDYES){
+
+			ShellExecute(0, "open", "http://mxcontrol.sourceforge.net/modules.php?name=Downloads&d_op=viewdownload&cid=12", 0, 0, SW_SHOW);
+			return FALSE;
+		}
+		else{
+
+			return FALSE;
+		}
+	}
+
 
 	WSADATA wsaData;
 
@@ -205,6 +232,14 @@ BOOL CMetis3App::InitInstance()
 		return FALSE;
 	m_pMainWnd = pMainFrame;
 
+	((CMainFrame*)pMainFrame)->LoadPlugins();
+
+#ifndef _DEBUG
+	if(g_sSettings.GetUpdate()){
+
+		((CMainFrame*)pMainFrame)->CheckUpdate();
+	}
+#endif
 
 	// Parse command line for standard shell commands, DDE, file open
 	CCommandLineInfo cmdInfo;

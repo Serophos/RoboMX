@@ -78,7 +78,7 @@ public:
 
 	// Network stuff
 	CMySocket m_mSocket;
-	BOOL    m_bListen;
+	volatile BOOL    m_bListen;
 
 	// View
 	CMetis3View* m_pView;

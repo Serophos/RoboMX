@@ -29,6 +29,7 @@
 #include "Settings.h"
 #include <mmsystem.h>
 #include "Tokenizer.h"
+#include "SystemInfo.h"
 
 #include "RoboEx.h"
 #include ".\mainfrm.h"
@@ -41,6 +42,7 @@ static char THIS_FILE[] = __FILE__;
 
 extern CSettings g_sSettings;
 extern CArray<SOUND, SOUND> g_aSounds;
+extern CStringArray g_aGreetings;
 
 CPtrArray g_aPlugins;
 
@@ -50,12 +52,14 @@ CPtrArray g_aPlugins;
 #define WM_INCOMMING WM_APP+10
 
 extern UINT UWM_INPUT;
+extern CSystemInfo  g_sSystem;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
 
 CStringArray g_aRCMSCommands;
+CStringArray g_aWinMXCommands;
 extern CStringArray g_aQuick;
 extern CStringArray g_aRooms;
 
@@ -101,7 +105,7 @@ static UINT indicators[] =
 
 CMainFrame::CMainFrame()
 {
-	// TODO: add member initialization code here
+
 	m_bChannelList    = FALSE;
 	m_bFullScreenMode = FALSE;
 	m_bSettings       = FALSE;
@@ -119,7 +123,6 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	if (CMDIFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
-	
 
 	if (!m_wndToolBarStd.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
 		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
@@ -203,10 +206,18 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 		PlaySound(g_sSettings.GetSfxStart(), 0, SND_FILENAME|SND_ASYNC);
 	}
+
 	LoadRCMS();
 	LoadEmoticons();
 	LoadRooms();
 	LoadPlugins();
+
+#ifndef _DEBUG
+	if(g_sSettings.GetUpdate()){
+
+		CheckUpdate();
+	}
+#endif
 	return 0;
 }
 
@@ -324,6 +335,15 @@ LRESULT CMainFrame::OnTrayNotify(WPARAM wParam, LPARAM lParam)
 		m_cmSystray.GetSubMenu(0)->TrackPopupMenu(TPM_BOTTOMALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,pt.x,pt.y,this);
 		m_cmSystray.GetSubMenu(0)->SetDefaultItem(0,TRUE);
 		break;
+	case 0x00000405:
+		::ShellExecute(	0,
+				"open",
+				"http://mxcontrol.sourceforge.net",
+				0,
+				0,
+				SW_SHOW
+			);
+		break;
     } 
 	return 1;
 }
@@ -337,6 +357,8 @@ void CMainFrame::OnDestroy()
 	{
 		Shell_NotifyIcon(NIM_DELETE,&m_nIconData);
 	}
+
+	g_sSettings.Save();
 	
 }
 
@@ -394,12 +416,13 @@ void CMainFrame::OnStartNodeserver()
 {
 
 	// Create a new ChatServerDocument
-	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
+	/*POSITION pos = GetApp()->GetFirstDocTemplatePosition();
 	CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
-	pTemplate->OpenDocumentFile(NULL);
+	pTemplate->OpenDocumentFile(NULL);*/
+	AfxMessageBox("Sorry, the roomserver is disabled in this release.", MB_ICONINFORMATION);
 }
 
 
@@ -456,6 +479,36 @@ void CMainFrame::LoadRCMS()
 		g_aRCMSCommands.Add("Error Reading RCMS.ini. Please check your installation");
 	}
 
+	///////////////////////////
+	// Load WinMX 3.52 commands
+	strIniFile = g_sSettings.GetWorkingDir() + "\\WinMX.ini";
+	g_aWinMXCommands.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				g_aWinMXCommands.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+
+	if(g_aWinMXCommands.GetSize() == 0){
+
+		g_aWinMXCommands.Add("Error Reading WinMX.ini. Please check your installation");
+	}
+
+	///////////////////////
+	// Load quick commands
 	strIniFile = g_sSettings.GetWorkingDir() + "\\quick.ini";
 	g_aQuick.RemoveAll();
 
@@ -661,28 +714,28 @@ void CMainFrame::LoadEmoticons(void)
 void CMainFrame::AddEmoticon(char* szFileName, char* szActivationText)
 {
 
-	Emoticon *eEmoticon = new Emoticon();
+	Emoticon *eEmoticon = new Emoticon;
 
 	strcpy(eEmoticon->szActivationText, szActivationText);
 	strcpy(eEmoticon->szFileName, szFileName);
 
-	// Create temp CImage Object for conversion
+	HBITMAP hTmp = (HBITMAP)::LoadImage(NULL, szFileName, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE|LR_DEFAULTCOLOR);
 
-	CImage iImage;
-	if(iImage.Load(szFileName) == E_FAIL){
-
-		delete eEmoticon;
-		return;
-	}
-
-	eEmoticon->hBitmap = iImage.Detach();
-
-	if(eEmoticon->hBitmap == NULL){
+	if(!hTmp){
 
 		delete eEmoticon;
 		return;
 	}
-	
+
+	eEmoticon->hBitmap = Emoticon::ReplaceColor(hTmp, RGB(255,0,255), g_sSettings.GetRGBBg(), 0);
+	DeleteObject(hTmp);
+
+	if (!eEmoticon->hBitmap)
+	{
+		delete eEmoticon;
+		return;
+	}
+
 	m_lEmoticons.AddTail(eEmoticon);
 }
 
@@ -859,6 +912,28 @@ void CMainFrame::LoadRooms(void)
 		return;
 	}END_CATCH;
 
+	strIniFile = g_sSettings.GetWorkingDir() + "\\hello.ini";
+	g_aGreetings.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				g_aGreetings.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
 }
 
 void CMainFrame::ActivateFrame(int nCmdShow)
@@ -950,4 +1025,67 @@ void CMainFrame::OnSystrayRestore()
 {
 
 	ShowWindow(SW_RESTORE);
+}
+
+void CMainFrame::DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon)
+{
+
+	
+	
+	m_nIconData.uFlags		      = NIF_TIP | NIF_INFO;
+
+	m_nIconData.dwInfoFlags      = dwIcon; // add an icon to a balloon ToolTip
+
+	m_nIconData.uTimeout         = uTimeout * 1000;
+
+	strcpy( m_nIconData.szInfo, strMessage);
+
+	Shell_NotifyIcon(NIM_MODIFY, &m_nIconData); // add to the taskbar's status area
+}
+
+void CMainFrame::CheckUpdate(void)
+{
+
+	CInternetSession	is;
+	CString				strTmp, strNewVersion;
+	
+	try{
+
+		CHttpFile* pFile = (CHttpFile*) is.OpenURL("http://mxcontrol.sourceforge.net/update/robomx.info");
+		//some ISPs interfear with a proxy to display adds when the first page is loaded
+		//so we close and opem the file again
+		pFile->Close();
+		delete pFile;
+		pFile = 0;
+		pFile = (CHttpFile*) is.OpenURL("http://mxcontrol.sourceforge.net/update/robomx.info");
+		
+		if(pFile != NULL){
+
+			pFile->ReadString(strNewVersion);
+			pFile->Close();
+			delete pFile;
+		}
+
+		is.Close();
+	}
+	catch(CInternetException* pEx){
+		
+		TCHAR   szCause[255];
+		CString strFormatted;
+
+		pEx->GetErrorMessage(szCause, 255);
+		strFormatted.Format("Error during Update Query: %s\n", szCause);
+		TRACE(strFormatted);
+	}
+
+	CString strOldVersion = STR_VERSION_DLG;
+	strOldVersion.Replace("\n", " ");
+	strNewVersion.Replace("\\n", " ");
+
+	if(strNewVersion != strOldVersion){
+
+		strTmp.Format("There is a new version of RoboMX available!\n\n -> You are running %s\n -> The newest version is %s\n\nClick here to go to the download page",
+			strOldVersion, strNewVersion);
+		DisplayToolTip(strTmp, 30);
+	}
 }

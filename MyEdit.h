@@ -60,6 +60,7 @@ protected:
 	COLORREF m_crBgFocus;
 	COLORREF m_crDraw;
 	CBrush m_brBkgnd;
+	CStringArray *m_pCommands;
 	//{{AFX_MSG(CMyEdit)
 	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
 	afx_msg void OnKillFocus(CWnd* pNewWnd);
@@ -67,6 +68,8 @@ protected:
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()
+public:
+	void SetCommands(CStringArray* pCmd);
 };
 
 /////////////////////////////////////////////////////////////////////////////

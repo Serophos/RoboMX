@@ -219,6 +219,11 @@ BOOL CMetis3App::InitInstance()
 	pMainFrame->ShowWindow(m_nCmdShow);
 	pMainFrame->UpdateWindow();
 
+	if(g_sSettings.GetAutoList()){
+
+		((CMainFrame*)pMainFrame)->OnChannelChannellist();
+	}
+
 	return TRUE;
 }
 

@@ -59,7 +59,7 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedOk();
+	BOOL m_bAllRooms;
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -26,18 +26,9 @@
 //
 #include "ImageDataObject.h"
 
-/*
-class _AFX_RICHEDITEX_STATE
-{
-public:
-    _AFX_RICHEDITEX_STATE();
-    virtual ~_AFX_RICHEDITEX_STATE();
+#define COLORREF2RGB(Color) (Color & 0xff00) | ((Color >> 16) & 0xff) \
+                                 | ((Color << 16) & 0xff0000)
 
-    HINSTANCE m_hInstRichEdit20 ;
-};
-
-BOOL PASCAL AfxInitRichEditEx();
-*/
 class Emoticon
 {
 public:
@@ -47,6 +38,111 @@ public:
 	//CImage iImage;
 	char szFileName[1024];
 	char szActivationText[64];
+
+
+	static HBITMAP ReplaceColor(HBITMAP hBmp,COLORREF cOldColor,COLORREF cNewColor,HDC hBmpDC)
+	{
+
+		HBITMAP hRetBmp = NULL;
+
+		if(hBmp){	
+
+			HDC hBufferDC = CreateCompatibleDC(NULL);	// The DC for Sourcebitmap
+
+			if(hBufferDC){
+
+				HBITMAP hTmpBitmap = (HBITMAP) NULL;
+
+				if(hBmpDC){ // only if hbitmap is selected in a dc
+
+					if(hBmp == (HBITMAP)GetCurrentObject(hBmpDC, OBJ_BITMAP)){
+
+						hTmpBitmap = CreateBitmap(1, 1, 1, 1, NULL);
+						SelectObject(hBmpDC, hTmpBitmap);
+					}
+				}
+			    
+				HGDIOBJ hPreviousBufferObject = SelectObject(hBufferDC, hBmp);
+				// here BufferDC contains the bitmap
+					
+				HDC hDirectDC = CreateCompatibleDC(NULL); // Temporary DC
+
+				if(hDirectDC){
+
+					// size
+					BITMAP hBm;
+					GetObject(hBmp, sizeof(hBm), &hBm);
+							
+					// create a BITMAPINFO for the CreateDIBSection
+					BITMAPINFO RGB32BitsBITMAPINFO; 
+					ZeroMemory(&RGB32BitsBITMAPINFO, sizeof(BITMAPINFO)); // clean it first ;)
+
+					RGB32BitsBITMAPINFO.bmiHeader.biSize	 = sizeof(BITMAPINFOHEADER);
+					RGB32BitsBITMAPINFO.bmiHeader.biWidth	 = hBm.bmWidth;
+					RGB32BitsBITMAPINFO.bmiHeader.biHeight	 = hBm.bmHeight;
+					RGB32BitsBITMAPINFO.bmiHeader.biPlanes	 = 1;
+					RGB32BitsBITMAPINFO.bmiHeader.biBitCount = 32;
+
+					UINT * ptPixels;	
+
+					HBITMAP hDirectBitmap = CreateDIBSection(
+															 hDirectDC, 
+												             (BITMAPINFO*)&RGB32BitsBITMAPINFO, 
+												             DIB_RGB_COLORS,
+												             (void**)&ptPixels, 
+												             NULL, 0
+															);
+
+
+					if(hDirectBitmap){
+
+						// here DirectBitmap != NULL so ptPixels != NULL no need to test
+
+						HGDIOBJ hPreviousObject = SelectObject(hDirectDC, hDirectBitmap);
+
+						BitBlt(hDirectDC, 0, 0, hBm.bmWidth, hBm.bmHeight, hBufferDC, 0, 0, SRCCOPY);
+				
+						// here the hDirectDC contains the bitmap
+
+						// Convert COLORREF to RGB (Invert RED and BLUE)
+						cOldColor = COLORREF2RGB(cOldColor);
+						cNewColor = COLORREF2RGB(cNewColor);
+
+						// After all the inits we can do the job : Replace Color
+						for(int i = ((hBm.bmWidth *hBm.bmHeight)-1); i >= 0; i--){
+
+							if(ptPixels[i] == cOldColor){
+								
+								ptPixels[i] = cNewColor;
+							}
+						}
+
+						// little clean up
+						// Don't delete the result of SelectObject because it's 
+						// our modified bitmap (hDirectBitmap) ;)
+						SelectObject(hDirectDC, hPreviousObject);
+								
+						// finish
+						hRetBmp = hDirectBitmap;
+					}
+
+					// clean up some more... :P
+					DeleteDC(hDirectDC);
+				}			
+				if(hTmpBitmap){
+
+					SelectObject(hBmpDC, hBmp);
+					DeleteObject(hTmpBitmap);
+				}
+				
+				SelectObject(hBufferDC, hPreviousBufferObject);
+				// BufferDC is now useless
+				DeleteDC(hBufferDC);
+			}
+		}
+		return hRetBmp;
+	}
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////

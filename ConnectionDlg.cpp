@@ -21,7 +21,9 @@
 #include "Metis3.h"
 #include "ConnectionDlg.h"
 #include "Ini.h"
+#include "settings.h"
 #include "MainFrm.h"
+#include "Util.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -31,7 +33,7 @@ static char THIS_FILE[] = __FILE__;
 
 /////////////////////////////////////////////////////////////////////////////
 // CConnectionDlg dialog
-
+extern CSettings g_sSettings;
 
 CConnectionDlg::CConnectionDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CConnectionDlg::IDD, pParent)
@@ -93,9 +95,9 @@ BOOL CConnectionDlg::OnInitDialog()
 
 	}
 	
-	m_strName = ini.GetValue("UserInfo", "Name", "RoboMX.[:].494");
-	m_nLine   = ini.GetValue("UserInfo", "Line", 0);
-	m_dwFiles = ini.GetValue("UserInfo", "Files", 494);
+	m_strName = g_sSettings.GetNickname();
+	m_nLine   = g_sSettings.GetLine();
+	m_dwFiles = g_sSettings.GetFiles();
 	
 	m_strRoom = ((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom;
 	
@@ -120,9 +122,9 @@ void CConnectionDlg::OnOK()
 		AfxMessageBox("Roomname does not appear to be valid!", MB_ICONINFORMATION);
 		return;
 	}
-	if(m_strName.IsEmpty()){
+	if(m_strName.GetLength() < 1){
 
-		AfxMessageBox("Username must not be emtpy!", MB_ICONINFORMATION);
+		AfxMessageBox("Username too short.", MB_ICONINFORMATION);
 		return;
 	}
 	if((m_strName.Find(" ") >= 0) || (m_strName.Find("\\rtf") >= 0)){
@@ -131,6 +133,9 @@ void CConnectionDlg::OnOK()
 		return;
 	}
 	
+	Util::MakeValidUserName(m_strName);
+	UpdateData(FALSE);
+
 	if(m_cbRoom.FindStringExact(-1, m_strRoom) == CB_ERR){
 
 		m_cbRoom.AddString(m_strRoom);
@@ -152,9 +157,9 @@ void CConnectionDlg::OnOK()
 
 	}
 	
-	ini.SetValue("UserInfo", "Name", m_strName);
-	ini.SetValue("UserInfo", "Line", m_nLine);
-	ini.SetValue("UserInfo", "Files", m_dwFiles);
+	g_sSettings.SetNickname(m_strName);
+	g_sSettings.SetLine(m_nLine);
+	g_sSettings.SetFiles(m_dwFiles);
 
 	CDialog::OnOK();
 }

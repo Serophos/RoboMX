@@ -20,6 +20,9 @@
 #include "Metis3.h"
 #include "RenameDlg.h"
 #include ".\renamedlg.h"
+#include "settings.h"
+#include "util.h"
+#include "ini.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,9 +33,11 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CRenameDlg dialog
 
+extern CSettings g_sSettings;
 
 CRenameDlg::CRenameDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CRenameDlg::IDD, pParent)
+	, m_bAllRooms(FALSE)
 {
 	//{{AFX_DATA_INIT(CRenameDlg)
 	m_strName = _T("");
@@ -51,6 +56,7 @@ void CRenameDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_CBIndex(pDX, IDC_LINE, m_nLine);
 	DDX_Text(pDX, IDC_FILES, m_dwFiles);
 	DDV_MinMaxDWord(pDX, m_dwFiles, 0, 65535);
+	DDX_Check(pDX, IDC_ALLROOMS, m_bAllRooms);
 	//}}AFX_DATA_MAP
 }
 
@@ -58,7 +64,6 @@ void CRenameDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CRenameDlg, CDialog)
 	//{{AFX_MSG_MAP(CRenameDlg)
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(IDOK, OnBnClickedOk)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -69,21 +74,24 @@ void CRenameDlg::OnOK()
 
 	if(!UpdateData(TRUE)) return;
 
-	if(m_strName.IsEmpty()){
+	if(m_strName.GetLength() < 1){
 
-		AfxMessageBox("Username must not be emtpy!", MB_ICONINFORMATION);
+		AfxMessageBox("Username too short.", MB_ICONINFORMATION);
 		return;
 	}
+
+	Util::MakeValidUserName(m_strName);
+	UpdateData(FALSE);
+
 	if((m_strName.Find(" ") >= 0) || (m_strName.Find("\\rtf") >= 0)){
 
 		AfxMessageBox("Username contains illegal characters!", MB_ICONINFORMATION);
 		return;
 	}
+	
+	g_sSettings.SetNickname(m_strName);
+	g_sSettings.SetLine(m_nLine);
+	g_sSettings.SetFiles(m_dwFiles);
+	
 	CDialog::OnOK();
-}
-
-void CRenameDlg::OnBnClickedOk()
-{
-	// TODO: Add your control notification handler code here
-	OnOK();
 }

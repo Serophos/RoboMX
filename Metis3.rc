@@ -85,6 +85,7 @@ IDB_ROBOMX              BITMAP                  "res\\RoboMX.bmp"
 IDB_ABOUTBG             BITMAP                  "res\\about.bmp"
 IDB_TOOLBAR256_DEACT    BITMAP                  "res\\toolbar2.bmp"
 IDB_TOOLBAR256          BITMAP                  "res\\Toolbar_256.bmp"
+IDB_USERMODE            BITMAP                  "res\\usermodes.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -548,7 +549,7 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,137,202,50,14,WS_GROUP
     LTEXT           "RoboMX is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2.0 of the License, or (at your option) any later version.",
                     IDC_STATIC,11,112,302,25
-    LTEXT           "RoboMX is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.",
+    LTEXT           "RoboMX is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.",
                     IDC_STATIC,11,140,303,27
     LTEXT           "You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA",
                     IDC_STATIC,12,169,300,27
@@ -563,8 +564,8 @@ BEGIN
     EDITTEXT        IDC_INPUT,1,219,403,14,ES_AUTOHSCROLL
     PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
     CONTROL         "List1",IDC_USERLIST,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SORTASCENDING | WS_BORDER | 
-                    WS_TABSTOP,296,2,161,215
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    WS_TABSTOP,296,2,161,215,WS_EX_CLIENTEDGE
     CONTROL         "",IDC_SYS,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
                     ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
                     2,293,52
@@ -601,10 +602,10 @@ BEGIN
     PUSHBUTTON      "Clear Room History",IDC_CLEAR,255,70,71,14
 END
 
-IDD_RENAME DIALOG  0, 0, 254, 92
+IDD_RENAME DIALOGEX 0, 0, 254, 92
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Change User Details..."
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     LTEXT           "&Name:",IDC_STATIC_NAME,7,10,47,8
     EDITTEXT        IDC_NAME,59,7,188,14,ES_AUTOHSCROLL
@@ -613,9 +614,11 @@ BEGIN
     LTEXT           "&Line",IDC_STATIC_LINE,7,48,40,8
     COMBOBOX        IDC_LINE,59,46,188,259,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
-    ICON            IDR_MAINFRAME,IDC_STATIC,7,65,20,20
+    ICON            IDR_MAINFRAME,IDC_STATIC,7,65,21,20
     DEFPUSHBUTTON   "OK",IDOK,141,71,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,197,71,50,14
+    CONTROL         "&All Rooms",IDC_ALLROOMS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,59,73,73,10
 END
 
 IDD_CHANNELLIST DIALOGEX 0, 0, 400, 168
@@ -655,48 +658,54 @@ IDD_GENERAL DIALOGEX 0, 0, 361, 256
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "&Language Setup",IDC_STATIC_LANG,1,1,181,30,WS_DISABLED
-    COMBOBOX        IDC_LANG,7,12,168,141,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_DISABLED | WS_VSCROLL | WS_TABSTOP
-    GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,33,181,87
+    GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,1,183,104
     CONTROL         "Enable &History",IDC_ENABLE_HISTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,7,45,94,10
-    EDITTEXT        IDC_HISTORDEPTH,104,44,40,12,ES_AUTOHSCROLL | 
-                    WS_DISABLED
+                    BS_AUTOCHECKBOX | WS_DISABLED | WS_TABSTOP,7,10,85,10
+    EDITTEXT        IDC_HISTORDEPTH,100,9,40,12,ES_AUTOHSCROLL | WS_DISABLED
     CONTROL         "&Limit Chatwindow to ",IDC_LINES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,62,94,9
-    EDITTEXT        IDC_LINESNUM,104,60,40,12,ES_AUTOHSCROLL
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,24,85,9
+    EDITTEXT        IDC_LINESNUM,100,22,40,12,ES_AUTOHSCROLL
     CONTROL         "Minimize to &tray",IDC_MINITRAY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,73,138,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,35,85,10
+    CONTROL         "Check for &Updates",IDC_UPDATE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,100,35,75,10
     CONTROL         "Print &PING notification",IDC_PING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,83,139,10
-    GROUPBOX        "Auto &Greet Channels",IDC_STATIC,189,1,171,119
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,47,85,10
+    CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,100,47,77,10
+    CONTROL         "Maximize &Clientwindows",IDC_MDIMAXI,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,63,93,10
+    CONTROL         "Use &Keyword Higlightning for Userlist too",
+                    IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
+                    74,167,10
+    CONTROL         "Auto&load Channellist",IDC_LISTCHANNEL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,85,162,10
+    GROUPBOX        "Auto &Greet Channels",IDC_STATIC,189,1,171,155
     EDITTEXT        IDC_CHANNELNAME,194,14,103,14,ES_AUTOHSCROLL
     PUSHBUTTON      "&Add",IDC_ADDCHANNEL,303,14,50,14
-    LISTBOX         IDC_CHANNELLIST,194,28,103,66,LBS_SORT | 
+    LISTBOX         IDC_CHANNELLIST,194,28,103,57,LBS_SORT | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "&Remove",IDC_REMOVECHANNEL,303,42,50,16
     CONTROL         "All Channe&ls",IDC_ALLCHANNELS,"Button",BS_AUTOCHECKBOX | 
                     BS_MULTILINE | WS_TABSTOP,303,62,50,29
-    LTEXT           "Gre&eting:",IDC_STATIC_GREETING,194,95,159,8
-    EDITTEXT        IDC_GREETING,194,103,159,12,ES_AUTOHSCROLL
-    GROUPBOX        "Time",IDC_STATIC_TIMEFORMAT,1,124,359,32
+    LTEXT           "Gre&etings:",IDC_STATIC_GREETING,194,87,159,8
+    EDITTEXT        IDC_GREETING,194,99,105,12,ES_AUTOHSCROLL
+    GROUPBOX        "Time",IDC_STATIC_TIMEFORMAT,1,112,183,44
     CONTROL         "Print Time&stamp in front of messages",IDC_TIMESTAMP,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,139,168,10
-    COMBOBOX        IDC_TIME,194,137,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,123,168,10
+    COMBOBOX        IDC_TIME,7,140,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
                     WS_TABSTOP
     GROUPBOX        "Plugins",IDC_STATIC_PLUGINS,3,156,357,99
     CONTROL         "List1",IDC_PLUGINLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
                     LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,169,289,79
     PUSHBUTTON      "&Configure",IDC_CONFIGURE,304,169,50,14
-    CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,7,93,160,10
-    CONTROL         "Use &Keyword Higlightning for Userlist too",
-                    IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
-                    103,164,10
     PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,304,234,50,14
     PUSHBUTTON      "&Rescan",IDC_RESCAN,304,217,50,14
+    PUSHBUTTON      "&Add",IDC_ADDCHANNEL2,304,98,50,14
+    PUSHBUTTON      "&Remove",IDC_REMOVECHANNEL2,304,115,50,16
+    LISTBOX         IDC_WELCOMES,194,112,103,40,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_COLORS DIALOGEX 0, 0, 363, 242
@@ -1050,6 +1059,7 @@ BEGIN
         HORZGUIDE, 14
         HORZGUIDE, 34
         HORZGUIDE, 52
+        HORZGUIDE, 78
     END
 
     IDD_CHANNELLIST, DIALOG
@@ -1082,11 +1092,19 @@ BEGIN
         LEFTMARGIN, 1
         RIGHTMARGIN, 360
         VERTGUIDE, 7
+        VERTGUIDE, 92
+        VERTGUIDE, 100
+        VERTGUIDE, 184
         VERTGUIDE, 194
         VERTGUIDE, 354
         TOPMARGIN, 1
         BOTTOMMARGIN, 255
-        HORZGUIDE, 120
+        HORZGUIDE, 63
+        HORZGUIDE, 75
+        HORZGUIDE, 85
+        HORZGUIDE, 95
+        HORZGUIDE, 105
+        HORZGUIDE, 123
         HORZGUIDE, 156
         HORZGUIDE, 160
         HORZGUIDE, 169

@@ -61,8 +61,13 @@ CSettings::CSettings()
 	m_bFilterXtrem  = FALSE;
 	m_bFilterIgnore = FALSE;
 	m_bFilterNormal = FALSE;
+	m_bUpdate		= TRUE;
+	m_bAutoList		= TRUE;
+	m_bMaxi			= FALSE;	
 	m_strFont = "Arial";
 
+	m_dwFiles		= 1;
+	m_wLine			= 0;
 	ZeroMemory(&m_cfDefault, sizeof(CHARFORMAT2));
 
 	m_cfDefault.cbSize  = sizeof(CHARFORMAT2);
@@ -100,15 +105,26 @@ void CSettings::Load()
 	ini.SetIniFileName(m_strWd + "\\RoboMX.ini");
 
 	m_strLanguage = ini.GetValue("General", "Language", "English");
-	m_strNickname = ini.GetValue("General", "Nickname", "Unknown");
+	m_strNickname = ini.GetValue("UserInfo", "Nickname", "RoboMX.494_12345");
+	m_dwFiles	  = ini.GetValue("UserInfo", "Files", 1);
+	m_wLine		  = ini.GetValue("UserInfo", "Line", 0);
+
+	if(m_wLine > 8) m_wLine = 0;
+	if(m_dwFiles > 65535) m_dwFiles = 1;
 	
+	m_bUpdate		= ini.GetValue("Genereal", "CheckUpdate", TRUE);
+	m_bAutoList		= ini.GetValue("Look & Feel", "AutoList", TRUE);
+	m_bMaxi			= ini.GetValue("Look & Feel", "AlwaysMaximizeMDI", FALSE);	
+
 	m_bMiniTray   = ini.GetValue("Look & Feel", "Mini2Tray", FALSE);
 	m_bTime = ini.GetValue("Look & Feel", "Timestamp", TRUE);
 	
+
 	m_FA    = ini.GetValue("Look & Feel", "EnActFront", "* ");
 	m_FM    = ini.GetValue("Look & Feel", "EnMsgFront", "");
 	m_EA    = ini.GetValue("Look & Feel", "EnActEnd", "");
 	m_EM    = ini.GetValue("Look & Feel", "EnMsgEnd", " :");
+
 	m_FA.Replace(" ", " ");  // replace Alt+0160 with regular space
 	m_FM.Replace(" ", " ");  // replace Alt+0160 with regular space
 	m_EA.Replace(" ", " ");  // replace Alt+0160 with regular space
@@ -273,7 +289,13 @@ void CSettings::Save()
 	ini.SetIniFileName(m_strWd + "\\RoboMX.ini");
 
 	ini.SetValue("General", "Language", m_strLanguage);
-	ini.SetValue("General", "Nickname", m_strNickname);
+	ini.SetValue("UserInfo", "Nickname", m_strNickname);
+	ini.SetValue("UserInfo", "Files", m_dwFiles);
+	ini.SetValue("UserInfo", "Line", m_wLine);
+
+	ini.SetValue("Genereal", "CheckUpdate", m_bUpdate);
+	ini.SetValue("Look & Feel", "AutoList", m_bAutoList);
+	ini.SetValue("Look & Feel", "AlwaysMaximizeMDI", m_bMaxi);	
 
 	ini.SetValue("Look & Feel", "Timestamp", m_bTime);
 

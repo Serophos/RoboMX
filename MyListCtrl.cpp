@@ -235,10 +235,10 @@ BOOL CMyListCtrl::SetHeadings(const CString& strHeadings)
 }
 
 
-int CMyListCtrl::AddItem(LPCTSTR pszText, ...)
+int CMyListCtrl::AddItem(int nIcon, LPCTSTR pszText, ...)
 {
 
-	const int nIndex = InsertItem(GetItemCount(), pszText);
+	const int nIndex = InsertItem(GetItemCount(), pszText, nIcon);
 
 	LPTSTR* arrpsz = new LPTSTR[ m_nNumColumns ];
 	arrpsz[ 0 ] = new TCHAR[ lstrlen(pszText) + 1 ];
@@ -251,7 +251,7 @@ int CMyListCtrl::AddItem(LPCTSTR pszText, ...)
 
 		pszText = va_arg(list, LPCTSTR);
 		ASSERT_VALID_STRING(pszText);
-		VERIFY(CListCtrl::SetItem(nIndex, nColumn, LVIF_TEXT, pszText, 0, 0, 0, 0));
+		VERIFY(CListCtrl::SetItem(nIndex, nColumn, LVIF_TEXT|LVIF_IMAGE, pszText, nIcon, 0, 0, 0));
 
 		arrpsz[ nColumn ] = new TCHAR[ lstrlen(pszText) + 1 ];
 		(void)lstrcpy(arrpsz[ nColumn ], pszText);

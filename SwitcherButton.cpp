@@ -482,42 +482,42 @@ BOOL CSwitcherButton::OnCommand(WPARAM wParam, LPARAM lParam)
 /*
 	if((wParam >= ID_TRANSPARENCY_0) && (wParam <= ID_TRANSPARENCY_100 ) && g_sSystem.IsWindowsNT()){
 
-		::SetWindowLong(m_AttachedView->m_hWnd, GWL_EXSTYLE,
-						::GetWindowLong(m_AttachedView->m_hWnd, GWL_EXSTYLE)^WS_EX_LAYERED);
+		::SetWindowLong(((CView*)m_AttachedView)->GetParentFrame()->m_hWnd, GWL_EXSTYLE,
+						::GetWindowLong(((CView*)m_AttachedView)->GetParentFrame()->m_hWnd, GWL_EXSTYLE)^WS_EX_LAYERED);
 		switch(wParam){
 
 			case ID_TRANSPARENCY_0:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 0, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 0, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_10:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*10/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*10/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_20:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*20/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*20/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_30:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*30/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*30/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_40:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*40/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*40/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_50:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*50/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*50/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_60:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*60/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*60/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_70:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*70/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*70/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_80:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*80/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*80/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_90:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*90/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*90/100, LWA_ALPHA);
 				break;
 			case ID_TRANSPARENCY_100:
-				m_AttachedView->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*100/100, LWA_ALPHA);
+				((CView*)m_AttachedView)->GetParentFrame()->SetLayeredWindowAttributes(g_sSettings.GetRGBBg(), 255*100/100, LWA_ALPHA);
 				break;
 			default:
 				ASSERT(FALSE);

@@ -30,6 +30,8 @@ Topic-Notification: (Server) (implemented)
 Userlist-Notification (Server) (implemented)
 0x006F][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
 
+in winmx 3.52
+0x0072
 -
 
 Motd-Notification (Server) (implemented)
@@ -40,20 +42,27 @@ Motd-Notification (Server) (implemented)
 User-Join notification (Server) (implemented)
 0x006E][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
 
+in winmx 3.52
+
+0x0071][Username:N][00:1][Node-IP:4][UDP-Port:2][Line-Type:2][Shared-Files:4][User-Mode:2][IP:4]
 -
 
 User-Part notification (Server) (implemented)
-0x0073][Username:N][00:1][IP-Address:4][UDP-Port:2]
+0x0073][Username:N][00:1][Node-IP:4][UDP-Port:2]
 
 -
 
 Rename notification (Client) (implemented)
-0x0065][Line-Type:2][IP-Address:4][UDP-Port:2][Shared-Files:4][New-Name:N][00:1]
+0x0065][Line-Type:2][Node-IP:4][UDP-Port:2][Shared-Files:4][New-Name:N][00:1]
 
 -
 
 Rename notification (Server) (implemented)
-0x0070][Name:N][00:1][IP-Address:4][UDP-Port:2][Name:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:42][Shared-Files:4]
+0x0070][Name:N][00:1][Node-IP:4][UDP-Port:2][Name:N][00:1][Node-IP:4][UDP-Port:2][Line-Type:42][Shared-Files:4]
+
+in winmx 3.52
+
+0x0074][Name:N][00:1][Node-IP:4][UDP-Port:2][Name:N][00:1][Node-IP:4][UDP-Port:2][Line-Type:42][Shared-Files:4][User-Mode:2][IP:4]
 
 -
 
@@ -95,3 +104,21 @@ Cable   0x0007
 DSL     0x0008
 T1      0x0009
 T3      0x000A
+
+
+----
+
+New commands in Winmx 3.52 Beta
+
+-
+
+??? (server)
+
+0x68] 
+
+
+-
+Change Channelname (Server)
+0x12D][Name:N][00:1]
+
+

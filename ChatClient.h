@@ -33,6 +33,10 @@
 #define MXCHAT_LOGIN		0x0064
 #define MXCHAT_LOGINGRANTED 0x0066
 
+#define SERVER_RCMS         0x0001
+#define SERVER_WINMX352		0x0002
+#define SERVER_ROBOMX		0x0003
+
 class CMetis3View;
 
 class CChatClient  
@@ -80,6 +84,9 @@ public:
 	CMetis3View* m_pView;
 	CEvent m_eClose;
 	CWinThread *m_pThread;
+	
+	// RCMS warning
+	BOOL m_bWarned;
 };
 
 #endif // !defined(AFX_CHATCLIENT_H__E77F22CE_3865_4876_944C_DDDE8A6555F0__INCLUDED_)

@@ -27,6 +27,7 @@
 
 extern CSettings g_sSettings;
 extern CStringArray g_aRooms;
+extern CStringArray g_aGreetings;
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -43,9 +44,10 @@ CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 	: CCfgDlg(CGeneralCfg::IDD, pParent)
 	, m_bEmoticons(FALSE)
 	, m_bHiliteUsers(FALSE)
+	, m_bMaxi(FALSE)
+	, m_bUpdate(FALSE)
+	, m_bAutoList(FALSE)
 {
-	//{{AFX_DATA_INIT(CGeneralCfg)
-	m_strLanguage = _T("");
 	m_nHistory = 0;
 	m_bHistory = FALSE;
 	m_bAllChannels = FALSE;
@@ -57,7 +59,6 @@ CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 	m_nTime = -1;
 	m_bPing = FALSE;
 	m_bMiniTray = FALSE;
-	//}}AFX_DATA_INIT
 }
 
 
@@ -66,8 +67,7 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_PLUGINLIST, m_lcPlugins);
 	DDX_Control(pDX, IDC_CHANNELLIST, m_lbChannels);
-	DDX_Control(pDX, IDC_LANG, m_cbLang);
-	DDX_CBString(pDX, IDC_LANG, m_strLanguage);
+	DDX_Control(pDX, IDC_WELCOMES, m_lbGreetings);
 	DDX_Text(pDX, IDC_HISTORDEPTH, m_nHistory);
 	DDX_Check(pDX, IDC_ENABLE_HISTORY, m_bHistory);
 	DDX_Check(pDX, IDC_ALLCHANNELS, m_bAllChannels);
@@ -81,6 +81,9 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_MINITRAY, m_bMiniTray);
 	DDX_Check(pDX, IDC_EMOTICONS, m_bEmoticons);
 	DDX_Check(pDX, IDC_USERHILITE, m_bHiliteUsers);
+	DDX_Check(pDX, IDC_MDIMAXI, m_bMaxi);
+	DDX_Check(pDX, IDC_UPDATE, m_bUpdate);
+	DDX_Check(pDX, IDC_LISTCHANNEL, m_bAutoList);
 }
 
 
@@ -93,6 +96,8 @@ BEGIN_MESSAGE_MAP(CGeneralCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_CONFIGURE, OnBnClickedConfigure)
 	ON_BN_CLICKED(IDC_RESCAN, OnBnClickedRescan)
 	ON_BN_CLICKED(IDC_UNINSTALL, OnBnClickedUninstall)
+	ON_BN_CLICKED(IDC_ADDCHANNEL2, OnBnClickedAddchannel2)
+	ON_BN_CLICKED(IDC_REMOVECHANNEL2, OnBnClickedRemovechannel2)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -112,8 +117,7 @@ BOOL CGeneralCfg::OnInitDialog()
 	m_nHistory     = g_sSettings.GetHistoryDepth();
 	m_bLimit       = g_sSettings.GetLimitChat();
 	m_nLimit       = g_sSettings.GetMaxLines();
-	m_strGreeting  = g_sSettings.GetEnterMsg();
-	m_strLanguage  = g_sSettings.GetLanguage();
+	//m_strGreeting  = g_sSettings.GetEnterMsg();
 	m_bAllChannels = g_sSettings.GetDoEnterMsg();
 	m_bTimeStamp   = g_sSettings.GetPrintTime();
 	m_nTime		   = g_sSettings.GetTimeFmt();
@@ -121,24 +125,10 @@ BOOL CGeneralCfg::OnInitDialog()
 	m_bMiniTray    = g_sSettings.GetMiniTray();
 	m_bEmoticons   = g_sSettings.GetEmoticons();
 	m_bHiliteUsers = g_sSettings.GetHiliteUsers();
+	m_bUpdate	   = g_sSettings.GetUpdate();
+	m_bAutoList	   = g_sSettings.GetAutoList();
+	m_bMaxi		   = g_sSettings.GetMaxi();
 
-	CFileFind finder;
-	BOOL bResult = finder.FindFile(g_sSettings.GetWorkingDir() + "\\languages\\*.txt");
-		
-	while(bResult){
-
-		bResult = finder.FindNextFile();
-		m_cbLang.AddString(finder.GetFileTitle());
-	}
-
-	if(m_cbLang.GetCount() > 0){
-
-		int nIndex = m_cbLang.FindStringExact(0, m_strLanguage);
-		if(nIndex != CB_ERR){
-
-			m_cbLang.SetCurSel(nIndex);
-		}
-	}
 	UpdateData(FALSE);
 	LoadRooms();
 	OnAllchannels();
@@ -195,6 +185,31 @@ void CGeneralCfg::LoadRooms()
 		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
 		return;
 	}END_CATCH;
+
+	strIniFile = g_sSettings.GetWorkingDir() + "\\hello.ini";
+	g_aGreetings.RemoveAll();
+	m_lbGreetings.ResetContent();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				g_aGreetings.Add(strBuffer);
+				m_lbGreetings.InsertString(m_lbGreetings.GetCount(), strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
+		return;
+	}END_CATCH;
 }
 
 void CGeneralCfg::SaveRooms()
@@ -223,6 +238,27 @@ void CGeneralCfg::SaveRooms()
 		AfxMessageBox("Error during file operation.", MB_OK+MB_ICONSTOP);
 
 	}END_CATCH;
+
+	strIniFile = g_sSettings.GetWorkingDir() + "\\hello.ini";
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeWrite|CFile::typeText|CFile::shareExclusive);
+		ini.SetLength(0);
+
+		for(int i = 0; i < m_lbGreetings.GetCount(); i++){
+			
+			m_lbGreetings.GetText(i, strBuffer);
+			ini.WriteString(strBuffer + "\n");
+		}
+		ini.Flush();
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+		AfxMessageBox("Error during file operation.", MB_OK+MB_ICONSTOP);
+
+	}END_CATCH;
 }
 
 void CGeneralCfg::Apply()
@@ -235,14 +271,16 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetHistoryDepth(m_nHistory);
 	g_sSettings.SetLimitChat(m_bLimit);
 	g_sSettings.SetMaxLines(m_nLimit);
-	g_sSettings.SetEnterMsg(m_strGreeting);
-	g_sSettings.SetLanguage(m_strLanguage);
+	//g_sSettings.SetEnterMsg(m_strGreeting);
 	g_sSettings.SetPrintTime(m_bTimeStamp);
 	g_sSettings.SetPing(m_bPing);
 	g_sSettings.SetTimeFmt(m_nTime);
 	g_sSettings.SetMiniTray(m_bMiniTray);
 	g_sSettings.SetEmoticons(m_bEmoticons);
 	g_sSettings.SetHiliteUsers(m_bHiliteUsers);
+	g_sSettings.SetUpdate(m_bUpdate);
+	g_sSettings.SetAutoList(m_bAutoList);
+	g_sSettings.SetMaxi(m_bMaxi);
 
 	SaveRooms();
 	LoadRooms();
@@ -267,6 +305,28 @@ void CGeneralCfg::OnRemovechannel()
 		m_lbChannels.DeleteString(m_lbChannels.GetCurSel());
 	}
 }
+
+
+void CGeneralCfg::OnBnClickedAddchannel2()
+{
+
+	UpdateData(TRUE);
+	if(m_strGreeting.IsEmpty()) return;
+
+	m_lbGreetings.AddString(m_strGreeting);
+	m_strGreeting.Empty();
+	UpdateData(FALSE);
+}
+
+void CGeneralCfg::OnBnClickedRemovechannel2()
+{
+
+	if(m_lbGreetings.GetCurSel() != -1){
+
+		m_lbGreetings.DeleteString(m_lbGreetings.GetCurSel());
+	}
+}
+
 
 void CGeneralCfg::OnBnClickedConfigure()
 {

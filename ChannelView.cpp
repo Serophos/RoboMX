@@ -119,7 +119,32 @@ void CChannelView::OnInitialUpdate()
 	CFormView::OnInitialUpdate();
 	
     GetParentFrame()->RecalcLayout();
-    ResizeParentToFit(FALSE);
+    
+	if(g_sSettings.GetMaxi()){
+
+		if(!m_lcList.m_hWnd){
+
+			return;
+		}
+
+		CRect	rcItem;
+		CRect	rcParent;
+
+		GetClientRect(rcParent);
+
+		// resize userlist
+		m_lcList.GetWindowRect(rcItem);
+		ScreenToClient(rcItem);
+		
+		rcItem.right = rcParent.right - 1;
+		rcItem.bottom = rcParent.bottom -1;
+
+		m_lcList.MoveWindow(rcItem);
+	}
+	else{
+
+		ResizeParentToFit(FALSE);
+	}
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_LIST );
 
@@ -285,12 +310,8 @@ void CChannelView::UpdateRoomItem(LPCTSTR lpszRoomName, WORD wUsers, WORD wLimit
 		CString strNum, strMax;
 		strNum.Format("%d", wUsers);
 		strMax.Format("%d", wLimit);
-		m_lcList.AddItem(lpszRoomName, (LPCTSTR)strNum, (LPCTSTR)strMax, lpszTopic);
-		//m_nPerc = (int)((float)m_lcList.GetItemCount() / 1500.f * 100.f);
-		//m_pgStatus.SetPos(m_nPerc);
-		//m_tTime.Calculate(m_nPerc);
-		//strNum.Format("%04d Rooms (ETA: %s, %s, %s)", m_lcList.GetItemCount(), m_tTime.GetRemainingString(), m_tTime.GetElapsedString(), m_tTime.GetEstimateString());
-		//GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strNum);
+		m_lcList.AddItem(0, lpszRoomName, (LPCTSTR)strNum, (LPCTSTR)strMax, lpszTopic);
+		m_lcList.Sort();
 		if(m_bNoScroll){
 
 			int n = m_lcList.GetNextItem(-1, LVNI_SELECTED);

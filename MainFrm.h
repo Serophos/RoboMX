@@ -54,6 +54,7 @@ public:
 
 // Implementation
 public:
+	afx_msg void OnChannelChannellist();
 	void LoadRCMS();
 	void JoinChannel();
 	
@@ -94,6 +95,7 @@ protected:  // control bar embedded members
 
 // Generated message map functions
 protected:
+	void DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon = NIIF_INFO);
 	CArray<HINSTANCE, HINSTANCE> m_aMods;
 	HICON m_hIcon;
 	NOTIFYICONDATA m_nIconData;
@@ -103,7 +105,6 @@ protected:
 	afx_msg void OnViewOptions();
 	afx_msg void OnDestroy();
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
-	afx_msg void OnChannelChannellist();
 	afx_msg void OnUpdateChannelChannellist(CCmdUI* pCmdUI);
 	afx_msg void OnUpdateViewChannelBar(CCmdUI* pCmdUI);
 	afx_msg void OnFileNew();
@@ -127,6 +128,7 @@ public:
 	afx_msg void OnSystrayRestore();
 	BOOL DeletePlugin(CString strName);
 	void ReloadPlugins(void);
+	void CheckUpdate(void);
 };
 
 /////////////////////////////////////////////////////////////////////////////

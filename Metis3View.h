@@ -72,7 +72,7 @@ public:
 	void DoResize2(int delta);
 	void DoResize1(int delta);
 	void RemoveUser(const CString strUser, const CString strIP, WORD wPort);
-	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort);
+	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, WORD wUserLevel);
 	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0));
 
 	static CString GetWinampSong();
@@ -82,6 +82,7 @@ public:
 	CChatClient m_mxClient;
 	CArray<MX_USERINFO, MX_USERINFO> m_aUsers;
 	CFont m_fFont;
+	int m_nServerType;
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CMetis3View)
@@ -108,6 +109,8 @@ protected:
 	CString		 m_strWd;
 	DWORD		 m_dwAvLag;
 	DWORD		 m_dwLastTic;
+
+	CImageList	m_iImageList;
 // Generated message map functions
 protected:
 	BOOL m_bHasJoined;
@@ -127,7 +130,6 @@ protected:
 	afx_msg LRESULT OnRenameMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRclickChat(WPARAM w, LPARAM l);
 
-	//{{AFX_MSG(CMetis3View)
 	afx_msg void OnUpdateUserlistMenu(CCmdUI* pCmdUI);
 	afx_msg void OnRename();
 	afx_msg void OnTimer(UINT nIDEvent);
@@ -170,7 +172,9 @@ protected:
 	afx_msg void OnChatroomAsciiartdesign();
 	afx_msg void OnChatTexttricks3dbuttonsnormal();
 	afx_msg void OnChatTexttricks3dbuttonsaction();
-	//}}AFX_MSG
+	afx_msg LRESULT OnRoomRename(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnSetServerType(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnRenNotify(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
 	CRichEditExCtrl m_rSys;
@@ -179,6 +183,7 @@ public:
 
 
 	void HandleHiLite(void);
+	afx_msg LRESULT OnRenameCl(WPARAM wParam, LPARAM lParam);
 };
 
 #ifndef _DEBUG  // debug version in Metis3View.cpp

@@ -23,6 +23,7 @@
 #include "Metis3Doc.h"
 #include "Metis3View.h"
 #include "Settings.h"
+#include ".\myedit.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -37,10 +38,9 @@ extern CSettings g_sSettings;
 
 UINT UWM_INPUT = ::RegisterWindowMessage("UWM_INPUT-7A14F66B-ABAB-4525-AC01-841C82EC48B6");
 
-extern CStringArray g_aRCMSCommands;
 CStringArray g_aQuick;
 
-#define g_aRCMSCommandsNUM g_aRCMSCommands.GetSize() 
+#define m_aCommandsNUM m_pCommands->GetSize()
 #define g_aQuickNUM g_aQuick.GetSize() 
 
 CMyEdit::CMyEdit()
@@ -51,6 +51,7 @@ CMyEdit::CMyEdit()
 	m_brBkgnd.CreateSolidBrush(m_crBg); // Create the Brush Color for the Background.
 	m_crDraw = m_crBg;
 	m_bEx = FALSE;
+	m_pCommands = NULL;
 }
 
 CMyEdit::~CMyEdit()
@@ -109,7 +110,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 	}
 	else if((pMsg->message == WM_MOUSEWHEEL || pMsg->message == WM_KEYDOWN) && !m_bEx){
 
-
+		ASSERT(m_pCommands);
 		///////////////////////////////////////////////////////
 		// Scroll through RCMS commands UP (PAGE UP)
 		///////////////////////////////////////////////////////
@@ -122,18 +123,18 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 				DWORD dwIndex = atol(szTempStr);
 				if(dwIndex == 0){
 
-					lstrcpy(szTempStr, g_aRCMSCommands[g_aRCMSCommandsNUM - 1]);
+					lstrcpy(szTempStr, m_pCommands->GetAt(m_aCommandsNUM - 1));
 					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 					return TRUE;
 				}
-				else if((dwIndex == 1) || (dwIndex > g_aRCMSCommandsNUM)){
+				else if((dwIndex == 1) || (dwIndex > m_aCommandsNUM)){
 
 					SetWindowText("");
 				}
 				else{
 
-					lstrcpy(szTempStr, g_aRCMSCommands[dwIndex - 2]);
+					lstrcpy(szTempStr, m_pCommands->GetAt(dwIndex - 2));
 					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 				}
@@ -141,7 +142,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			}
 			else{
 
-				lstrcpy(szTempStr, g_aRCMSCommands[g_aRCMSCommandsNUM - 1]);
+				lstrcpy(szTempStr, m_pCommands->GetAt(m_aCommandsNUM - 1));
 				SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
 				SendMessage(WM_KEYDOWN, VK_END, 0);
 				return TRUE;
@@ -157,14 +158,14 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
 
 				DWORD dwIndex = atol(szTempStr);
-				if(dwIndex >= g_aRCMSCommandsNUM){
+				if(dwIndex >= m_aCommandsNUM){
 
 					SendMessage(WM_SETTEXT, 0, (LPARAM)"");
 					//Beep(1000, 50);
 				}
 				else{
 
-					lstrcpy(szTempStr, g_aRCMSCommands[dwIndex]);
+					lstrcpy(szTempStr, m_pCommands->GetAt(dwIndex));
 					SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 				}
@@ -172,7 +173,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 			}
 			else{
 
-				lstrcpy(szTempStr, g_aRCMSCommands[0]);
+				lstrcpy(szTempStr, m_pCommands->GetAt(0));
 				SendMessage(WM_SETTEXT, 0, (LPARAM)szTempStr);
 				SendMessage(WM_KEYDOWN, VK_END, 0);
 				return TRUE;
@@ -314,4 +315,12 @@ void CMyEdit::SetExtended()
 {
 
 	m_bEx = TRUE;
+}
+
+void CMyEdit::SetCommands(CStringArray* pCmd)
+{
+
+	ASSERT(pCmd);
+	
+	m_pCommands = pCmd;
 }

@@ -50,7 +50,7 @@ public:
 	BOOL SetHeadings(UINT uiStringID);
 	BOOL SetHeadings(const CString& strHeadings);
 
-	int AddItem(LPCTSTR pszText, ...);
+	int AddItem(int nIcon, LPCTSTR pszText, ...);
 	BOOL DeleteItem(int nItem);
 	BOOL DeleteAllItems();
 	void LoadColumnInfo();

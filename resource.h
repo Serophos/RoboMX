@@ -42,6 +42,7 @@
 #define IDB_TOOLBAR256_DEACT            175
 #define IDB_TOOLBAR256                  176
 #define IDR_SYSTRAY                     177
+#define IDB_USERMODE                    180
 #define IDC_CONNECT                     1000
 #define IDC_ROOM                        1001
 #define IDC_STATIC_ROOM                 1002
@@ -177,6 +178,10 @@
 #define ID_OK                           1123
 #define IDC_OK                          1123
 #define IDC_CANCEL                      1124
+#define IDC_ALLROOMS                    1125
+#define IDC_UPDATE                      1126
+#define IDC_MDIMAXI                     1127
+#define IDC_LISTCHANNEL                 1128
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -190,8 +195,11 @@
 #define IDC_CHANNELLIST                 5015
 #define IDC_REMOVECHANNEL               5016
 #define IDC_ALLCHANNELS                 5017
+#define IDC_ADDCHANNEL2                 5018
 #define IDC_ENABLE_HISTORY              5019
+#define IDC_REMOVECHANNEL2              5020
 #define IDC_LINES                       5021
+#define IDC_WELCOMES                    5022
 #define IDC_LINESNUM                    5023
 #define IDC_HISTORDEPTH                 5024
 #define IDC_STATIC_MESSAGE              5047
@@ -356,9 +364,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        180
+#define _APS_NEXT_RESOURCE_VALUE        181
 #define _APS_NEXT_COMMAND_VALUE         32857
-#define _APS_NEXT_CONTROL_VALUE         1125
+#define _APS_NEXT_CONTROL_VALUE         1129
 #define _APS_NEXT_SYMED_VALUE           32920
 #endif
 #endif

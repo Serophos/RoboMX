@@ -74,19 +74,36 @@ BOOL CMetis3Doc::OnNewDocument()
 	m_wLine   = (WORD)dlg.m_nLine;
 	m_strRoom = dlg.m_strRoom;
 	m_strName = dlg.m_strName;
-
-	int n = m_strRoom.Find("_");
+	
+	int n = m_strRoom.ReverseFind('_');
 	if(n > 0){
 
 		m_strRoomShort = m_strRoom.Left(n);
 	}
-
-	SetTitle(m_strRoom);
+	
+	CDocument::SetTitle(m_strRoom);
 	return TRUE;
 }
 
 
+void CMetis3Doc::SetTitle(LPCTSTR lpszTitle)
+{
 
+	CString strAppendix;
+	
+	int n = m_strRoom.ReverseFind('_');
+
+	m_strRoomShort = lpszTitle;
+	
+	if(n > 0){
+
+		strAppendix = m_strRoom.Mid(n);
+    }
+
+	m_strRoom = m_strRoomShort + strAppendix;
+
+	CDocument::SetTitle(m_strRoom);
+}
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3Doc serialization
 

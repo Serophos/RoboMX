@@ -33,6 +33,10 @@ static char THIS_FILE[]=__FILE__;
 
 extern CSettings g_sSettings;
 
+#ifdef _DEBUG
+extern Hex_Trace(PVOID pBuffer, int nLen);
+#endif
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -47,6 +51,11 @@ UINT UWM_ADDUSER    = ::RegisterWindowMessage("UWM_ADDUSER-229F871A-7B27-44C5-88
 UINT UWM_REDIRECT   = ::RegisterWindowMessage("UWM_REDIRECT-229F871A-7B27-44C5-8879-AF881DE94891");
 UINT UWM_UNKNOWN    = ::RegisterWindowMessage("UWM_UNKNOWN-229F871A-7B27-44C5-8879-AF881DE94891");
 UINT UWM_SYSTEM     = ::RegisterWindowMessage("UWM_SYSTEM-229F871A-7B27-44C5-8879-AF881DE94891");
+// new commands for winmx 3.52 beta
+UINT UWM_ROOMRENAME = ::RegisterWindowMessage("UWM_ROOMRENAME-229F871A-7B27-44C5-8879-AF881DE94891");
+UINT UWM_RENOTIFY   = ::RegisterWindowMessage("UWM_RENOTIFY-229F871A-7B27-44C5-8879-AF881DE94891");
+UINT UWM_SERVERTYPE = ::RegisterWindowMessage("UWM_SERVERTYPE-229F871A-7B27-44C5-8879-AF881DE94891");
+
 
 CChatClient::CChatClient()
 {
@@ -62,6 +71,7 @@ CChatClient::CChatClient()
 	m_strRoomIP      = "127.0.0.1";
 	m_pThread        = 0;
 	m_bListen        = FALSE;
+	m_bWarned		 = FALSE;
 }
 
 CChatClient::~CChatClient()
@@ -73,9 +83,7 @@ BOOL CChatClient::Connect()
 {
 
 	m_eClose.ResetEvent();
-	//char buffer[1024] = {'\0'};
-	
-
+	m_bWarned		 = FALSE;
 	m_pThread = AfxBeginThread(RecvProc, (PVOID)this, THREAD_PRIORITY_NORMAL);
 	return TRUE;
 }
@@ -119,7 +127,6 @@ UINT CChatClient::RecvProc(PVOID pParam)
 		return FALSE;
 	}
 
-
 	CreateCryptKeyID(0x57, (BYTE *)buffer);
 
 	// Send UP Key Block
@@ -154,13 +161,32 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	// Get the keys
 	GetCryptKey((BYTE *)buffer, &pClient->m_dwUPKey, &pClient->m_dwDWKey);
 
-	//Login-Request: (Client)
-	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
-
 	// Prepare login buffer...
 	ZeroMemory(buffer, sizeof(buffer));
-	
 
+	// Send new pre-login packet
+	// ED 13 01 00 31	nLen = 5;
+	*(WORD*)buffer = 0xED;
+	*(WORD*)(buffer+1) = 0x13;
+	*(WORD*)(buffer+2) = 0x01;
+	*(WORD*)(buffer+3) = 0x00;
+	*(WORD*)(buffer+4) = 0x31;
+	nLen = 5;
+
+	pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
+	
+	if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
+
+		CString strError;
+		strError.Format("Robo-Panic: Sending WinMX 3.52 pre-login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
+		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+
+	//Login-Request: (Client)
+	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
 	nLen = Util::FormatMXMessage(0x0064, (char*)&buffer, "SWDWDS", 
 					(LPCTSTR)pClient->m_strRoom, 
 					pClient->m_wLineType,
@@ -194,7 +220,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	
 	pClient->m_dwDWKey = DecryptMXTCP((BYTE *)buffer, 5, pClient->m_dwDWKey);
 
-	if((*(WORD*)buffer) != MXCHAT_LOGINGRANTED){
+	if((*(WORD*)buffer) != 0x0066){
 
 		pClient->WriteMessage("Login rejected.", RGB(150,0,0));
 		pClient->m_bListen  = FALSE;
@@ -311,22 +337,6 @@ BOOL CChatClient::SendRename(CString strUser, DWORD dwFiles, WORD wLine)
 		char buffer[1024];
 		ZeroMemory(buffer, 1024);
 		
-		/*int nCmdLen = 0;
-		memcpy(buffer+4, &m_wLineType, 2);
-		nCmdLen+=2;
-		memcpy(buffer+6, &m_dwClientIP, 4);
-		nCmdLen+=4;
-		memcpy(buffer+10, &m_wClientUDPPort, 2);
-		nCmdLen+=2;
-		memcpy(buffer+12, &m_dwFiles, 4);
-		nCmdLen+=4;
-		strcpy(buffer+16, m_strUser);
-		nCmdLen+=m_strUser.GetLength()+1;
-		
-		*(WORD*)buffer = 0x0065;
-		*(WORD*)(buffer+2) = nCmdLen;
-		nCmdLen+=4;*/
-
 		WORD wLen = Util::FormatMXMessage(0x0065, (char*)&buffer, "WDWDS", 
 									  m_wLineType, m_dwClientIP,
 									  m_wClientUDPPort, m_dwFiles,
@@ -455,8 +465,6 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 {
 
 
-	// TODO
-	// Change to sendmessage
 	switch(wType){
 
 	case 0x12C: // topic
@@ -466,16 +474,23 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		::SendMessage(m_pView->m_hWnd, UWM_MOTD, wLen, (LPARAM)cmd);
 		break;
 	case 0x06F: // userlist
-		::SendMessage(m_pView->m_hWnd, UWM_ADDUSER, wLen, (LPARAM)cmd);
+	case 0x072: // new userlist
+		::SendMessage(m_pView->m_hWnd, UWM_ADDUSER, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x06E: // user join
-		::SendMessage(m_pView->m_hWnd, UWM_JOIN, wLen, (LPARAM)cmd);
+	case 0x071: // new join
+	case 0x075: // new user join with IP
+		::SendMessage(m_pView->m_hWnd, UWM_JOIN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
 		break;
 	case 0x0073: // user part
 		::SendMessage(m_pView->m_hWnd, UWM_PART, wLen, (LPARAM)cmd);
 		break;
 	case 0x0070: // user rename
-		::SendMessage(m_pView->m_hWnd, UWM_RENAME, wLen, (LPARAM)cmd);
+	case 0x0074: // new user rename
+		::SendMessage(m_pView->m_hWnd, UWM_RENAME, MAKEWPARAM(wType, wLen), (LPARAM)cmd);
+		break;
+	case 0x00D2: // user rename message (xy is now know as ab)
+		::SendMessage(m_pView->m_hWnd, UWM_RENOTIFY, wLen, (LPARAM)cmd);
 		break;
 	case 0x00C9: // normal message
 		::SendMessage(m_pView->m_hWnd, UWM_MESSAGE, wLen, (LPARAM)cmd);
@@ -484,6 +499,19 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		::SendMessage(m_pView->m_hWnd, UWM_ACTION, wLen, (LPARAM)cmd);
 		break;
 	case 0x00C8: // rcms garbage
+		if(!m_bWarned){
+
+			WriteMessage("Info: Room is powered by RCMS.", g_sSettings.GetRGBPend());
+			::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_RCMS, 0);
+			m_bWarned = TRUE;
+		}
+		break;
+	case 0x0068: // ?
+		WriteMessage("Info: Room is powered by WinMX 3.52. Advanced channel commands available.", g_sSettings.GetRGBOK());
+		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX352, 0);
+		break;
+	case 0x012D: // room name changed
+		::SendMessage(m_pView->m_hWnd, UWM_ROOMRENAME, wLen, (LPARAM)cmd);
 		break;
 	case 0x0190: // redirect
 		::PostMessage(m_pView->m_hWnd, UWM_REDIRECT, wLen, (LPARAM)cmd);

@@ -43,12 +43,12 @@ public:
 	enum { IDD = IDD_GENERAL };
 	CListCtrl	m_lcPlugins;
 	CListBox	m_lbChannels;
-	CComboBox	m_cbLang;
-	CString	m_strLanguage;
+	CListBox	m_lbGreetings;
 
 	BOOL	m_bHistory;
 	BOOL	m_bAllChannels;
 	BOOL	m_bLimit;
+	BOOL    m_bAutoList;
 	BOOL	m_bTimeStamp;
 	int		m_nHistory;
 	CString	m_strChannel;
@@ -85,6 +85,10 @@ public:
 	BOOL m_bHiliteUsers;
 	afx_msg void OnBnClickedRescan();
 	afx_msg void OnBnClickedUninstall();
+	BOOL m_bMaxi;
+	BOOL m_bUpdate;
+	afx_msg void OnBnClickedAddchannel2();
+	afx_msg void OnBnClickedRemovechannel2();
 };
 
 //{{AFX_INSERT_LOCATION}}

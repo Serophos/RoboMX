@@ -96,6 +96,8 @@ public:
 	void	SetFont(CString strValue){ m_strFont = strValue; }
 	void    SetFontSize(int nValue){ m_nFontSize = nValue; }
 
+	void	SetFiles(DWORD dwValue){m_dwFiles = dwValue; }
+	void	SetLine(WORD wValue){ m_wLine = wValue; }
 	void    SetNickname(CString strValue){m_strNickname = strValue; }
 	void	SetWinampMsg(CString strValue){ m_strWinampMsg = strValue; }
 	void	SetVideoMsg(CString strValue){ m_strVideoMsg = strValue; }
@@ -107,6 +109,9 @@ public:
 	void	SetPing(BOOL bValue){ m_bPing = bValue; }
 	void	SetTimeFmt(int nValue){ m_nTimeFormat = nValue; }
 	void	SetFocus(BOOL bValue){ m_bFocus = bValue; }
+	void	SetUpdate(BOOL bValue){ m_bUpdate = bValue; }
+	void	SetAutoList(BOOL bValue){ m_bAutoList = bValue; }
+	void	SetMaxi(BOOL bValue){ m_bMaxi = bValue; }
 
 	// Serve shit
 	void	SetServerIP(DWORD dwValue){  m_dwIP = dwValue; }
@@ -143,6 +148,8 @@ public:
 	BOOL	GetFilterNormal(){ return m_bFilterNormal; }
 	BOOL	GetEmoticons(){ return m_bEmoticons; }
 	BOOL	GetHiliteUsers(){ return m_bHiliteUsers; }
+	DWORD	GetFiles(){ return m_dwFiles; }
+	WORD	GetLine(){ return m_wLine; }
 
 	BOOL	GetMessageItalic(){ return m_bMsItalic; }
 	BOOL	GetMessageLine(){ return m_bMsLine; }
@@ -207,6 +214,9 @@ public:
 	BOOL		GetMiniTray(){ return m_bMiniTray; }
 	BOOL		GetPing(){ return m_bPing; }
 	int			GetTimeFmt(){ return m_nTimeFormat; }
+	BOOL		GetUpdate(){ return m_bUpdate; }
+	BOOL		GetAutoList(){ return m_bAutoList; }
+	BOOL		GetMaxi(){ return m_bMaxi; }
 
 	// Sound stuff
 	CString     GetSfxJoin(){ return m_strSfxJoin; }
@@ -262,6 +272,9 @@ protected:
 	BOOL	m_bFocus;
 	BOOL	m_bHiliteUsers;
 	BOOL	m_bEmoticons;
+	BOOL	m_bUpdate;
+	BOOL	m_bAutoList;
+	BOOL	m_bMaxi;
 
 	CHARFORMAT2	m_cfDefault;
 	COLORREF	m_crFocus;
@@ -300,6 +313,9 @@ protected:
 	CString     m_strPart;
 	CString     m_strImage;
 
+	DWORD		m_dwFiles;
+	WORD		m_wLine;
+
 	// Sound stuff
 	CString     m_strSfxJoin;
 	CString	    m_strSfxPart;
@@ -310,7 +326,7 @@ protected:
 	CString		m_strSfxError;
 	BOOL		m_bChatSfx;
 	BOOL		m_bSoundFX;
-	
+		
 	// Serve shit
 	DWORD      m_dwIP;
 	DWORD	   m_dwPort;

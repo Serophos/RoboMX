@@ -30,6 +30,7 @@
 #include "Settings.h"
 #include "Tokenizer.h"
 #include "SfxCfg.h"
+#include "ini.h"
 #include "InputRequest.h"
 #include "RoboEx.h"
 #include <mmsystem.h>
@@ -62,6 +63,9 @@ extern UINT UWM_SYSTEM;
 extern UINT UWM_REDIRECT;
 extern UINT UWM_LOAD_SETTINGS;
 extern UINT UWM_RCLICK;
+extern UINT UWM_ROOMRENAME;
+extern UINT UWM_SERVERTYPE;
+extern UINT UWM_RENOTIFY;
 
 #define WM_ECHOTEXT WM_APP+1
 #define WM_ECHOSYSTEXT WM_APP+2
@@ -72,10 +76,15 @@ extern CPtrArray g_aPlugins;
 #define PLUGIN ((CRoboEx*)g_aPlugins[i])
 
 extern CArray<SOUND, SOUND> g_aSounds;
+extern CStringArray g_aRCMSCommands;
+extern CStringArray g_aWinMXCommands;
+
 CStringArray g_aIgnored;
 CSystemInfo  g_sSystem;
 CStringArray g_aRooms;
+CStringArray g_aGreetings;
 
+UINT UWM_RENAMECL = ::RegisterWindowMessage("UWM_RENAMECL-{494D99C1-03BE-49e3-8A47-D0D17C6D4ACE}");
 
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3View
@@ -142,6 +151,10 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_NOTIFY(EN_LINK, IDC_CHAT, OnEnLinkChat)
 	ON_MESSAGE(WM_ECHOTEXT, OnEchoText)
 	ON_MESSAGE(WM_ECHOSYSTEXT, OnEchoSysText)
+	ON_REGISTERED_MESSAGE(UWM_ROOMRENAME, OnRoomRename)
+	ON_REGISTERED_MESSAGE(UWM_SERVERTYPE, OnSetServerType)
+	ON_REGISTERED_MESSAGE(UWM_RENOTIFY, OnRenNotify)
+	ON_REGISTERED_MESSAGE(UWM_RENAMECL, OnRenameCl)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -158,11 +171,13 @@ CMetis3View::CMetis3View()
 	m_dwAvLag = 0;
 	m_dwLastTic = 0;
 	m_bHasJoined = FALSE;
+	m_nServerType = SERVER_RCMS;
 }
 
 CMetis3View::~CMetis3View()
 {
 
+	m_iImageList.DeleteImageList();
 }
 
 void CMetis3View::DoDataExchange(CDataExchange* pDX)
@@ -190,7 +205,7 @@ void CMetis3View::OnInitialUpdate()
 	
 	CFormView::OnInitialUpdate();
     GetParentFrame()->RecalcLayout();
-    ResizeParentToFit(FALSE);
+
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_CHANNEL );
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	
@@ -221,8 +236,12 @@ void CMetis3View::OnInitialUpdate()
 		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, "Arial");
 	ListView_SetExtendedListViewStyle(m_lcUsers.m_hWnd, LVS_EX_FULLROWSELECT);
 
-
-	m_lcUsers.SetHeadings("Name,120;Files,60;Line,80;Node-IP,120;Node-Port,80");
+	CBitmap		bitmap;
+	bitmap.LoadMappedBitmap(IDB_USERMODE);
+	m_iImageList.Create(16, 16, ILC_COLORDDB|ILC_MASK, 4, 1);
+	m_iImageList.Add(&bitmap, RGB(255,0,255));
+	
+	m_lcUsers.SetHeadings("User,136;Share,60;Speed,80;Node-IP,120;Node-Port,80;IP (Admin/Op),120");
 	m_lcUsers.LoadColumnInfo();
 	
 	m_lcUsers.SetColors(
@@ -241,16 +260,30 @@ void CMetis3View::OnInitialUpdate()
 		g_sSettings.GetRGBIP(),
 		g_sSettings.GetRGBPort()
 		);
+
 	if(g_sSettings.GetHiliteUsers()){
 
 		m_lcUsers.SetHiLite();
 	}
+	m_lcUsers.SetImageList(&m_iImageList, LVSIL_SMALL);
 	m_lcUsers.SetFont(&m_fFont);
 	m_eInput.SetFont(&m_fFont);
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
-	
+	m_eInput.SetCommands(&g_aRCMSCommands);
+
 	// Set up client
 	m_sSplitter1.SetRange(150, 50, -1);
+
+	if(g_sSettings.GetMaxi()){
+
+		ReCalcLayout();
+	}
+	else{
+
+		ResizeParentToFit(FALSE);
+	}
+
+
 	m_mxClient.m_pView		= this;
 	m_mxClient.m_dwFiles	= GetDocument()->m_dwFiles;
 	m_mxClient.m_wLineType	= GetDocument()->m_wLine;
@@ -440,7 +473,7 @@ void CMetis3View::RemoveUser(const CString strUser, const CString strIP, WORD wP
 	}
 }
 
-void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort)
+void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort, CString strIP, WORD wUserLevel)
 {
 
 	CString strFiles, strLine, strPort;
@@ -448,10 +481,27 @@ void CMetis3View::AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CStrin
 	strLine = Util::FormatLine(wLine);
 	strPort.Format("%d", wNodePort);
 
-	m_lcUsers.AddItem(strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strNodeIP, (LPCTSTR)strPort);
+	m_lcUsers.AddItem(wUserLevel, strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strNodeIP, (LPCTSTR)strPort, (LPCTSTR)strIP);
 	m_lcUsers.Sort();
 }
 
+
+LRESULT CMetis3View::OnRoomRename(WPARAM wParam, LPARAM lParam)
+{
+
+	CString strRoom = (LPCSTR)lParam;
+	CString strOldRoom = GetDocument()->m_strRoom;
+	CString strOut;
+
+	GetDocument()->SetTitle(strRoom);
+	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.UpdateTitle(this, GetDocument()->m_strRoom);
+
+	strOut.Format("Roomname changed from %s to %s", strOldRoom, GetDocument()->m_strRoom);
+	
+	WriteSystemMsg(strOut, g_sSettings.GetRGBOK());
+	
+	return 1;
+}
 
 LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 {
@@ -469,7 +519,7 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 
 	m_rChat.SetText(" Topic: " + strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
 
-	if(g_sSettings.GetSoundFX()){
+	if(g_sSettings.GetSoundFX() && m_bHasJoined){
 
 		PlaySound(g_sSettings.GetSfxTopic(), NULL, SND_FILENAME|SND_ASYNC);
 	}
@@ -491,7 +541,7 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 
 	m_rChat.SetText(" " + strMotd + "\n", g_sSettings.GetRGBMotd(), g_sSettings.GetRGBBg());
 
-	if(g_sSettings.GetSoundFX()){
+	if(g_sSettings.GetSoundFX() && m_bHasJoined){
 
 		PlaySound(g_sSettings.GetSfxMotd(), NULL, SND_FILENAME|SND_ASYNC);
 	}
@@ -502,37 +552,44 @@ LRESULT CMetis3View::OnAddUser(WPARAM wParam, LPARAM lParam)
 {
 
 	char* pUserInfo = (char*)lParam;
-	WORD  wLen      = (WORD)wParam;
+	WORD  wType		= LOWORD(wParam);
+	WORD  wLen		= HIWORD(wParam);
+
 	//Userlist-Notification (Server)
     // 0x006F][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
-	CString strUser = pUserInfo, strTmp;
-	int nLen = strUser.GetLength()+1;
 
 	MX_USERINFO user;
-	user.strUser = strUser;
 	
-	DWORD dwTest;
-	memcpy(&dwTest,   pUserInfo+nLen,   4);
-	strTmp.Format("%X", dwTest);
-	if(strTmp.GetLength() < 8){
-	
-		strTmp.Insert(0, "0");
-	}
-	int nA = 0, nB = 0, nC = 0, nD = 0;
-	
-	nA = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(0,2), 2);
-	nB = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(2,2), 2);
-	nC = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(4,2), 2);
-	nD = Util::axtoi((LPSTR)(LPCSTR)strTmp.Mid(6,2), 2);
+	DWORD dwIP = 0, dwRealIP = 0;
+	LPSTR lpUser;
+	CString strUser;
 
-	user.strNodeIP.Format("%d.%d.%d.%d", nD, nC, nB, nA);
-	memcpy(&user.wNodePort,  pUserInfo+nLen+4, 2);
-	memcpy(&user.wLineType,  pUserInfo+nLen+6, 2);
-	memcpy(&user.dwNumFiles, pUserInfo+nLen+8, 4);
-	m_aUsers.Add(user);
-	//m_aUsers.Add(user);
+	if(wType == 0x072){ // winmx 3.52 and later
+
+		if(Util::ScanMessage(pUserInfo, wLen, "SDWWDW", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles, &user.wUserLever, &dwRealIP) < 6){
+
+			TRACE("Error decoding join notification packet\n");
+			return 0;
+		}
+	}
+	else{
+
+		if(Util::ScanMessage(pUserInfo, wLen, "SDWWD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles) != 5){
+
+			TRACE("Error decoding join notification packet\n");
+			return 0;
+		}
+		user.wUserLever = 0;
+	}
 	
-	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort);
+	strUser = lpUser;
+	user.strUser = strUser;
+	user.strNodeIP = Util::FormatIP(dwIP);
+	user.strRealIP = Util::FormatIP(dwRealIP);
+
+	m_aUsers.Add(user);
+	
+	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.wUserLever);
 
 	return 1;
 }
@@ -541,22 +598,51 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 {
 
 	char* pUserInfo = (char*)lParam;
-	WORD  wLen		= (WORD)wParam;
+	WORD  wType		= LOWORD(wParam);
+	WORD  wLen		= HIWORD(wParam);
 
 	MX_USERINFO user;
 	//User-Join notification (Server)
 	//0x006E][Username:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4]
-	DWORD dwIP;
+	DWORD dwIP = 0, dwRealIP = 0;
 	LPSTR lpUser;
 	CString strUser;
-	if(Util::ScanMessage(pUserInfo, wLen, "SDWWD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles) != 5){
+	
+	if(wType == 0x071){ // winmx 3.52 and later (no-ip display)
 
-		TRACE("Error decoding join notification packet\n");
-		return 0;
+		BYTE btDummy;
+		if(Util::ScanMessage(pUserInfo, wLen, "SDWWDB", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles, &btDummy) < 6){
+
+			TRACE("Error decoding join notification packet\n");
+			return 0;
+		}
+		user.wUserLever = (WORD)btDummy;
 	}
+	else if(wType == 0x075){ // winmx 3.52 and later (ip display)
+
+		BYTE btDummy;
+		if(Util::ScanMessage(pUserInfo, wLen, "SDWWDBD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles, &btDummy, &dwRealIP) < 6){
+
+			TRACE("Error decoding join notification packet\n");
+			return 0;
+		}
+		user.wUserLever = (WORD)btDummy;
+	}
+	else{  // old winmx
+
+		if(Util::ScanMessage(pUserInfo, wLen, "SDWWD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles) != 5){
+
+			TRACE("Error decoding join notification packet\n");
+			return 0;
+		}
+
+		user.wUserLever = 0;
+	}
+	
 	strUser = lpUser;
 	user.strUser = strUser;
 	user.strNodeIP = Util::FormatIP(dwIP);
+	user.strRealIP = Util::FormatIP(dwRealIP);
 
 	m_aUsers.Add(user);
 
@@ -575,21 +661,23 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 	strJoin.Replace("%NAME%", strUser);
 	strJoin.Replace("%LINE%", Util::FormatLine(user.wLineType));
 	strJoin.Replace("%FILES%", Util::FormatInt(user.dwNumFiles));
+	strJoin.Replace("%IP%", user.strRealIP);
+
 	m_rChat.SetText(" " + strJoin + "\n", g_sSettings.GetRGBJoin(), g_sSettings.GetRGBBg());
 
-	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort);
+	AddUser(strUser, user.wLineType, user.dwNumFiles, user.strNodeIP, user.wNodePort, user.strRealIP, user.wUserLever);
 
 	if(!m_bHasJoined){
 
 		if(strUser == GetDocument()->m_strName){
 
-			InputWelcome();
-			m_bHasJoined = TRUE;
-
 			for(int i = 0; i < g_aPlugins.GetSize(); i++){
 
 				PLUGIN->OnJoinChannel((DWORD)m_hWnd, GetDocument()->m_strRoom, &m_aUsers);
 			}
+
+			m_bHasJoined = TRUE;
+			InputWelcome();
 		}
 	}
 
@@ -605,24 +693,39 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 {
 
 	char* pRenameInfo = (char*)lParam;
-	WORD  wLen		  = (WORD)wParam;
+	WORD  wType		= LOWORD(wParam);
+	WORD  wLen		= HIWORD(wParam);
+
 	//Rename notification (Server)
 	//0x0070]
 	//[Name:N][00:1][IP-Address:4][UDP-Port:2] // old
 	//[Name:N][00:1][IP-Address:4][UDP-Port:2][Line-Type:2][Shared-Files:4] // new
-	//CString strOldname = pRenameInfo;
+
 	LPSTR   lpOldName = 0, lpNewName = 0;
-	DWORD   dwOldIP = 0, dwNewIP = 0, dwFiles = 0;
-	WORD    wOldPort = 0, wNewPort = 0, wLine = 0;
-	
-	if(Util::ScanMessage(pRenameInfo, wLen, "SDWSDWWD", 
-								&lpOldName, &dwOldIP, &wOldPort,
-								&lpNewName, &dwNewIP, &wNewPort, &wLine, &dwFiles) != 8){
+	DWORD   dwOldIP = 0, dwNewIP = 0, dwFiles = 0, dwRealIP = 0;
+	WORD    wOldPort = 0, wNewPort = 0, wLine = 0, wMode = 0;
 
-		TRACE("Error decoding rename notification packet\n");
-		return 0;
+	if(wType == 0x0074){
+
+		if(Util::ScanMessage(pRenameInfo, wLen, "SDWSDWWDWD", 
+									&lpOldName, &dwOldIP, &wOldPort,
+									&lpNewName, &dwNewIP, &wNewPort, &wLine, &dwFiles, &wMode, &dwRealIP) < 9){
+
+			TRACE("Error decoding rename notification packet\n");
+			return 0;
+		}
 	}
+	else{
 
+		if(Util::ScanMessage(pRenameInfo, wLen, "SDWSDWWD", 
+									&lpOldName, &dwOldIP, &wOldPort,
+									&lpNewName, &dwNewIP, &wNewPort, &wLine, &dwFiles) != 8){
+
+			TRACE("Error decoding rename notification packet\n");
+			return 0;
+		}
+		wMode = 10;
+	}
 	//CString strOldName;
 	//strOldName.Format("%s", lpOldName);
 
@@ -630,6 +733,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	fi.flags = LVFI_STRING|LVFI_WRAP;
 	fi.psz = lpOldName;
 
+	m_lcUsers.Sort();
 	int nPos = m_lcUsers.FindItem(&fi, -1);
 
 	MX_USERINFO oldUser, newUser;
@@ -657,19 +761,27 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		newUser.wNodePort = wNewPort;
 		newUser.dwNumFiles = dwFiles;
 		newUser.strNodeIP = Util::FormatIP(dwNewIP);
+		newUser.wUserLever = (wMode != 10 ? wMode : oldUser.wUserLever);
+		newUser.strRealIP = Util::FormatIP(dwRealIP);
 		
 		m_aUsers.SetAt(i, newUser);
-		m_lcUsers.SetItemText(nPos, 0, newUser.strUser); // name
-		m_lcUsers.SetItemText(nPos, 1, Util::FormatInt(newUser.dwNumFiles)); // files
-		m_lcUsers.SetItemText(nPos, 2, Util::FormatLine(newUser.wLineType)); // line
-		m_lcUsers.SetItemText(nPos, 3, newUser.strNodeIP); // nodeip
-		m_lcUsers.SetItemText(nPos, 4, Util::FormatInt(newUser.wNodePort)); // nodeport
+		m_lcUsers.DeleteItem(nPos);
+		m_lcUsers.Sort();
+		m_lcUsers.AddItem(newUser.wUserLever, newUser.strUser, (LPCTSTR)Util::FormatInt(newUser.dwNumFiles), (LPCTSTR)Util::FormatLine(newUser.wLineType),
+			(LPCTSTR)newUser.strNodeIP, (LPCTSTR)Util::FormatInt(newUser.wNodePort), (LPCSTR)newUser.strRealIP);
+		//m_lcUsers.AddItem(wUserLevel, strUsername, (LPCTSTR)strFiles, (LPCTSTR)strLine, (LPCTSTR)strNodeIP, (LPCTSTR)strPort, (LPCTSTR)strIP);
+		//m_lcUsers.SetItemState(nPos, &item);
+		//m_lcUsers.SetItemText(nPos, 0, newUser.strUser); // name
+		//m_lcUsers.SetItemText(nPos, 1, Util::FormatInt(newUser.dwNumFiles)); // files
+		//m_lcUsers.SetItemText(nPos, 2, Util::FormatLine(newUser.wLineType)); // line
+		//m_lcUsers.SetItemText(nPos, 3, newUser.strNodeIP); // nodeip
+		//m_lcUsers.SetItemText(nPos, 4, Util::FormatInt(newUser.wNodePort)); // nodeport
 		m_lcUsers.Sort();
 	}
 	else{
 
 		CString strErr;
-		strErr.Format("Debug Assertion Failed: Could not locate '%s' in the userlist. Please report this error. CListCtrl::FindItem returned %d\n", lpOldName, nPos);
+		strErr.Format("Debug Assertion Failed (call: OnRenameMsg): Could not locate '%s' in the userlist. Please report this error. CMyListCtrl::FindItem returned %d\n", lpOldName, nPos);
 		WriteSystemMsg(strErr, g_sSettings.GetRGBErr());
 		return 0;
 	}
@@ -682,13 +794,32 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+
+LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
+{
+
+	CString strMsg = (char*)lParam;
+	
+	strMsg.Replace("\\rtf", "#rtf");
+	
+	CString strPart, strTime;
+	if(g_sSettings.GetPrintTime()){
+
+		strTime.Format("[%s]", GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBPend());
+	}
+	
+	m_rChat.SetText(" " + strMsg + "\n", g_sSettings.GetRGBPend(), g_sSettings.GetRGBBg());
+	
+	return 1;
+}
+
 LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 {
 
 	//User-Part notification (Server)
 	//0x0073][Username:N][00:1][IP-Address:4][UDP-Port:2]
 
-	//CString strUser = (LPCSTR)lParam;
 	char* pPart = (char*)lParam;
 	WORD  wLen  = (WORD)wParam;
 	
@@ -894,8 +1025,9 @@ LRESULT CMetis3View::OnUnknown(WPARAM wParam, LPARAM lParam)
 void CMetis3View::Input(CString strText)
 {
 
-	m_eInput.SetWindowText(strText);
-	m_eInput.PostMessage(WM_KEYDOWN, 13, 256);
+	//m_eInput.SetWindowText(strText);
+	//m_eInput.PostMessage(WM_KEYDOWN, 13, 256);
+	OnInput(1, (LPARAM)(LPCTSTR)strText);
 }
 
 LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
@@ -903,7 +1035,7 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 
 	if(wParam == 1){
 
-		m_strInput = (LPTSTR)lParam;
+		m_strInput = (LPCTSTR)lParam;
 	}
 	else{
 
@@ -986,7 +1118,15 @@ void CMetis3View::OnRename()
 
 	if(dlg.DoModal() == IDOK){
 
-		m_mxClient.SendRename(dlg.m_strName, dlg.m_dwFiles, dlg.m_nLine);
+		if(dlg.m_bAllRooms){
+
+			((CMainFrame*)GetApp()->m_pMainWnd)->m_wndDocSelector.BroadcastMessage(UWM_RENAMECL, 0, 0);
+		}
+		else{
+
+			m_mxClient.SendRename(dlg.m_strName, dlg.m_dwFiles, dlg.m_nLine);
+		}
+
 		GetDocument()->m_dwFiles = dlg.m_dwFiles;
 		GetDocument()->m_strName = dlg.m_strName;
 		GetDocument()->m_wLine   = dlg.m_nLine;
@@ -1028,6 +1168,7 @@ LRESULT CMetis3View::OnRedirect(WPARAM wParam, LPARAM lParam)
 
 			m_mxClient.Disconnect();
 		}
+		m_bHasJoined = FALSE;
 		m_lcUsers.DeleteAllItems();
 		m_mxClient.SetRoom(strTarget);
 		GetDocument()->m_strRoom = strTarget;
@@ -1318,16 +1459,31 @@ void CMetis3View::OnUserlistCustomizethismenu()
 
 		if(ini.GetLength() == 0){
 
-			ini.WriteString("#UserCmd Redirect\n");
-			ini.WriteString("#UserCmd /kick\n");
-			ini.WriteString("#AdminCmd /kickban\n");
-			ini.WriteString("#AdminCmd /ban\n");
-			ini.WriteString("#UserCmd /unban\n");
-			ini.WriteString("#userCmd PrintUserStat\n");
-			ini.WriteString("#AdminCmd PrintIP\n");
-			ini.WriteString("#AdminCmd AddAdmin\n");
-			ini.WriteString("#AdminCmd RemoveAdmin\n");
-			ini.WriteString("#UserCmd Readmsg\n");
+			if(m_nServerType != SERVER_RCMS){
+
+				m_aRCMSMenu.Add("#UserCmd Redirect");
+				m_aRCMSMenu.Add("/kick");
+				m_aRCMSMenu.Add("/kickban");
+				m_aRCMSMenu.Add("/ban");
+				m_aRCMSMenu.Add("/unban");
+				m_aRCMSMenu.Add("/level");
+				m_aRCMSMenu.Add("#AdminCmd PrintIP");
+				m_aRCMSMenu.Add("/setuserlevel 190");
+				m_aRCMSMenu.Add("/setuserlevel 60");
+				m_aRCMSMenu.Add("#UserCmd Readmsg");
+			}
+			else{
+				ini.WriteString("#UserCmd Redirect\n");
+				ini.WriteString("#UserCmd /kick\n");
+				ini.WriteString("#AdminCmd /kickban\n");
+				ini.WriteString("#AdminCmd /ban\n");
+				ini.WriteString("#UserCmd /unban\n");
+				ini.WriteString("#userCmd PrintUserStat\n");
+				ini.WriteString("#AdminCmd PrintIP\n");
+				ini.WriteString("#AdminCmd AddAdmin\n");
+				ini.WriteString("#AdminCmd RemoveAdmin\n");
+				ini.WriteString("#UserCmd Readmsg\n");
+			}
 		}
 
 		ini.Close();
@@ -1470,17 +1626,33 @@ void CMetis3View::LoadRCMSMenu()
 
 	if(m_aRCMSMenu.GetSize() == 0){
 
-		// Fill in defaults
-		m_aRCMSMenu.Add("#UserCmd Redirect");
-		m_aRCMSMenu.Add("#UserCmd /kick");
-		m_aRCMSMenu.Add("#AdminCmd /kickban");
-		m_aRCMSMenu.Add("#AdminCmd /ban");
-		m_aRCMSMenu.Add("#UserCmd /unban");
-		m_aRCMSMenu.Add("#UserCmd PrintUserStat");
-		m_aRCMSMenu.Add("#AdminCmd PrintIP");
-		m_aRCMSMenu.Add("#AdminCmd AddAdmin");
-		m_aRCMSMenu.Add("#AdminCmd RemoveAdmin");
-		m_aRCMSMenu.Add("#UserCmd Readmsg");
+		if(m_nServerType != SERVER_RCMS){
+
+			m_aRCMSMenu.Add("#UserCmd Redirect");
+			m_aRCMSMenu.Add("/kick");
+			m_aRCMSMenu.Add("/kickban");
+			m_aRCMSMenu.Add("/ban");
+			m_aRCMSMenu.Add("/unban");
+			m_aRCMSMenu.Add("/level");
+			m_aRCMSMenu.Add("#AdminCmd PrintIP");
+			m_aRCMSMenu.Add("/setuserlevel 190");
+			m_aRCMSMenu.Add("/setuserlevel 60");
+			m_aRCMSMenu.Add("#UserCmd Readmsg");
+		}
+		else{
+
+			// Fill in defaults
+			m_aRCMSMenu.Add("#UserCmd Redirect");
+			m_aRCMSMenu.Add("#UserCmd /kick");
+			m_aRCMSMenu.Add("#AdminCmd /kickban");
+			m_aRCMSMenu.Add("#AdminCmd /ban");
+			m_aRCMSMenu.Add("#UserCmd /unban");
+			m_aRCMSMenu.Add("#UserCmd PrintUserStat");
+			m_aRCMSMenu.Add("#AdminCmd PrintIP");
+			m_aRCMSMenu.Add("#AdminCmd AddAdmin");
+			m_aRCMSMenu.Add("#AdminCmd RemoveAdmin");
+			m_aRCMSMenu.Add("#UserCmd Readmsg");
+		}
 	}
 }
 
@@ -1832,7 +2004,7 @@ void CMetis3View::InputWelcome()
 	}
 	if(g_sSettings.GetDoEnterMsg()){
 		
-		CString strMsg = g_sSettings.GetEnterMsg();
+		CString strMsg = g_aGreetings[rand() % g_aGreetings.GetSize()];
 		ReplaceVars(strMsg);
 		Input(strMsg);
 	}
@@ -1842,7 +2014,7 @@ void CMetis3View::InputWelcome()
 
 			if(GetDocument()->m_strRoom.Find(g_aRooms[i], 0) >= 0){
 
-				CString strMsg = g_sSettings.GetEnterMsg();
+				CString strMsg = g_aGreetings[rand() % g_aGreetings.GetSize()];
 				ReplaceVars(strMsg);
 				Input(strMsg);
 				break;
@@ -1958,4 +2130,38 @@ void CMetis3View::HandleHiLite(void)
 
 		GetApp()->GetMainFrame()->m_wndDocSelector.SetHiLite(this);
 	}
+}
+
+LRESULT CMetis3View::OnSetServerType(WPARAM wParam, LPARAM lParam)
+{
+
+	m_nServerType = (int)wParam;
+	switch((int)wParam){
+
+		case SERVER_RCMS:
+			m_eInput.SetCommands(&g_aRCMSCommands);
+			break;
+		case SERVER_WINMX352:
+			m_eInput.SetCommands(&g_aWinMXCommands);
+			break;
+		case SERVER_ROBOMX:
+			m_eInput.SetCommands(&g_aWinMXCommands);
+			break;
+		default:
+			ASSERT(FALSE);
+	}
+	LoadRCMSMenu();
+	return 1;
+}
+
+LRESULT CMetis3View::OnRenameCl(WPARAM wParam, LPARAM lParam)
+{
+
+	GetDocument()->m_strName = g_sSettings.GetNickname();
+	GetDocument()->m_wLine   = g_sSettings.GetLine();
+	GetDocument()->m_dwFiles = g_sSettings.GetFiles();
+
+	m_mxClient.SendRename(GetDocument()->m_strName, GetDocument()->m_dwFiles, GetDocument()->m_wLine);
+
+	return 1;
 }

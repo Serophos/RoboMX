@@ -33,6 +33,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
+CStringArray g_aRCMSCommands;
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
@@ -113,7 +114,8 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		m_hIcon,
 		NIIF_INFO
 	); 
-
+	
+	LoadRCMS();
 	return 0;
 }
 
@@ -149,7 +151,6 @@ void CMainFrame::Dump(CDumpContext& dc) const
 void CMainFrame::OnAppExit()
 {
 
-	//GetApp()->m_pView->m_mxClient.Disconnect();
 	OnClose();
 }
 
@@ -296,4 +297,36 @@ void CMainFrame::JoinChannel()
 {
 
 	OnFileNew();
+}
+
+void CMainFrame::LoadRCMS()
+{
+
+	CString strIniFile = "RCMS.ini";
+	CStdioFile ini;
+	CString strBuffer;
+	g_aRCMSCommands.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeRead|CFile::typeText|CFile::shareExclusive);
+
+		while(ini.ReadString(strBuffer)){
+
+			if(!strBuffer.IsEmpty()){
+
+				g_aRCMSCommands.Add(strBuffer);
+			}
+		}
+		ini.Close();
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+
+	if(g_aRCMSCommands.GetSize() == 0){
+
+		g_aRCMSCommands.Add("Error Reading RCMS.ini. Please check your installation");
+	}
 }

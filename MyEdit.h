@@ -53,7 +53,12 @@ public:
 
 	// Generated message map functions
 protected:
+	COLORREF m_crBg;
+	CBrush m_brBkgnd;
 	//{{AFX_MSG(CMyEdit)
+	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);
+	afx_msg void OnKillFocus(CWnd* pNewWnd);
+	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	//}}AFX_MSG
 
 	DECLARE_MESSAGE_MAP()

@@ -33,6 +33,8 @@
 #include "SplitterControl.h"
 #include "MyListCtrl.h"
 
+#define LCSB_CLIENTDATA 1
+#define LCSB_NCOVERRIDE 2
 
 class CMetis3View : public CFormView
 {
@@ -58,6 +60,8 @@ public:
 
 // Operations
 public:
+	void LoadRCMSMenu();
+	void ReCalcLayout();
 	afx_msg LRESULT OnSystem(WPARAM wParam, LPARAM lParam);
 	void DeleteEmoticons();
 	void AddEmoticon(char *szFileName, char *szActivationText);
@@ -91,9 +95,11 @@ public:
 #endif
 
 protected:
-
+	CStringArray m_aRCMSMenu;
+	CString		 m_strWd;
 // Generated message map functions
 protected:
+
 	afx_msg LRESULT OnInput(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMessage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnAction(WPARAM wParam, LPARAM lParam);
@@ -111,6 +117,20 @@ protected:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg void OnDestroy();
 	afx_msg void OnLeave();
+	afx_msg void OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnUserlistSendmessage();
+	afx_msg void OnUserlistRemoveadmin();
+	afx_msg void OnUserlistRedirect();
+	afx_msg void OnUserlistPrintuserstat();
+	afx_msg void OnUserlistPrintip();
+	afx_msg void OnUserlistUnban();
+	afx_msg void OnUserlistKickban();
+	afx_msg void OnUserlistKick();
+	afx_msg void OnUserlistCopyusername();
+	afx_msg void OnUserlistBan();
+	afx_msg void OnUserlistAddadmin();
+	afx_msg void OnUserlistReadusermessage();
+	afx_msg void OnUserlistCustomizethismenu();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

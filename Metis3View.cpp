@@ -24,12 +24,14 @@
 #include "Metis3View.h"
 #include "RenameDlg.h"
 #include <fstream.h>
+#include "Clipboard.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
 
 #define TIMER_CONNECT 10334
 #define TIMER_PING    10035
@@ -63,6 +65,20 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_WM_SIZE()
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_LEAVE, OnLeave)
+	ON_NOTIFY(NM_RCLICK, IDC_USERLIST, OnRclickUserlist)
+	ON_COMMAND(ID_USERLIST_SENDMESSAGE, OnUserlistSendmessage)
+	ON_COMMAND(ID_USERLIST_REMOVEADMIN, OnUserlistRemoveadmin)
+	ON_COMMAND(ID_USERLIST_REDIRECT, OnUserlistRedirect)
+	ON_COMMAND(ID_USERLIST_PRINTUSERSTAT, OnUserlistPrintuserstat)
+	ON_COMMAND(ID_USERLIST_PRINTIP, OnUserlistPrintip)
+	ON_COMMAND(ID_USERLIST_UNBAN, OnUserlistUnban)
+	ON_COMMAND(ID_USERLIST_KICKBAN, OnUserlistKickban)
+	ON_COMMAND(ID_USERLIST_KICK, OnUserlistKick)
+	ON_COMMAND(ID_USERLIST_COPYUSERNAME, OnUserlistCopyusername)
+	ON_COMMAND(ID_USERLIST_BAN, OnUserlistBan)
+	ON_COMMAND(ID_USERLIST_ADDADMIN, OnUserlistAddadmin)
+	ON_COMMAND(ID_USERLIST_READUSERMESSAGE, OnUserlistReadusermessage)
+	ON_COMMAND(ID_USERLIST_CUSTOMIZETHISMENU, OnUserlistCustomizethismenu)
 	//}}AFX_MSG_MAP
 	ON_REGISTERED_MESSAGE(UWM_INPUT, OnInput)
 	ON_REGISTERED_MESSAGE(UWM_MESSAGE, OnMessage)
@@ -110,7 +126,6 @@ BOOL CMetis3View::PreCreateWindow(CREATESTRUCT& cs)
 {
 	// TODO: Modify the Window class or styles here by modifying
 	//  the CREATESTRUCT cs
-
 	return CFormView::PreCreateWindow(cs);
 }
 
@@ -120,26 +135,25 @@ void CMetis3View::OnInitialUpdate()
 	CFormView::OnInitialUpdate();
     GetParentFrame()->RecalcLayout();
     ResizeParentToFit(FALSE);
-	
 	//GetApp()->m_pView = this;
 	
 	LoadEmoticons();
-
+	LoadRCMSMenu();
 	m_rChat.Init();
 	CRect rc;
 	CWnd* pWnd = GetDlgItem(IDC_SPLITTER_1);
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_sSplitter1.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_1);
-	m_sSplitter1.SetStyle(SPS_HORIZONTAL);
-	m_sSplitter1.SetRange(100, 100, -1);
+	m_sSplitter1.SetStyle(SPS_VERTICAL);
+	m_sSplitter1.SetRange(200, 200, 1);
 	
 	pWnd = GetDlgItem(IDC_SPLITTER_2);
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_sSplitter2.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_2);
 	m_sSplitter2.SetStyle(SPS_HORIZONTAL);
-	m_sSplitter2.SetRange(150, 150, -1);
+	m_sSplitter2.SetRange(150, 150, 1);
 	//m_sSplitter2.SetRange(-150, 150);
 
 	pWnd = GetDlgItem(IDC_STATIC_SYSOUT);
@@ -164,7 +178,7 @@ void CMetis3View::OnInitialUpdate()
 	ListView_SetExtendedListViewStyle(m_lcUsers.m_hWnd, LVS_EX_FULLROWSELECT);
 
 	// Set up layout
-	m_lcUsers.InsertColumn(0, "Name", LVCFMT_LEFT, 300);
+	m_lcUsers.InsertColumn(0, "Name", LVCFMT_LEFT, 120);
 	m_lcUsers.InsertColumn(1, "Files", LVCFMT_RIGHT, 60);
 	m_lcUsers.InsertColumn(2, "Line", LVCFMT_CENTER, 80);
 	m_lcUsers.InsertColumn(3, "Node-IP", LVCFMT_RIGHT, 120);
@@ -181,7 +195,7 @@ void CMetis3View::OnInitialUpdate()
 	m_mxClient.m_strUser	= GetDocument()->m_strName;
 
 	m_mxClient.SetRoom(GetDocument()->m_strRoom);
-	WriteSystemMsg("Connecting. Stand by...");
+	WriteSystemMsg("Connecting. Stand by...", RGB(255,128,64));
 	
 /*	CBitmap		bitmap;
 
@@ -217,10 +231,10 @@ BOOL CMetis3View::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 void CMetis3View::DoResize1(int delta)
 {
 
-	CSplitterControl::ChangeHeight(&m_lcUsers, delta, CW_TOPALIGN);
-	CSplitterControl::ChangeHeight(&m_rSys, -delta, CW_BOTTOMALIGN);
-	CSplitterControl::ChangeHeight(&m_rChat, 0);
-	CSplitterControl::ChangeHeight(&m_eInput, 0);
+	CSplitterControl::ChangeWidth(&m_lcUsers, -delta, CW_RIGHTALIGN);
+	CSplitterControl::ChangeWidth(&m_rSys, delta, CW_LEFTALIGN);
+	CSplitterControl::ChangeWidth(&m_rChat, delta, CW_LEFTALIGN);
+	CSplitterControl::ChangeWidth(&m_sSplitter2, delta, CW_LEFTALIGN);
 	Invalidate();
 	UpdateWindow();
 }
@@ -228,10 +242,9 @@ void CMetis3View::DoResize1(int delta)
 void CMetis3View::DoResize2(int delta)
 {
 
-	CSplitterControl::ChangeHeight(&m_lcUsers, 0);
 	CSplitterControl::ChangeHeight(&m_rSys, delta, CW_TOPALIGN);
 	CSplitterControl::ChangeHeight(&m_rChat, -delta, CW_BOTTOMALIGN);
-	CSplitterControl::ChangeHeight(&m_eInput, 0);
+//	CSplitterControl::ChangeHeight(&m_eInput, 0);
 	Invalidate();
 	UpdateWindow();
 }
@@ -275,13 +288,10 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 
 	if(nIDEvent == TIMER_CONNECT){
 
-		if(m_mxClient.Connect()){
+		if(!m_mxClient.Connect()){
 
-			WriteSystemMsg("Successfully connected to room.");
-		}
-		else{
-
-			WriteSystemMsg("Could not join room.");
+			KillTimer(TIMER_CONNECT);
+			return;	
 		}
 		KillTimer(TIMER_CONNECT);
 		SetTimer(TIMER_PING, 5*60*1000, 0);
@@ -689,6 +699,11 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 
 	BOOL bAction = FALSE;
 
+	if(m_strInput.Find("{\\rtf", 0) >= 0){
+
+		m_strInput = "Sorry, I made a futile attemp to send an RTF exploit to the room. RoboMX outsmarted me though and blocked it. Please kick my butt!";
+	}
+
 	if(m_strInput.Find("/me ", 0) == 0){
 
 		m_strInput = m_strInput.Mid(4);
@@ -716,68 +731,7 @@ void CMetis3View::OnSize(UINT nType, int cx, int cy)
 {
 	CFormView::OnSize(nType, cx, cy);
 	
-	if(!m_rSys.m_hWnd || !m_rChat.m_hWnd || !m_sSplitter1.m_hWnd || !m_sSplitter2.m_hWnd){
-
-		return;
-	}
-
-	CRect	rcItem;
-	CRect	rcItem2;
-	CRect	rcParent;
-
-	GetClientRect(rcParent);
-	
-
-	// resize userlist
-	m_lcUsers.GetWindowRect(rcItem);
-	ScreenToClient(rcItem);
-	rcItem.right = rcParent.right - 1;
-	m_lcUsers.MoveWindow(rcItem);
-	// resize splitter1
-	m_sSplitter1.GetWindowRect(rcItem);
-	ScreenToClient(rcItem);
-	rcItem.right = rcParent.right - 1;
-	m_sSplitter1.MoveWindow(rcItem);
-	// resize system out
-	m_rSys.GetWindowRect(rcItem);
-	ScreenToClient(rcItem);
-	rcItem.right = rcParent.right - 1;
-	m_rSys.MoveWindow(rcItem);
-	// resize splitter2
-	m_sSplitter2.GetWindowRect(rcItem);
-	ScreenToClient(rcItem);
-	rcItem.right = rcParent.right - 1;
-	m_sSplitter2.MoveWindow(rcItem);
-	
-	// Get Button Position
-	m_btExit.GetWindowRect(rcItem2);
-	ScreenToClient(rcItem2);
-	// Get Edit Position
-	m_eInput.GetWindowRect(rcItem);
-	ScreenToClient(rcItem);
-
-	int nHeight = rcItem.Height();
-	rcItem.bottom = rcParent.bottom - 1;
-	rcItem.top = rcItem.bottom - nHeight;
-	rcItem.right = rcParent.right - 6 - rcItem2.Width();
-
-	nHeight = rcItem2.Height();
-	int nWidth = rcItem2.Width();
-	rcItem2.bottom = rcParent.bottom - 1;
-	rcItem2.right  = rcParent.right - 1;
-	rcItem2.top    = rcItem2.bottom - nHeight;
-	rcItem2.left   = rcItem2.right  - nWidth;
-
-	m_eInput.MoveWindow(rcItem);
-	m_btExit.MoveWindow(rcItem2);
-
-	// resize chat
-	m_rChat.GetWindowRect(rcItem);
-	ScreenToClient(rcItem);
-	rcItem.right  = rcParent.right - 1;
-	rcItem.bottom = rcItem2.top - 2;
-	m_rChat.MoveWindow(rcItem);
-	
+	ReCalcLayout();	
 }
 
 void CMetis3View::OnRename() 
@@ -869,5 +823,359 @@ void CMetis3View::OnLeave()
 {
 
 	GetDocument()->OnCloseDocument();
+}
+
+void CMetis3View::ReCalcLayout()
+{
+
+	if(!m_rSys.m_hWnd || !m_rChat.m_hWnd || !m_sSplitter1.m_hWnd || !m_sSplitter2.m_hWnd){
+
+		return;
+	}
+
+	CRect	rcItem;
+	CRect	rcItem2;
+	CRect	rcParent;
+
+	GetClientRect(rcParent);
+	
+
+	// Get Button Position
+	m_btExit.GetWindowRect(rcItem2);
+	ScreenToClient(rcItem2);
+	// Get Edit Position
+	m_eInput.GetWindowRect(rcItem);
+	ScreenToClient(rcItem);
+
+	int nHeight = rcItem.Height();  // Save height of button
+	rcItem.bottom = rcParent.bottom - 1;
+	rcItem.top = rcItem.bottom - nHeight;
+	rcItem.right = rcParent.right - 6 - rcItem2.Width();
+
+	nHeight = rcItem2.Height();
+	int nWidth = rcItem2.Width();
+	rcItem2.bottom = rcParent.bottom - 1;
+	rcItem2.right  = rcParent.right - 1;
+	rcItem2.top    = rcItem2.bottom - nHeight;
+	rcItem2.left   = rcItem2.right  - nWidth;
+
+	m_eInput.MoveWindow(rcItem);
+	m_btExit.MoveWindow(rcItem2);
+
+	// move userlist
+	m_lcUsers.GetWindowRect(rcItem);
+	ScreenToClient(rcItem);
+
+	nWidth = rcItem.Width();
+	rcItem.right = rcParent.right;
+	rcItem.left  = rcParent.right - nWidth;
+	rcItem.bottom = rcItem2.top - 2;
+	m_lcUsers.MoveWindow(rcItem);
+
+	// move/size splitter1
+	m_sSplitter1.GetWindowRect(rcItem);
+	ScreenToClient(rcItem);
+	rcItem.right = rcParent.right - nWidth - 1;
+	rcItem.left  = rcParent.right - nWidth - 6;
+	rcItem.bottom = rcParent.bottom - 6 - nHeight;
+	m_sSplitter1.MoveWindow(rcItem);
+
+	// resize system out
+	m_rSys.GetWindowRect(rcItem);
+	ScreenToClient(rcItem);
+	rcItem.right = rcParent.right - 6 - nWidth;
+	m_rSys.MoveWindow(rcItem);
+	
+	// resize splitter2
+	m_sSplitter2.GetWindowRect(rcItem);
+	ScreenToClient(rcItem);
+	rcItem.right = rcParent.right - 6 - nWidth;
+	m_sSplitter2.MoveWindow(rcItem);
+
+	// resize chat
+	m_rChat.GetWindowRect(rcItem);
+	ScreenToClient(rcItem);
+	rcItem.right  = rcParent.right - 6 - nWidth;
+	rcItem.bottom = rcItem2.top - 2;
+	m_rChat.MoveWindow(rcItem);
+
+}
+
+void CMetis3View::OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult) 
+{
+
+	CMenu mContextMenu;
+	mContextMenu.LoadMenu(IDR_USER);
+
+	POINT point;
+	GetCursorPos(&point);
+
+	if(m_lcUsers.GetNextItem(-1, LVNI_FOCUSED) >= 0){
+
+		mContextMenu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+											point.x,
+											point.y,
+											AfxGetMainWnd());
+	}
+
+	*pResult = 0;
+}
+
+void CMetis3View::OnUserlistSendmessage() 
+{
+
+	AfxMessageBox("Sorry. This feature has not been implemented yet.");
+}
+
+void CMetis3View::OnUserlistRedirect() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[0], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistKick() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[1], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistKickban() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[2], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistBan() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[3], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistUnban() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[4], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistPrintuserstat() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[5], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistPrintip() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[6], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistAddadmin() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[7], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistRemoveadmin() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[8], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistReadusermessage() 
+{
+
+	
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd.Format("%s %s", m_aRCMSMenu[9], m_lcUsers.GetItemText(n, 0));
+		m_mxClient.SendMessage(strCmd, strCmd.GetLength(), FALSE);
+	}
+}
+
+void CMetis3View::OnUserlistCustomizethismenu() 
+{
+	CString strIniFile, strRoom;
+
+	strRoom = GetDocument()->m_strRoomShort;
+	strRoom.Remove('?');
+	strRoom.Remove(':');
+	strRoom.Remove(',');
+	strRoom.Remove('\\');
+	strRoom.Remove('/');
+	strRoom.Remove('<');
+	strRoom.Remove('>');
+	strRoom.Remove('\"');
+	strRoom.Remove('*');
+	strRoom.Remove('|');
+	strRoom.Replace(1, '-');
+
+	strIniFile.Format("%s.rcms", strRoom);
+
+
+	CStdioFile ini;
+	CString strBuffer;
+	m_aRCMSMenu.RemoveAll();
+
+	TRY{
+
+		ini.Open(strIniFile, CFile::modeCreate|CFile::modeNoTruncate|CFile::modeReadWrite|CFile::typeText|CFile::shareExclusive);
+
+		if(ini.GetLength() == 0){
+
+			ini.WriteString("#UserCmd Redirect\n");
+			ini.WriteString("#UserCmd /kick\n");
+			ini.WriteString("#AdminCmd /kickban\n");
+			ini.WriteString("#AdminCmd /ban\n");
+			ini.WriteString("#UserCmd /unban\n");
+			ini.WriteString("#userCmd PrintUserStat\n");
+			ini.WriteString("#AdminCmd PrintIP\n");
+			ini.WriteString("#AdminCmd AddAdmin\n");
+			ini.WriteString("#AdminCmd RemoveAdmin\n");
+			ini.WriteString("#UserCmd Readmsg\n");
+		}
+
+		ini.Close();
+
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+
+
+	AfxMessageBox("RoboMX will now open the a configuration file in notepad. Please adjust the RCMS commands to the one used in this room, save the document and re-join the channel. Do not change the order of the commands in the file.", MB_ICONINFORMATION);
+
+	ShellExecute(0, "open", "notepad.exe", strIniFile, 0, SW_SHOW);
+}
+
+void CMetis3View::OnUserlistCopyusername() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strCmd;
+	if(n >= 0){
+
+		strCmd = m_lcUsers.GetItemText(n, 0);
+		CClipboard::SetText((LPSTR)(LPCSTR)strCmd);
+	}	
+}
+
+void CMetis3View::LoadRCMSMenu()
+{
+
+	CString strIniFile, strRoom;
+
+	strRoom = GetDocument()->m_strRoomShort;
+	strRoom.Remove('?');
+	strRoom.Remove(':');
+	strRoom.Remove(',');
+	strRoom.Remove('\\');
+	strRoom.Remove('/');
+	strRoom.Remove('<');
+	strRoom.Remove('>');
+	strRoom.Remove('\"');
+	strRoom.Remove('*');
+	strRoom.Remove('|');
+	strRoom.Replace(1, '-');
+
+	strIniFile.Format("%s.rcms", strRoom);
+
+
+	CStdioFile ini;
+	CString strBuffer;
+	m_aRCMSMenu.RemoveAll();
+
+	TRY{
+
+		if(ini.Open(strIniFile, CFile::modeRead|CFile::typeText|CFile::shareExclusive)){
+
+
+			while(ini.ReadString(strBuffer)){
+
+				if(!strBuffer.IsEmpty()){
+
+					strBuffer.TrimLeft();
+					strBuffer.TrimRight();
+					m_aRCMSMenu.Add(strBuffer);
+				}
+			}
+			ini.Close();
+		}
+		
+	}
+	CATCH(CFileException, e){
+
+	}END_CATCH;
+
+	if(m_aRCMSMenu.GetSize() == 0){
+
+		// Fill in defaults
+		m_aRCMSMenu.Add("#UserCmd Redirect");
+		m_aRCMSMenu.Add("#UserCmd /kick");
+		m_aRCMSMenu.Add("#AdminCmd /kickban");
+		m_aRCMSMenu.Add("#AdminCmd /ban");
+		m_aRCMSMenu.Add("#UserCmd /unban");
+		m_aRCMSMenu.Add("#UserCmd PrintUserStat");
+		m_aRCMSMenu.Add("#AdminCmd PrintIP");
+		m_aRCMSMenu.Add("#AdminCmd AddAdmin");
+		m_aRCMSMenu.Add("#AdminCmd RemoveAdmin");
+		m_aRCMSMenu.Add("#UserCmd Readmsg");
+	}
 }
 

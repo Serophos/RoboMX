@@ -6,6 +6,38 @@
 --------------------Configuration: Metis3 - Win32 Release--------------------
 </h3>
 <h3>Command Lines</h3>
+Creating command line "rc.exe /l 0x409 /fo"Release/Metis3.res" /d "NDEBUG" /d "_AFXDLL" "C:\projects\Metis3\Metis3.rc"" 
+Creating temporary file "C:\DOCUME~1\tw\LOCALS~1\Temp\RSP3F7.tmp" with contents
+[
+/nologo /subsystem:windows /incremental:no /pdb:"Release/RoboMX.pdb" /map:"Release/RoboMX.map" /machine:I386 /out:"Release/RoboMX.exe" /MAPINFO:LINES /MAPINFO:EXPORTS 
+.\Release\ChannelDoc.obj
+.\Release\ChannelView.obj
+.\Release\ChatClient.obj
+.\Release\ChildFrm.obj
+.\Release\Clipboard.obj
+.\Release\ConnectionDlg.obj
+.\Release\ImageDataObject.obj
+.\Release\Ini.obj
+.\Release\ListClient.obj
+.\Release\MainFrm.obj
+.\Release\Metis3.obj
+.\Release\Metis3Doc.obj
+.\Release\Metis3View.obj
+.\Release\MyEdit.obj
+.\Release\MyListCtrl.obj
+.\Release\MySocket.obj
+.\Release\RenameDlg.obj
+.\Release\RichEditExCtrl.obj
+.\Release\ServerDoc.obj
+.\Release\ServerView.obj
+.\Release\SplitterControl.obj
+.\Release\StdAfx.obj
+.\Release\Metis3.res
+]
+Creating command line "link.exe @C:\DOCUME~1\tw\LOCALS~1\Temp\RSP3F7.tmp"
+<h3>Output Window</h3>
+Compiling resources...
+Linking...
 
 
 

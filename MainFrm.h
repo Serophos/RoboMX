@@ -46,6 +46,7 @@ public:
 
 // Implementation
 public:
+	void LoadRCMS();
 	void JoinChannel();
 	CString m_strRoom;
 	BOOL  m_bChannelList;

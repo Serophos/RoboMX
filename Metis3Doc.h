@@ -47,6 +47,7 @@ public:
 
 // Implementation
 public:
+	CString m_strRoomShort;
 	virtual ~CMetis3Doc();
 #ifdef _DEBUG
 	virtual void AssertValid() const;

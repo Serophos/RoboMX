@@ -53,7 +53,7 @@ BOOL CMySocket::Connect(LPCTSTR lpszIP, WORD wPort, int nWait)
 		struct hostent *pHost = gethostbyname(lpszIP);
 		if(!pHost){		
 
-			m_dwLastError = SOCK_SOCKERROR;
+			m_dwLastError = WSAGetLastError();
 			return FALSE;
 		}
 		else{
@@ -73,14 +73,14 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
 	// already connected?
 	if(m_sSocket != INVALID_SOCKET){
 
-		m_dwLastError = SOCK_SOCKERROR;
+		m_dwLastError = WSAGetLastError();
 		return FALSE;
 	}
 
 	m_sSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if(m_sSocket == INVALID_SOCKET){
 
-		m_dwLastError = SOCK_SOCKERROR;
+		m_dwLastError = WSAGetLastError();
 		return FALSE;		
 	}
 
@@ -91,10 +91,10 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
 
 	if(!nWait){
 
-		if(connect(m_sSocket, (PSOCKADDR)&SockAddr, sizeof(sockaddr))){
+		if(connect(m_sSocket, (PSOCKADDR)&SockAddr, sizeof(sockaddr)) == SOCKET_ERROR){
 
+			m_dwLastError = WSAGetLastError();
 			Close();
-			m_dwLastError = SOCK_SOCKERROR;
 			return FALSE;		
 		}
 	
@@ -112,35 +112,35 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
 
 	if(ioctlsocket(m_sSocket, FIONBIO, &nArg) == SOCKET_ERROR){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return FALSE;		
 	}
 
 	if(connect(m_sSocket, (PSOCKADDR)&SockAddr, sizeof(sockaddr)) != SOCKET_ERROR){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return FALSE;		
 	}
 	if(WSAGetLastError() != WSAEWOULDBLOCK){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return FALSE;		
 	}
 
 	if(select(32, NULL, &FdSet, NULL, &TimeVal) == SOCKET_ERROR){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return FALSE;		
 	}
 
 	if(!FD_ISSET(m_sSocket, &FdSet)){
 
-		Close();
 		m_dwLastError = SOCK_TIMEOUT;
+		Close();
 		return FALSE;
 	}
 
@@ -148,7 +148,7 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
 	if(ioctlsocket(m_sSocket, FIONBIO, &nArg) == SOCKET_ERROR){
 
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
+		m_dwLastError = WSAGetLastError();
 		return FALSE;		
 	}
 
@@ -161,7 +161,7 @@ int CMySocket::Recv(char *pBuff, int nLen, int nWait)
 
 	if(m_sSocket == INVALID_SOCKET){
 
-		m_dwLastError = SOCK_SOCKINVALID;
+		m_dwLastError = WSAGetLastError();
 		return SOCKET_ERROR;
 	}
 
@@ -183,7 +183,7 @@ int CMySocket::RecvOnce(char *pBuff, int nMaxLen, int nWait)
 
 	if(m_sSocket == INVALID_SOCKET){
 
-		m_dwLastError = SOCK_SOCKINVALID;
+		m_dwLastError = WSAGetLastError();
 		return SOCKET_ERROR;
 	}
 	
@@ -192,8 +192,8 @@ int CMySocket::RecvOnce(char *pBuff, int nMaxLen, int nWait)
 
 	if(getsockopt(m_sSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&nValue, &nSize)){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return SOCKET_ERROR;
 	}
 
@@ -201,8 +201,9 @@ int CMySocket::RecvOnce(char *pBuff, int nMaxLen, int nWait)
 
 		nValue = nWait * 1000;
 		if(setsockopt(m_sSocket, SOL_SOCKET, SO_RCVTIMEO, (char *)&nValue, sizeof(int))){
+
+			m_dwLastError = WSAGetLastError();
 			Close();
-			m_dwLastError = SOCK_SOCKERROR;
 			return SOCKET_ERROR;
 		}
 	}
@@ -211,7 +212,7 @@ int CMySocket::RecvOnce(char *pBuff, int nMaxLen, int nWait)
 	int nRef = recv(m_sSocket, pBuff, nMaxLen, 0);
 	if(nRef == SOCKET_ERROR || !nRef){
 
-		DWORD dwLastError = (WSAGetLastError() == WSAETIMEDOUT) ? SOCK_TIMEOUT : SOCK_SOCKERROR;
+		DWORD dwLastError = (WSAGetLastError() == WSAETIMEDOUT) ? SOCK_TIMEOUT : WSAGetLastError();
 		if(dwLastError != SOCK_TIMEOUT){
 
 			Close();
@@ -229,7 +230,7 @@ int CMySocket::Send(char *pBuff, int nLen, int nWait)
 
 	if(m_sSocket == INVALID_SOCKET){
 
-		m_dwLastError = SOCK_SOCKINVALID;
+		m_dwLastError = WSAGetLastError();
 		return SOCKET_ERROR;
 	}
 
@@ -254,7 +255,7 @@ int CMySocket::SendOnce(char *pBuff, int nMaxLen, int nWait)
 
 	if(m_sSocket == INVALID_SOCKET){
 
-		m_dwLastError = SOCK_SOCKINVALID;
+		m_dwLastError = WSAGetLastError();
 		return SOCKET_ERROR;
 	}
 	
@@ -262,8 +263,8 @@ int CMySocket::SendOnce(char *pBuff, int nMaxLen, int nWait)
 	int nValue  = 0, nSize = sizeof(int);
 	if(getsockopt(m_sSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&nValue, &nSize)){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return SOCKET_ERROR;
 	}
 	if(nValue != (nWait * 1000)){
@@ -271,8 +272,8 @@ int CMySocket::SendOnce(char *pBuff, int nMaxLen, int nWait)
 		nValue = nWait * 1000;
 		if(setsockopt(m_sSocket, SOL_SOCKET, SO_SNDTIMEO, (char *)&nValue, sizeof(int))){
 
+			m_dwLastError = WSAGetLastError();
 			Close();
-			m_dwLastError = SOCK_SOCKERROR;
 			return SOCKET_ERROR;
 		}
 	}
@@ -281,7 +282,7 @@ int CMySocket::SendOnce(char *pBuff, int nMaxLen, int nWait)
 	int nRef = send(m_sSocket, pBuff, nMaxLen, 0);
 	if(nRef == SOCKET_ERROR || !nRef){
 
-		DWORD dwLastError = (WSAGetLastError() == WSAETIMEDOUT) ? SOCK_TIMEOUT : SOCK_SOCKERROR;
+		DWORD dwLastError = (WSAGetLastError() == WSAETIMEDOUT) ? SOCK_TIMEOUT : WSAGetLastError();
 		if(dwLastError != SOCK_TIMEOUT){
 
 			Close();
@@ -297,7 +298,7 @@ int CMySocket::SendOnce(char *pBuff, int nMaxLen, int nWait)
 BOOL CMySocket::Close(void)
 {
 
-	m_dwLastError = SOCK_NOERROR;
+	//m_dwLastError = SOCK_NOERROR;
 
 	// check if we are actually connected ;)
 	if(m_sSocket != INVALID_SOCKET){
@@ -311,7 +312,7 @@ BOOL CMySocket::Close(void)
 	}
 	else{
 		
-		m_dwLastError = SOCK_SOCKINVALID;
+		m_dwLastError = WSAGetLastError();
 	}
 
 	return (m_dwLastError == SOCK_NOERROR) ? TRUE : FALSE;
@@ -332,9 +333,6 @@ CString CMySocket::GetLastErrorStr(void)
 	case SOCK_NOERROR:
 		strError = "No error occured";
 		break;
-	case SOCK_SOCKERROR:
-		strError = "Socket error";
-		break;
 	case SOCK_TIMEOUT:
 		strError = "Connection timeout";
 		break;
@@ -342,7 +340,7 @@ CString CMySocket::GetLastErrorStr(void)
 		strError = "Invalid Socket";
 		break;
 	default:
-		strError = "Unknown Error";
+		strError = GetErrorString(GetLastError());
 	}
 	return strError;
 }
@@ -362,8 +360,8 @@ BOOL CMySocket::GetLocalAddr(DWORD *pIP, WORD *pPort)
 	
 	if(getsockname(m_sSocket, (struct sockaddr *)&LocalAddr, &AddrLen) == SOCKET_ERROR){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return FALSE;
 	}
 
@@ -387,8 +385,8 @@ BOOL CMySocket::GetPeerAddr(DWORD *pIP, WORD *pPort)
 	
 	if(getpeername(m_sSocket, (struct sockaddr *)&PeerAddr, &AddrLen) == SOCKET_ERROR){
 
+		m_dwLastError = WSAGetLastError();
 		Close();
-		m_dwLastError = SOCK_SOCKERROR;
 		return FALSE;
 	}
 
@@ -398,3 +396,34 @@ BOOL CMySocket::GetPeerAddr(DWORD *pIP, WORD *pPort)
 	return TRUE;
 }
 
+CString CMySocket::GetErrorString(DWORD dwError){
+
+     CString strError;
+     LPTSTR szTemp;
+    
+	 if(::FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_FROM_SYSTEM,
+            NULL,
+            dwError,
+            0,
+            (LPTSTR)&szTemp,
+            0,
+            NULL) == 0){
+
+		// Unknown error code %08x (%d)
+		 strError.Format("Unknown error 0x%08x (%d)", dwError, LOWORD(dwError));
+    }
+	else{
+
+		LPTSTR p = _tcschr(szTemp, _T('\r'));
+
+		if(p != NULL){
+
+			*p = _T('\0');
+		}
+
+		strError = szTemp;
+		::LocalFree(szTemp);
+	}
+	return strError;
+}

@@ -74,6 +74,12 @@ BOOL CMetis3Doc::OnNewDocument()
 	m_strRoom = dlg.m_strRoom;
 	m_strName = dlg.m_strName;
 
+	int n = m_strRoom.Find("_");
+	if(n > 0){
+
+		m_strRoomShort = m_strRoom.Left(n);
+	}
+
 	SetTitle(m_strName + "@" + m_strRoom);
 	return TRUE;
 }

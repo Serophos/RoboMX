@@ -62,6 +62,7 @@ void CConnectionDlg::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(CConnectionDlg, CDialog)
 	//{{AFX_MSG_MAP(CConnectionDlg)
+	ON_BN_CLICKED(IDC_USENODE, OnUsenode)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -124,7 +125,7 @@ void CConnectionDlg::OnOK()
 		AfxMessageBox("Username must not be emtpy!", MB_ICONINFORMATION);
 		return;
 	}
-	if(m_strName.Find(" ") >= 0){
+	if((m_strName.Find(" ") >= 0) || (m_strName.Find("\\rtf") >= 0)){
 
 		AfxMessageBox("Username contains illegal characters!", MB_ICONINFORMATION);
 		return;
@@ -156,4 +157,10 @@ void CConnectionDlg::OnOK()
 	ini.SetValue("UserInfo", "Files", m_dwFiles);
 
 	CDialog::OnOK();
+}
+
+void CConnectionDlg::OnUsenode() 
+{
+
+	AfxMessageBox("Sorry, this features is not implemented yet");
 }

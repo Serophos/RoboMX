@@ -141,21 +141,29 @@ BOOL CMetis3App::InitInstance()
 	//  serve as the connection between documents, frame windows and views.
 
 
-	CMultiDocTemplate* pDocTemplate2;
-	pDocTemplate2 = new CMultiDocTemplate(
+	CMultiDocTemplate* pListTemplate;
+	pListTemplate = new CMultiDocTemplate(
 		IDR_LIST,
 		RUNTIME_CLASS(CChannelDoc),
 		RUNTIME_CLASS(CChildFrame), // custom MDI child frame
 		RUNTIME_CLASS(CChannelView));
-	AddDocTemplate(pDocTemplate2);
+	AddDocTemplate(pListTemplate);
 
-	CMultiDocTemplate* pDocTemplate;
-	pDocTemplate = new CMultiDocTemplate(
+	CMultiDocTemplate* pChannelTemplate;
+	pChannelTemplate = new CMultiDocTemplate(
 		IDR_CHANNEL,
 		RUNTIME_CLASS(CMetis3Doc),
 		RUNTIME_CLASS(CChildFrame), // custom MDI child frame
 		RUNTIME_CLASS(CMetis3View));
-	AddDocTemplate(pDocTemplate);
+	AddDocTemplate(pChannelTemplate);
+
+	CMultiDocTemplate* pServerTemplate;
+	pServerTemplate = new CMultiDocTemplate(
+		IDR_SERVER,
+		RUNTIME_CLASS(CMetis3Doc),
+		RUNTIME_CLASS(CChildFrame), // custom MDI child frame
+		RUNTIME_CLASS(CMetis3View));
+	AddDocTemplate(pServerTemplate);
 
 	// create main MDI Frame window
 	CMainFrame* pMainFrame = new CMainFrame;

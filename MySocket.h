@@ -28,9 +28,8 @@
 
 // Return values for GetLastError()
 #define SOCK_NOERROR		0x00
-#define SOCK_SOCKERROR		0x01
-#define	SOCK_TIMEOUT		0x02
-#define SOCK_SOCKINVALID	0x03
+#define	SOCK_TIMEOUT		0x01
+#define SOCK_SOCKINVALID	0x02
 
 class CMySocket  
 {
@@ -50,6 +49,7 @@ public:
 	BOOL Close(void);
 	DWORD GetLastError(void);
 	CString GetLastErrorStr(void);
+	static CString GetErrorString(DWORD dwError);
 
 	BOOL GetLocalAddr(DWORD *pIP, WORD *pPort);
 	BOOL GetPeerAddr(DWORD *pIP, WORD *pPort);

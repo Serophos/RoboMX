@@ -109,6 +109,10 @@ SOURCE=.\ChildFrm.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\Clipboard.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\ConnectionDlg.cpp
 # End Source File
 # Begin Source File
@@ -165,6 +169,14 @@ SOURCE=.\RichEditExCtrl.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\ServerDoc.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\ServerView.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\SplitterControl.cpp
 # End Source File
 # Begin Source File
@@ -191,6 +203,10 @@ SOURCE=.\ChatClient.h
 # Begin Source File
 
 SOURCE=.\ChildFrm.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\Clipboard.h
 # End Source File
 # Begin Source File
 
@@ -254,6 +270,14 @@ SOURCE=.\RichEditExCtrl.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\ServerDoc.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\ServerView.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\SplitterControl.h
 # End Source File
 # Begin Source File
@@ -279,6 +303,10 @@ SOURCE=.\res\bmp00001.bmp
 # Begin Source File
 
 SOURCE=.\res\channel.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\idr_serv.ico
 # End Source File
 # Begin Source File
 

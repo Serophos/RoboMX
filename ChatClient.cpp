@@ -117,125 +117,8 @@ BOOL CChatClient::Connect()
 {
 
 	m_eClose.ResetEvent();
-	char buffer[1024] = {'\0'};
+	//char buffer[1024] = {'\0'};
 	
-	if(!m_mSocket.Connect(m_strRoomIP, m_wRoomTCPPort, 5)){
-
-		CString strError;
-		strError.Format("Robo-Panic: Could not Connect to %s. %s", m_strRoomIP, m_mSocket.GetLastErrorStr());
-		WriteMessage(strError, RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-	// recv protocoll version
-	//recv(m_sSocket, (char*)&buffer, 1, 0);
-	m_mSocket.Recv(buffer, 1, 5);
-	
-	if(buffer[0] != 0x31){
-		
-		WriteMessage("Robo-Panic: Error nogotiating [a] :-(",  RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-
-
-	CreateCryptKeyID(0x57, (BYTE *)buffer);
-
-	// Send UP Key Block
-	if(m_mSocket.Send(buffer, 16, 5) != 16){
-		
-		WriteMessage("Robo-Panic: Error nogotiating [b] :-(",  RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-
-	// Recv DW Key Block
-	if(m_mSocket.Recv(buffer, 16, 50) != 16){
-		
-		WriteMessage("Robo-Panic: Error nogotiating [c] :-(",  RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-
-	// Check Cryptkey
-	if(GetCryptKeyID((BYTE *)buffer) != 0x58){
-	
-		// this was not crypt key from Chatserver :-(
-		WriteMessage("Robo-Panic: Error nogotiating [d] :-(",  RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-
-	// Get the keys
-	GetCryptKey((BYTE *)buffer, &m_dwUPKey, &m_dwDWKey);
-
-	//Login-Request: (Client)
-	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
-
-	// Prepare login buffer...
-	ZeroMemory(buffer, sizeof(buffer));
-	
-	int nLen = 4;
-	lstrcpy(buffer+nLen, m_strRoom);
-	nLen+=m_strRoom.GetLength()+1;
-	memcpy(buffer+nLen, &m_wLineType, 2);
-	nLen+=2;
-	memcpy(buffer+nLen, &m_dwClientIP, 4);
-	nLen+=4;
-	//*(WORD*)(buffer+nLen++) = 127;
-	//*(WORD*)(buffer+nLen++) = 0;
-	//*(WORD*)(buffer+nLen++) = 0;
-	//*(WORD*)(buffer+nLen++) = 1;
-	memcpy(buffer+nLen, &m_wClientUDPPort, 2);
-	nLen+=2;
-	memcpy(buffer+nLen, &m_dwFiles, 4);
-	nLen+=4;
-	lstrcpy(buffer+nLen, m_strUser);
-	nLen+=m_strUser.GetLength()+1;
-	*(WORD*)buffer = MXCHAT_LOGIN;
-	*(WORD*)(buffer+2) = nLen-4;
-
-	m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, m_dwUPKey);
-
-	if(m_mSocket.Send(buffer, nLen, 5) != nLen){
-
-		CString strError;
-		strError.Format("Robo-Panic: Could not Connect to %s. %s", m_mSocket.GetLastErrorStr());
-		WriteMessage(strError, RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-
-	ZeroMemory(buffer, sizeof(buffer));
-	if(m_mSocket.Recv(buffer, 5, 0) != 5){
-
-		CString strError;
-		strError.Format("Robo-Panic: [e] %s", m_mSocket.GetLastErrorStr());
-		WriteMessage(strError, RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-	
-	m_dwDWKey = DecryptMXTCP((BYTE *)buffer, 5, m_dwDWKey);
-
-	if((*(WORD*)buffer) != MXCHAT_LOGINGRANTED){
-
-		WriteMessage("Login failed.", RGB(150,0,0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}
-	m_wNumUsers = *(WORD*)(buffer+2);
-	
-	/*if(m_mSocket.Recv(buffer, 1, 0) != 1){
-
-		CString strError;
-		strError.Format("Robo-Panic: [f] %s", m_mSocket.GetLastErrorStr());
-		WriteMessage(strError, RGB(150, 0, 0));
-		m_bListen  = FALSE;
-		return FALSE;
-	}*/
-
-	m_bListen = TRUE;
 
 	m_pThread = AfxBeginThread(RecvProc, (PVOID)this, THREAD_PRIORITY_NORMAL);
 	return TRUE;
@@ -257,6 +140,124 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	int nValue  = 0, nSize = sizeof(int);
 	int nWait  = 15;
 	WORD wType = 0;
+
+	if(!pClient->m_mSocket.Connect(pClient->m_strRoomIP, pClient->m_wRoomTCPPort, 5)){
+
+		CString strError;
+		strError.Format("Robo-Panic: Could not Connect to %s. %s", pClient->m_strRoomIP, pClient->m_mSocket.GetLastErrorStr());
+		pClient->WriteMessage(strError, RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+	// recv protocoll version
+	//recv(m_sSocket, (char*)&buffer, 1, 0);
+	pClient->WriteMessage("Starting handshake", RGB(254, 128, 64));
+	pClient->m_mSocket.Recv(buffer, 1, 5);
+	
+	if(buffer[0] != 0x31){
+		
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. Login failed.",  RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+
+
+	CreateCryptKeyID(0x57, (BYTE *)buffer);
+
+	// Send UP Key Block
+	if(pClient->m_mSocket.Send(buffer, 16, 5) != 16){
+		
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. Send Keyblock failed.",  RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+
+	// Recv DW Key Block
+	if(pClient->m_mSocket.Recv(buffer, 16, 50) != 16){
+		
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. Recieve Keyblock failed.",  RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+
+	// Check Cryptkey
+	if(GetCryptKeyID((BYTE *)buffer) != 0x58){
+	
+		// this was not crypt key from Chatserver :-(
+		pClient->WriteMessage("Robo-Panic: Error nogotiating. ID missmatch.",  RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+
+	// Get the keys
+	GetCryptKey((BYTE *)buffer, &pClient->m_dwUPKey, &pClient->m_dwDWKey);
+
+	//Login-Request: (Client)
+	//0x0064][00:1][RoomName:N][LineType:2][Room-IP-Address:4][UDP-Port:2][SharedFiles:4][Username:N][00:1]
+
+	// Prepare login buffer...
+	ZeroMemory(buffer, sizeof(buffer));
+	
+	nLen = 4;
+	lstrcpy(buffer+nLen, pClient->m_strRoom);
+	nLen+=pClient->m_strRoom.GetLength()+1;
+	memcpy(buffer+nLen, &pClient->m_wLineType, 2);
+	nLen+=2;
+	memcpy(buffer+nLen, &pClient->m_dwClientIP, 4);
+	nLen+=4;
+	memcpy(buffer+nLen, &pClient->m_wClientUDPPort, 2);
+	nLen+=2;
+	memcpy(buffer+nLen, &pClient->m_dwFiles, 4);
+	nLen+=4;
+	lstrcpy(buffer+nLen, pClient->m_strUser);
+	nLen+=pClient->m_strUser.GetLength()+1;
+	*(WORD*)buffer = MXCHAT_LOGIN;
+	*(WORD*)(buffer+2) = nLen-4;
+
+	pClient->m_dwUPKey = EncryptMXTCP((BYTE*)buffer, nLen, pClient->m_dwUPKey);
+
+	if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
+
+		CString strError;
+		strError.Format("Robo-Panic: Sending login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
+		pClient->WriteMessage(strError, RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+
+	ZeroMemory(buffer, sizeof(buffer));
+	if(pClient->m_mSocket.Recv(buffer, 5, 0) != 5){
+
+		CString strError;
+		strError.Format("Robo-Panic: Handshake failed. %s", pClient->m_mSocket.GetLastErrorStr());
+		pClient->WriteMessage(strError, RGB(150, 0, 0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+	
+	pClient->m_dwDWKey = DecryptMXTCP((BYTE *)buffer, 5, pClient->m_dwDWKey);
+
+	if((*(WORD*)buffer) != MXCHAT_LOGINGRANTED){
+
+		pClient->WriteMessage("Login rejected.", RGB(150,0,0));
+		pClient->m_bListen  = FALSE;
+		pClient->m_eClose.SetEvent();
+		return FALSE;
+	}
+	pClient->m_wNumUsers = *(WORD*)(buffer+2);
+	pClient->WriteMessage("Login granted.", RGB(0, 120, 0));
+	
+	pClient->m_bListen = TRUE;
+	
+
+	// main recv loop
 	while(pClient->m_bListen) {
 
 
@@ -266,7 +267,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			if((pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT) && pClient->m_bListen){
 
 				CString strError;
-				strError.Format("Robo-Panic [g]: %s '(", pClient->m_mSocket.GetLastErrorStr());
+				strError.Format("Robo-Panic [a]: %s '(", pClient->m_mSocket.GetLastErrorStr());
 				pClient->WriteMessage(strError, RGB(150, 0, 0));
 				pClient->m_bListen  = FALSE;
 				break;
@@ -306,7 +307,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			if(pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT){
 
 				CString strError;
-				strError.Format("Robo-Panic [h]: %s :'(", pClient->m_mSocket.GetLastErrorStr());
+				strError.Format("Robo-Panic [b]: %s :'(", pClient->m_mSocket.GetLastErrorStr());
 				pClient->WriteMessage(strError, RGB(150, 0, 0));
 				pClient->m_bListen  = FALSE;
 				break;

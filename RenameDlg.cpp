@@ -64,7 +64,18 @@ END_MESSAGE_MAP()
 
 void CRenameDlg::OnOK() 
 {
-	// TODO: Add extra validation here
-	
+
+	if(!UpdateData(TRUE)) return;
+
+	if(m_strName.IsEmpty()){
+
+		AfxMessageBox("Username must not be emtpy!", MB_ICONINFORMATION);
+		return;
+	}
+	if((m_strName.Find(" ") >= 0) || (m_strName.Find("\\rtf") >= 0)){
+
+		AfxMessageBox("Username contains illegal characters!", MB_ICONINFORMATION);
+		return;
+	}
 	CDialog::OnOK();
 }

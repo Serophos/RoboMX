@@ -193,13 +193,6 @@ BEGIN
             MENUITEM "ASCII Art Designer",          ID_CHATROOM_ASCIIARTDESIGN
 
         END
-        POPUP "&Away Control"
-        BEGIN
-            MENUITEM "Set Back",                    ID_CHATROOM_AWAYCONTROL_SETBACK
-
-            MENUITEM "Set Silent Back",             ID_CHATROOM_AWAYCONTROL_SETSILENTBACK
-
-        END
         MENUITEM SEPARATOR
         MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
         MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
@@ -369,13 +362,7 @@ BEGIN
             MENUITEM "ASCII Art Designer",          ID_CHATROOM_ASCIIARTDESIGN
 
         END
-        POPUP "&Away Control"
-        BEGIN
-            MENUITEM "Set Back",                    ID_CHATROOM_AWAYCONTROL_SETBACK
-
-            MENUITEM "Set Silent Back",             ID_CHATROOM_AWAYCONTROL_SETSILENTBACK
-
-        END
+        MENUITEM "&Away Control",               32859
         MENUITEM SEPARATOR
         MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
         MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
@@ -510,6 +497,15 @@ BEGIN
             MENUITEM "100&%",                       ID_TRANSPARENCY_100
         END
         MENUITEM "&Close",                      ID_CONTEXTMENU_CLOSE
+    END
+END
+
+IDR_BACK MENU 
+BEGIN
+    POPUP "BACK"
+    BEGIN
+        MENUITEM "Set &Back",                   ID_BACK_SETBACK
+        MENUITEM "Set &Silent Back",            ID_BACK_SETSI8LENTBACK
     END
 END
 
@@ -674,12 +670,12 @@ BEGIN
     CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,100,47,77,10
     CONTROL         "Maximize &Clientwindows",IDC_MDIMAXI,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,63,93,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,93,10
     CONTROL         "Use &Keyword Higlightning for Userlist too",
                     IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
-                    74,167,10
+                    90,167,10
     CONTROL         "Auto&load Channellist",IDC_LISTCHANNEL,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,85,162,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,80,162,10
     GROUPBOX        "Auto &Greet Channels",IDC_STATIC,189,1,171,155
     EDITTEXT        IDC_CHANNELNAME,194,14,103,14,ES_AUTOHSCROLL
     PUSHBUTTON      "&Add",IDC_ADDCHANNEL,303,14,50,14
@@ -706,6 +702,8 @@ BEGIN
     PUSHBUTTON      "&Remove",IDC_REMOVECHANNEL2,304,115,50,16
     LISTBOX         IDC_WELCOMES,194,112,103,40,LBS_SORT | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Enable Command-Scroller",IDC_SCROLLER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,69,165,10
 END
 
 IDD_COLORS DIALOGEX 0, 0, 363, 242
@@ -1102,7 +1100,7 @@ BEGIN
         TOPMARGIN, 1
         BOTTOMMARGIN, 255
         HORZGUIDE, 63
-        HORZGUIDE, 75
+        HORZGUIDE, 73
         HORZGUIDE, 85
         HORZGUIDE, 95
         HORZGUIDE, 105

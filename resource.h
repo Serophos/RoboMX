@@ -43,6 +43,7 @@
 #define IDB_TOOLBAR256                  176
 #define IDR_SYSTRAY                     177
 #define IDB_USERMODE                    180
+#define IDR_BACK                        181
 #define IDC_CONNECT                     1000
 #define IDC_ROOM                        1001
 #define IDC_STATIC_ROOM                 1002
@@ -183,6 +184,7 @@
 #define IDC_MDIMAXI                     1127
 #define IDC_LISTCHANNEL                 1128
 #define IDC_OPMSG                       1129
+#define IDC_SCROLLER                    1130
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -255,7 +257,6 @@
 #define IDC_STATIC_TIME                 5100
 #define IDC_DOCHI                       5101
 #define IDC_STATIC_DOCHI                5102
-#define IDC_STATIC_TIME2                5103
 #define IDC_STATIC_OPMSG                5103
 #define IDC_COLOR_NAME                  5104
 #define IDC_STATIC_COLOR_NAME_PREV      5105
@@ -361,15 +362,18 @@
 #define ID_TRANSPARENCY_90              32854
 #define ID_TRANSPARENCY_100             32855
 #define ID_CONTEXTMENU_CLOSE            32856
+#define ID_BACK_SETBACK                 32857
+#define ID_BACK_SETSI8LENTBACK          32858
+#define IDM_AWAY                        32859
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        181
-#define _APS_NEXT_COMMAND_VALUE         32857
-#define _APS_NEXT_CONTROL_VALUE         1130
+#define _APS_NEXT_RESOURCE_VALUE        182
+#define _APS_NEXT_COMMAND_VALUE         32860
+#define _APS_NEXT_CONTROL_VALUE         1131
 #define _APS_NEXT_SYMED_VALUE           32920
 #endif
 #endif

@@ -18,6 +18,11 @@
 #define IDR_USER                        147
 #define IDD_SETTINGS                    148
 #define IDR_SERVER                      149
+#define IDR_FULLSCREEN                  150
+#define IDR_CHAT                        152
+#define IDB_TOOLBAR256                  153
+#define IDB_TOOLBAR256_DEACT            154
+#define IDB_MENU_BUTTON                 155
 #define IDC_CONNECT                     1000
 #define IDC_ROOM                        1001
 #define IDC_STATIC_ROOM                 1002
@@ -50,6 +55,7 @@
 #define IDC_STATIC_ROOMS                1034
 #define IDC_STATIC_USERSETUP            1035
 #define IDC_USENODE                     1036
+#define IDC_RICHEDIT2                   1037
 #define ID_RENAME                       32771
 #define ID_EXIT                         32773
 #define ID_METIS_START                  32774
@@ -70,18 +76,39 @@
 #define ID_USERLIST_UNBAN               32789
 #define ID_USERLIST_PRINTUSERSTAT       32790
 #define ID_USERLIST_PRINTIP             32791
-#define IDR_START_NODESERVER            32792
-#define ID_USERLIST_READUSERMESSAGE     32793
+#define ID_USERLIST_IGNORE              32792
+#define ID_USERLIST_UNIGNORE            32793
 #define ID_USERLIST_CUSTOMIZETHISMENU   32794
+#define ID_USERLIST_READUSERMESSAGE     32795
+#define ID_CHATROOM_SELECTALL           32796
+#define ID_CHATROOM_COPY                32797
+#define ID_CHATROOM_SEARCHONGOOGLE      32800
+#define ID_CHATROOM_QUOTE               32801
+#define ID_CHATROOM_CLEARSCREEN         32802
+#define ID_CHATROOM_COPYROOMNAME        32803
+#define ID_NEXT                         32804
+#define ID_PREV                         32805
+#define ID_RECONNECT                    32806
+#define IDR_START_NODESERVER            32807
+#define ID_VIEW_FULL_SCREEN             32808
+#define ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG 32809
+#define ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME 32810
+#define ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO 32811
+#define ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG 32812
+#define ID_CHATROOM_TEXTTRICKS_BUBBLES  32814
+#define ID_CHATROOM_TEXTTRICKS_BOX      32815
+#define ID_CHATROOM_TEXTTRICKS_HACKER   32816
+#define ID_CHATROOM_AWAYCONTROL_TEST    32817
+#define ID_VIEW_CHANNELBAR              32818
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         32795
-#define _APS_NEXT_CONTROL_VALUE         1037
+#define _APS_NEXT_RESOURCE_VALUE        156
+#define _APS_NEXT_COMMAND_VALUE         32819
+#define _APS_NEXT_CONTROL_VALUE         1038
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

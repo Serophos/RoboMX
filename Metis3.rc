@@ -78,6 +78,10 @@ IDR_SERVER              ICON    DISCARDABLE     "res\\idr_serv.ico"
 
 IDB_BG                  BITMAP  DISCARDABLE     "res\\bg.bmp"
 IDR_MAINFRAME           BITMAP  MOVEABLE PURE   "res\\channel.bmp"
+IDR_FULLSCREEN          BITMAP  DISCARDABLE     "res\\toolbar1.bmp"
+IDB_TOOLBAR256          BITMAP  DISCARDABLE     "res\\Toolbar_256.bmp"
+IDB_TOOLBAR256_DEACT    BITMAP  DISCARDABLE     "res\\toolbar2.bmp"
+IDB_MENU_BUTTON         BITMAP  DISCARDABLE     "res\\bitmap1.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -86,19 +90,22 @@ IDR_MAINFRAME           BITMAP  MOVEABLE PURE   "res\\channel.bmp"
 
 IDR_MAINFRAME TOOLBAR DISCARDABLE  16, 16
 BEGIN
-    BUTTON      IDR_START_NODESERVER
-    SEPARATOR
     BUTTON      ID_MYFILE_NEW
+    BUTTON      ID_RECONNECT
     BUTTON      ID_FILE_CLOSE
     SEPARATOR
     BUTTON      ID_CHANNEL_CHANNELLIST
     SEPARATOR
     BUTTON      ID_RENAME
     SEPARATOR
-    BUTTON      ID_METIS_START
-    BUTTON      ID_METIS_STOP
+    BUTTON      AFX_IDS_SCNEXTWINDOW
     SEPARATOR
     BUTTON      ID_APP_ABOUT
+END
+
+IDR_FULLSCREEN TOOLBAR DISCARDABLE  16, 15
+BEGIN
+    BUTTON      ID_VIEW_FULL_SCREEN
 END
 
 
@@ -115,15 +122,15 @@ BEGIN
         MENUITEM "&Recent Channels",            65535
         MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
         MENUITEM SEPARATOR
-        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
-        MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
         MENUITEM SEPARATOR
-        MENUITEM "Recent File",                 ID_FILE_MRU_FILE1, GRAYED
+        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER, GRAYED
+        MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
     POPUP "&View"
     BEGIN
+        MENUITEM "&Channelbar",                 ID_VIEW_CHANNELBAR
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
@@ -142,27 +149,81 @@ BEGIN
         MENUITEM "&Enter New Channel\tCtrl+N",  ID_MYFILE_NEW
         MENUITEM "&Close this Channel",         ID_FILE_CLOSE
         MENUITEM SEPARATOR
-        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
-        MENUITEM SEPARATOR
         MENUITEM "&Channellist\tCtrl+L",        ID_CHANNEL_CHANNELLIST
+        MENUITEM SEPARATOR
+        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
         MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
-    POPUP "&Metis"
+    POPUP "&Chat"
     BEGIN
-        MENUITEM "&Start",                      ID_METIS_START
-        MENUITEM "&Stop",                       ID_METIS_STOP
+        MENUITEM "&Select All",                 ID_CHATROOM_SELECTALL
+        MENUITEM "&Copy",                       ID_CHATROOM_COPY
         MENUITEM SEPARATOR
-        POPUP "Edit"
+        POPUP "&Display in Channel"
         BEGIN
-            MENUITEM "Filelist...",                 ID_METIS_EDIT_FILELIST
+            MENUITEM "Winamp song",                 ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG
+
+            MENUITEM "System Uptime",               ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME
+
+            MENUITEM "System Info",                 ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO
+
+            MENUITEM "Average Lag",                 ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG
+
         END
-        MENUITEM "Reload Configuration",        ID_METIS_RELOADCONFIGURATION
+        POPUP "&Text Tricks"
+        BEGIN
+            MENUITEM "Bubbles",                     ID_CHATROOM_TEXTTRICKS_BUBBLES
+
+            MENUITEM "Box",                         ID_CHATROOM_TEXTTRICKS_BOX
+
+            MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+
+        END
+        POPUP "&Away Control"
+        BEGIN
+            MENUITEM "test",                        ID_CHATROOM_AWAYCONTROL_TEST
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
+        MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
+        MENUITEM SEPARATOR
+        MENUITEM "Clear &Screen",               ID_CHATROOM_CLEARSCREEN
+        MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
+    END
+    POPUP "&User"
+    BEGIN
+        MENUITEM "&Send Message",               ID_USERLIST_SENDMESSAGE
+        MENUITEM SEPARATOR
+        MENUITEM "&Ignore",                     ID_USERLIST_IGNORE
+        MENUITEM "&Unignore",                   ID_USERLIST_UNIGNORE
+        MENUITEM SEPARATOR
+        MENUITEM "Copy &Username",              ID_USERLIST_COPYUSERNAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Kick",                       ID_USERLIST_KICK
+        MENUITEM "&Ban",                        ID_USERLIST_BAN
+        MENUITEM "Kick-Ba&n",                   ID_USERLIST_KICKBAN
+        MENUITEM "&Unban",                      ID_USERLIST_UNBAN
+        MENUITEM "Redirect",                    ID_USERLIST_REDIRECT
+        MENUITEM SEPARATOR
+        MENUITEM "&Add Admin",                  ID_USERLIST_ADDADMIN
+        MENUITEM "&Remove Admin",               ID_USERLIST_REMOVEADMIN
+        MENUITEM SEPARATOR
+        MENUITEM "Print User&stat",             ID_USERLIST_PRINTUSERSTAT
+        MENUITEM "Print &IP",                   ID_USERLIST_PRINTIP
+        MENUITEM "Read Usermessage",            ID_USERLIST_READUSERMESSAGE
+        MENUITEM SEPARATOR
+        MENUITEM "Customize this menu",         ID_USERLIST_CUSTOMIZETHISMENU
+
     END
     POPUP "&View"
     BEGIN
+        MENUITEM "Full Screen",                 ID_VIEW_FULL_SCREEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Channelbar",                 ID_VIEW_CHANNELBAR
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
@@ -170,6 +231,8 @@ BEGIN
     END
     POPUP "&Window"
     BEGIN
+        MENUITEM "&Next",                       AFX_IDS_SCNEXTWINDOW
+        MENUITEM SEPARATOR
         MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
         MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
         MENUITEM "&Arrange",                    ID_WINDOW_ARRANGE
@@ -187,14 +250,17 @@ BEGIN
         MENUITEM "Connect &New Channel\tCtrl+N", ID_MYFILE_NEW
         MENUITEM "Channel&list\tCtrl+L",        ID_CHANNEL_CHANNELLIST
         MENUITEM SEPARATOR
-        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
-        MENUITEM SEPARATOR
         MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM SEPARATOR
+        MENUITEM "&Start Nodeserver",           IDR_START_NODESERVER
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
     POPUP "&View"
     BEGIN
+        MENUITEM "&Full Screen",                ID_VIEW_FULL_SCREEN
+        MENUITEM SEPARATOR
+        MENUITEM "&Channelbar",                 ID_VIEW_CHANNELBAR
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
@@ -202,6 +268,8 @@ BEGIN
     END
     POPUP "&Window"
     BEGIN
+        MENUITEM "&Next",                       AFX_IDS_SCNEXTWINDOW
+        MENUITEM SEPARATOR
         MENUITEM "&Cascade",                    ID_WINDOW_CASCADE
         MENUITEM "&Tile",                       ID_WINDOW_TILE_HORZ
         MENUITEM "&Arrange",                    ID_WINDOW_ARRANGE
@@ -226,6 +294,9 @@ BEGIN
     BEGIN
         MENUITEM "&Send Message",               ID_USERLIST_SENDMESSAGE
         MENUITEM SEPARATOR
+        MENUITEM "&Ignore",                     ID_USERLIST_IGNORE
+        MENUITEM "&Unignore",                   ID_USERLIST_UNIGNORE
+        MENUITEM SEPARATOR
         MENUITEM "Copy &Username",              ID_USERLIST_COPYUSERNAME
         MENUITEM SEPARATOR
         MENUITEM "&Kick",                       ID_USERLIST_KICK
@@ -246,6 +317,49 @@ BEGIN
     END
 END
 
+IDR_CHAT MENU DISCARDABLE 
+BEGIN
+    POPUP "Chatroom"
+    BEGIN
+        MENUITEM "&Select All",                 ID_CHATROOM_SELECTALL
+        MENUITEM "&Copy",                       ID_CHATROOM_COPY
+        MENUITEM SEPARATOR
+        POPUP "&Display in Channel"
+        BEGIN
+            MENUITEM "Winamp song",                 ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG
+
+            MENUITEM "System Uptime",               ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME
+
+            MENUITEM "System Info",                 ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO
+
+            MENUITEM "Average Lag",                 ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG
+
+        END
+        POPUP "&Text Tricks"
+        BEGIN
+            MENUITEM "Bubbles",                     ID_CHATROOM_TEXTTRICKS_BUBBLES
+
+            MENUITEM "Box",                         ID_CHATROOM_TEXTTRICKS_BOX
+
+            MENUITEM "Hacker",                      ID_CHATROOM_TEXTTRICKS_HACKER
+
+        END
+        POPUP "&Away Control"
+        BEGIN
+            MENUITEM "test",                        ID_CHATROOM_AWAYCONTROL_TEST
+
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Search on &Google",           ID_CHATROOM_SEARCHONGOOGLE
+        MENUITEM "&Quote",                      ID_CHATROOM_QUOTE
+        MENUITEM SEPARATOR
+        MENUITEM "Clear &Screen",               ID_CHATROOM_CLEARSCREEN
+        MENUITEM SEPARATOR
+        MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
+        MENUITEM SEPARATOR
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -258,6 +372,8 @@ BEGIN
     "N",            ID_MYFILE_NEW,          VIRTKEY, CONTROL, NOINVERT
     VK_F6,          ID_NEXT_PANE,           VIRTKEY, NOINVERT
     VK_F6,          ID_PREV_PANE,           VIRTKEY, SHIFT, NOINVERT
+    VK_F8,          ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, VIRTKEY, 
+                                                    NOINVERT
 END
 
 
@@ -304,16 +420,16 @@ FONT 8, "MS Sans Serif"
 BEGIN
     EDITTEXT        IDC_INPUT,1,219,403,14,ES_AUTOHSCROLL
     CONTROL         "",IDC_STATIC_CHAT,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,57,323,160
+                    WS_VISIBLE,1,57,293,160
     CONTROL         "",IDC_STATIC_SYSOUT,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,2,323,52
+                    WS_VISIBLE,1,2,293,52
     CONTROL         "List1",IDC_USERLIST,"SysListView32",LVS_REPORT | 
                     LVS_SINGLESEL | LVS_SORTASCENDING | WS_BORDER | 
-                    WS_TABSTOP,327,2,130,215
+                    WS_TABSTOP,296,2,161,215
     CONTROL         "",IDC_SPLITTER_1,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,324,2,3,215
+                    WS_VISIBLE,294,2,2,215
     CONTROL         "",IDC_SPLITTER_2,"Static",SS_BLACKFRAME | NOT 
-                    WS_VISIBLE,1,54,323,3
+                    WS_VISIBLE,1,54,293,3
     PUSHBUTTON      "&Exit",IDC_LEAVE,407,219,50,14,0,WS_EX_STATICEDGE
 END
 
@@ -339,8 +455,8 @@ BEGIN
                     WS_TABSTOP
     GROUPBOX        "User Info",IDC_STATIC_USERSETUP,7,7,325,82
     CONTROL         "Use Node-Server for room connection (enables you to recieve/send PMs)",
-                    IDC_USENODE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,12,72,
-                    314,10
+                    IDC_USENODE,"Button",BS_AUTOCHECKBOX | WS_DISABLED | 
+                    WS_TABSTOP,12,72,314,10
 END
 
 IDD_RENAME DIALOG DISCARDABLE  0, 0, 254, 92
@@ -451,8 +567,8 @@ BEGIN
         RIGHTMARGIN, 457
         VERTGUIDE, 70
         VERTGUIDE, 76
-        VERTGUIDE, 324
-        VERTGUIDE, 327
+        VERTGUIDE, 294
+        VERTGUIDE, 296
         TOPMARGIN, 2
         BOTTOMMARGIN, 233
         HORZGUIDE, 54
@@ -673,8 +789,8 @@ BEGIN
     AFX_IDS_SCMOVE          "Change the window position"
     AFX_IDS_SCMINIMIZE      "Reduce the window to an icon"
     AFX_IDS_SCMAXIMIZE      "Enlarge the window to full size"
-    AFX_IDS_SCNEXTWINDOW    "Switch to the next document window"
-    AFX_IDS_SCPREVWINDOW    "Switch to the previous document window"
+    AFX_IDS_SCNEXTWINDOW    "Switch to the next document window\nNext"
+    AFX_IDS_SCPREVWINDOW    "Switch to the previous document window\nPrevious"
     AFX_IDS_SCCLOSE         "Close the active window and prompts to save the documents"
 END
 
@@ -710,9 +826,30 @@ BEGIN
     ID_USERLIST_UNBAN       "Unban the user (RCMS)"
     ID_USERLIST_PRINTUSERSTAT "Print user statistics (RCMS)"
     ID_USERLIST_PRINTIP     "Prints users IP Address (RCMS)"
-    IDR_START_NODESERVER    "Starts a Nodeserver. Enables you to send and recieve PMs in channels\nStart Nodeserver"
-    ID_USERLIST_READUSERMESSAGE "Read user message (RCMS)"
+    ID_USERLIST_IGNORE      "Ignore user"
+    ID_USERLIST_UNIGNORE    "Unignore user"
     ID_USERLIST_CUSTOMIZETHISMENU "Customize the RCMS commands for this room"
+    ID_USERLIST_READUSERMESSAGE "Read user message (RCMS)"
+    ID_CHATROOM_SELECTALL   "Select all text"
+    ID_CHATROOM_COPY        "Copy selected text to clipboard"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_CHATROOM_SEARCHONGOOGLE "Search selected text on Google.com"
+    ID_CHATROOM_QUOTE       "Quote selected text"
+    ID_CHATROOM_CLEARSCREEN "Clear all text"
+    ID_CHATROOM_COPYROOMNAME "Copy the roomname to clipboard"
+    ID_NEXT                 "Next Window\nNext Window"
+    ID_PREV                 "Switch to previous Window\nPrevious Window"
+    ID_RECONNECT            "Reconnect to channel\nReconnect to channel"
+    IDR_START_NODESERVER    "Starts a Nodeserver. Enables you to send and recieve PMs in channels\nStart Nodeserver"
+    ID_VIEW_FULL_SCREEN     "Toggles Full Screen mode on/off"
+END
+
+STRINGTABLE DISCARDABLE 
+BEGIN
+    ID_VIEW_CHANNELBAR      "Show or hide the channelbar\nToggle Channel Bar"
 END
 
 #endif    // English (U.S.) resources

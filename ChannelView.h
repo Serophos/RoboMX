@@ -53,6 +53,7 @@ public:
 
 	CListClient m_mxClient;
 	int m_nLastItem;
+	CStatusBar*	 m_pStatusBar;
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CChannelView)

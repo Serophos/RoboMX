@@ -104,6 +104,8 @@ void CChannelView::OnInitialUpdate()
 	
     GetParentFrame()->RecalcLayout();
     ResizeParentToFit(FALSE);
+	m_pStatusBar = (CStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
+	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_LIST );
 
 	m_lcList.InsertColumn(0, "Room", LVCFMT_LEFT, 300);
 	m_lcList.InsertColumn(1, "Users", LVCFMT_RIGHT, 50);
@@ -117,6 +119,8 @@ void CChannelView::OnInitialUpdate()
 
 void CChannelView::OnDestroy() 
 {
+
+	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.RemoveButton(this);
 
 	m_mxClient.Disconnect();
 	CFormView::OnDestroy();
@@ -257,6 +261,16 @@ void CChannelView::OnTimer(UINT nIDEvent)
 			GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(TRUE);
 			SetDlgItemText(IDC_STATIC_MESSAGES, "Finished.");
 			KillTimer(TIMER_LOAD);
+		}
+		if(m_pStatusBar){
+
+			if(((CMainFrame*)GetApp()->m_pMainWnd)->GetActiveFrame() == GetParentFrame()){
+				m_pStatusBar->SetPaneText(1, "Channel List");
+				CString strText;
+				strText.Format("%d channels", m_lcList.GetItemCount());
+				m_pStatusBar->SetPaneText(2, strText);
+				m_pStatusBar->SetPaneText(3, "");
+			}
 		}
 	}
 	CFormView::OnTimer(nIDEvent);

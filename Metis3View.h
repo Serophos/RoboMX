@@ -60,6 +60,9 @@ public:
 
 // Operations
 public:
+	static CString GetMySystemInfo();
+	void Input(CString strText);
+	void UpdateAverageLag(BOOL bStart = TRUE);
 	void LoadRCMSMenu();
 	void ReCalcLayout();
 	afx_msg LRESULT OnSystem(WPARAM wParam, LPARAM lParam);
@@ -71,6 +74,10 @@ public:
 	void RemoveUser(CString strUser);
 	void AddUser(CString strUsername, WORD wLine, DWORD dwFiles, CString strNodeIP, WORD wNodePort);
 	void WriteSystemMsg(CString strMsg, COLORREF crText = RGB(0, 150, 0));
+
+	static CString GetWinampSong();
+	static BOOL    IsVideoPlaying();
+	static CString GetUpTime();
 
 	CChatClient m_mxClient;
 	CArray<MX_USERINFO, MX_USERINFO> m_aUsers;
@@ -85,6 +92,7 @@ public:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 	virtual void OnInitialUpdate(); // called first time after construct
 	virtual BOOL OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+	virtual void OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint);
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -95,8 +103,12 @@ public:
 #endif
 
 protected:
+	CStatusBar*	 m_pStatusBar;
+
 	CStringArray m_aRCMSMenu;
 	CString		 m_strWd;
+	DWORD		 m_dwAvLag;
+	DWORD		 m_dwLastTic;
 // Generated message map functions
 protected:
 
@@ -109,7 +121,8 @@ protected:
 	afx_msg LRESULT OnJoin(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnPart(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnAddUser(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnRedirect(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnRenameMsg(WPARAM wParam, LPARAM lParam);
 
 	//{{AFX_MSG(CMetis3View)
 	afx_msg void OnRename();
@@ -118,6 +131,7 @@ protected:
 	afx_msg void OnDestroy();
 	afx_msg void OnLeave();
 	afx_msg void OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnRclickChat(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnUserlistSendmessage();
 	afx_msg void OnUserlistRemoveadmin();
 	afx_msg void OnUserlistRedirect();
@@ -131,6 +145,22 @@ protected:
 	afx_msg void OnUserlistAddadmin();
 	afx_msg void OnUserlistReadusermessage();
 	afx_msg void OnUserlistCustomizethismenu();
+	afx_msg void OnUserlistIgnore();
+	afx_msg void OnUserlistUnignore();
+	afx_msg void OnUpdateUserlistMenu(CCmdUI* pCmdUI);
+	afx_msg void OnReconnect();
+	afx_msg void OnUpdateReconnect(CCmdUI* pCmdUI);
+	afx_msg void OnUpdateWinampsongMenu(CCmdUI* pCmdUI);
+	afx_msg void OnChatroomSelectall();
+	afx_msg void OnChatroomSearchongoogle();
+	afx_msg void OnChatroomQuote();
+	afx_msg void OnChatroomCopy();
+	afx_msg void OnChatroomClearscreen();
+	afx_msg void OnChatroomCopyroomname();
+	afx_msg void OnDisplayWinampsong();
+	afx_msg void OnDisplaySystemuptime();
+	afx_msg void OnDisplaySysteminfo();
+	afx_msg void OnDisplayAveragelag();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

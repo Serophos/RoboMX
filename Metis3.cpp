@@ -22,13 +22,15 @@
 #include "Metis3.h"
 #include "commctrl.h"
 
-#include "ChannelDoc.h"
-#include "ChannelView.h"
 #include "ChildFrm.h"
 #include "MainFrm.h"
+//#include "RichEditExCtrl.h"
+#include "ChannelDoc.h"
+#include "ChannelView.h"
+#include "ServerDoc.h"
+#include "ServerView.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
-#include "RichEditExCtrl.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -160,9 +162,9 @@ BOOL CMetis3App::InitInstance()
 	CMultiDocTemplate* pServerTemplate;
 	pServerTemplate = new CMultiDocTemplate(
 		IDR_SERVER,
-		RUNTIME_CLASS(CMetis3Doc),
+		RUNTIME_CLASS(CServerDoc),
 		RUNTIME_CLASS(CChildFrame), // custom MDI child frame
-		RUNTIME_CLASS(CMetis3View));
+		RUNTIME_CLASS(CServerView));
 	AddDocTemplate(pServerTemplate);
 
 	// create main MDI Frame window

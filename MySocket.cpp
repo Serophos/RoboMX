@@ -37,13 +37,50 @@ CMySocket::CMySocket()
 	m_dwLastError = SOCK_NOERROR;
 }
 
-CMySocket::~CMySocket()
+CMySocket::CMySocket(SOCKET sSocket) :
+  m_sSocket(sSocket)
+{
+
+	m_dwLastError = SOCK_NOERROR;
+}
+
+CMySocket::CMySocket(int nProtocol, u_short uPort)
+{
+
+	sockaddr_in local;
+	
+	local.sin_family	  = AF_INET;
+	local.sin_addr.s_addr = INADDR_ANY;
+	local.sin_port        = htons(uPort);
+	
+	m_sSocket = socket(AF_INET, (nProtocol == IPPROTO_UDP ? SOCK_DGRAM : SOCK_STREAM), nProtocol);
+
+	if(m_sSocket == INVALID_SOCKET){
+
+		m_dwLastError = WSAGetLastError();
+		Close();
+	}
+	if(bind(m_sSocket, (sockaddr*)&local, sizeof(local)) != 0){
+
+		m_dwLastError = WSAGetLastError();
+		Close();
+	}
+	if(listen(m_sSocket, 10) != 0){
+
+		m_dwLastError = WSAGetLastError();
+		Close();
+	}
+
+	m_dwLastError = SOCK_NOERROR;
+}
+
+ CMySocket::~CMySocket()
 {
 
 	Close();
 }
 
-BOOL CMySocket::Connect(LPCTSTR lpszIP, WORD wPort, int nWait)
+BOOL CMySocket::Connect(LPCTSTR lpszIP, WORD wPort, int nWait, int nProtocol)
 {
 
 	DWORD dwIP = inet_addr(lpszIP);
@@ -58,7 +95,7 @@ BOOL CMySocket::Connect(LPCTSTR lpszIP, WORD wPort, int nWait)
 		}
 		else{
 			
-			return Connect(*((DWORD *)pHost->h_addr_list[0]), wPort, nWait);
+			return Connect(*((DWORD *)pHost->h_addr_list[0]), wPort, nWait, nProtocol);
 		}
 	}
 	else{
@@ -67,7 +104,7 @@ BOOL CMySocket::Connect(LPCTSTR lpszIP, WORD wPort, int nWait)
 	}
 }
 
-BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
+BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait, int nProtocol)
 {
 
 	// already connected?
@@ -77,7 +114,7 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
 		return FALSE;
 	}
 
-	m_sSocket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	m_sSocket = socket(PF_INET, SOCK_STREAM, nProtocol);
 	if(m_sSocket == INVALID_SOCKET){
 
 		m_dwLastError = WSAGetLastError();
@@ -147,13 +184,36 @@ BOOL CMySocket::Connect(DWORD dwIP, WORD wPort, int nWait)
 	nArg = 0;
 	if(ioctlsocket(m_sSocket, FIONBIO, &nArg) == SOCKET_ERROR){
 
-		Close();
 		m_dwLastError = WSAGetLastError();
+		Close();
 		return FALSE;		
 	}
 
 	m_dwLastError = SOCK_NOERROR;
 	return TRUE;
+}
+
+SOCKET CMySocket::Accept()
+{
+
+	if(m_sSocket == INVALID_SOCKET){
+
+		m_dwLastError = WSAGetLastError();
+		return INVALID_SOCKET;
+	}
+
+	sockaddr_in from;
+	int fromlen = sizeof(from);
+
+	SOCKET nSocket = accept(m_sSocket, (struct sockaddr*)&from, &fromlen);
+	if(nSocket = INVALID_SOCKET){
+
+		Close();
+		m_dwLastError = WSAGetLastError();
+		return INVALID_SOCKET;
+	}
+	
+	return nSocket;
 }
 
 int CMySocket::Recv(char *pBuff, int nLen, int nWait)
@@ -427,3 +487,4 @@ CString CMySocket::GetErrorString(DWORD dwError){
 	}
 	return strError;
 }
+

@@ -89,6 +89,7 @@ UINT UWM_JOIN		= ::RegisterWindowMessage("UWM_JOIN-229F871A-7B27-44C5-8879-AF881
 UINT UWM_PART		= ::RegisterWindowMessage("UWM_PART-229F871A-7B27-44C5-8879-AF881DE94891");
 UINT UWM_RENAME		= ::RegisterWindowMessage("UWM_RENAME-229F871A-7B27-44C5-8879-AF881DE94891");
 UINT UWM_ADDUSER    = ::RegisterWindowMessage("UWM_ADDUSER-229F871A-7B27-44C5-8879-AF881DE94891");
+UINT UWM_REDIRECT   = ::RegisterWindowMessage("UWM_REDIRECT-229F871A-7B27-44C5-8879-AF881DE94891");
 UINT UWM_UNKNOWN    = ::RegisterWindowMessage("UWM_UNKNOWN-229F871A-7B27-44C5-8879-AF881DE94891");
 UINT UWM_SYSTEM     = ::RegisterWindowMessage("UWM_SYSTEM-229F871A-7B27-44C5-8879-AF881DE94891");
 
@@ -521,6 +522,9 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		::SendMessage(m_pView->m_hWnd, UWM_ACTION, wLen, (LPARAM)cmd);
 		break;
 	case 0x00C8: // rcms garbage
+		break;
+	case 0x0190: // redirect
+		::PostMessage(m_pView->m_hWnd, UWM_REDIRECT, wLen, (LPARAM)cmd);
 		break;
 	default: // unknown
 		::SendMessage(m_pView->m_hWnd, UWM_UNKNOWN, MAKEWPARAM(wType, wLen), (LPARAM)cmd);

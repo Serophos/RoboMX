@@ -73,7 +73,8 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		// Scroll through RCMS commands UP (PAGE UP)
 		///////////////////////////////////////////////////////
-		if(pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_PRIOR){
+		if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_PRIOR) || 
+			(pMsg->message == WM_MOUSEWHEEL && ((short)HIWORD(pMsg->wParam)) > 0)){
 		
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){
@@ -86,7 +87,7 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 					SendMessage(WM_KEYDOWN, VK_END, 0);
 					return TRUE;
 				}
-				else if(dwIndex == 1){
+				else if((dwIndex == 1) || (dwIndex >= g_aRCMSCommandsNUM)){
 
 					SetWindowText("");
 				}
@@ -109,7 +110,8 @@ BOOL CMyEdit::PreTranslateMessage(MSG* pMsg)
 		///////////////////////////////////////////////////////
 		// RCMS Down (PAGE DOWN)
 		///////////////////////////////////////////////////////
-		else if(pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_NEXT){
+		else if((pMsg->message == WM_KEYDOWN && pMsg->wParam == VK_NEXT) || 
+			(pMsg->message == WM_MOUSEWHEEL && ((short)HIWORD(pMsg->wParam)) <= 0)){
 		
 			TCHAR szTempStr[1024];
 			if(SendMessage(WM_GETTEXT, 1024, (LPARAM)szTempStr)){

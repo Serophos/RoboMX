@@ -20,11 +20,14 @@
 #include "stdafx.h"
 #include "Metis3.h"
 
+#include "winamp.h"
+#include "MainFrm.h"
 #include "Metis3Doc.h"
 #include "Metis3View.h"
 #include "RenameDlg.h"
 #include <fstream.h>
 #include "Clipboard.h"
+#include "SystemInfo.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -35,6 +38,7 @@ static char THIS_FILE[] = __FILE__;
 
 #define TIMER_CONNECT 10334
 #define TIMER_PING    10035
+#define TIMER_UPDATE  10036
 const char* line_types[] = {"Unknown", "14.4K", "28.8K", "33.3K", "56K", 
                             "64K ISDN", "128K ISDN", "Cable", "DSL", "T1", "T3"};
 
@@ -51,8 +55,12 @@ extern UINT UWM_RENAME;
 extern UINT UWM_ADDUSER;
 extern UINT UWM_UNKNOWN;
 extern UINT UWM_SYSTEM;
+extern UINT UWM_REDIRECT;
 
 extern axtoi(char *hexStg, int nLen);
+CStringArray g_aIgnored;
+CSystemInfo  g_sSystem;
+
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3View
 
@@ -66,6 +74,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_LEAVE, OnLeave)
 	ON_NOTIFY(NM_RCLICK, IDC_USERLIST, OnRclickUserlist)
+	ON_NOTIFY(NM_RCLICK, IDC_CHAT, OnRclickChat)
 	ON_COMMAND(ID_USERLIST_SENDMESSAGE, OnUserlistSendmessage)
 	ON_COMMAND(ID_USERLIST_REMOVEADMIN, OnUserlistRemoveadmin)
 	ON_COMMAND(ID_USERLIST_REDIRECT, OnUserlistRedirect)
@@ -79,6 +88,22 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_COMMAND(ID_USERLIST_ADDADMIN, OnUserlistAddadmin)
 	ON_COMMAND(ID_USERLIST_READUSERMESSAGE, OnUserlistReadusermessage)
 	ON_COMMAND(ID_USERLIST_CUSTOMIZETHISMENU, OnUserlistCustomizethismenu)
+	ON_COMMAND(ID_USERLIST_IGNORE, OnUserlistIgnore)
+	ON_COMMAND(ID_USERLIST_UNIGNORE, OnUserlistUnignore)
+	ON_UPDATE_COMMAND_UI_RANGE(ID_USERLIST_SENDMESSAGE, ID_USERLIST_READUSERMESSAGE, OnUpdateUserlistMenu)
+	ON_COMMAND(ID_RECONNECT, OnReconnect)
+	ON_UPDATE_COMMAND_UI(ID_RECONNECT, OnUpdateReconnect)
+	ON_UPDATE_COMMAND_UI(ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, OnUpdateWinampsongMenu)
+	ON_COMMAND(ID_CHATROOM_SELECTALL, OnChatroomSelectall)
+	ON_COMMAND(ID_CHATROOM_SEARCHONGOOGLE, OnChatroomSearchongoogle)
+	ON_COMMAND(ID_CHATROOM_QUOTE, OnChatroomQuote)
+	ON_COMMAND(ID_CHATROOM_COPY, OnChatroomCopy)
+	ON_COMMAND(ID_CHATROOM_CLEARSCREEN, OnChatroomClearscreen)
+	ON_COMMAND(ID_CHATROOM_COPYROOMNAME, OnChatroomCopyroomname)
+	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, OnDisplayWinampsong)
+	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMUPTIME, OnDisplaySystemuptime)
+	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_SYSTEMINFO, OnDisplaySysteminfo)
+	ON_COMMAND(ID_CHATROOM_DISPLAYINCHANNEL_AVERAGELAG, OnDisplayAveragelag)
 	//}}AFX_MSG_MAP
 	ON_REGISTERED_MESSAGE(UWM_INPUT, OnInput)
 	ON_REGISTERED_MESSAGE(UWM_MESSAGE, OnMessage)
@@ -91,6 +116,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_REGISTERED_MESSAGE(UWM_ADDUSER, OnAddUser)
 	ON_REGISTERED_MESSAGE(UWM_UNKNOWN, OnUnknown)
 	ON_REGISTERED_MESSAGE(UWM_SYSTEM, OnSystem)
+	ON_REGISTERED_MESSAGE(UWM_REDIRECT, OnRedirect)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -103,7 +129,9 @@ CMetis3View::CMetis3View()
 	m_strInput = _T("");
 	//}}AFX_DATA_INIT
 	// TODO: add construction code here
-
+	m_pStatusBar = 0;
+	m_dwAvLag = 0;
+	m_dwLastTic = 0;
 }
 
 CMetis3View::~CMetis3View()
@@ -135,7 +163,8 @@ void CMetis3View::OnInitialUpdate()
 	CFormView::OnInitialUpdate();
     GetParentFrame()->RecalcLayout();
     ResizeParentToFit(FALSE);
-	//GetApp()->m_pView = this;
+	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_CHANNEL );
+	m_pStatusBar = (CStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	
 	LoadEmoticons();
 	LoadRCMSMenu();
@@ -173,6 +202,8 @@ void CMetis3View::OnInitialUpdate()
 					ES_AUTOVSCROLL | ES_LEFT | ES_WANTRETURN, rc, this, IDC_CHAT, NULL);
 
 
+	m_rChat.SendMessage(EM_AUTOURLDETECT, TRUE, 0);
+
 	m_fFont.CreateFont(15, 6, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, OUT_STRING_PRECIS, 
 		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, "Arial");
 	ListView_SetExtendedListViewStyle(m_lcUsers.m_hWnd, LVS_EX_FULLROWSELECT);
@@ -196,6 +227,8 @@ void CMetis3View::OnInitialUpdate()
 
 	m_mxClient.SetRoom(GetDocument()->m_strRoom);
 	WriteSystemMsg("Connecting. Stand by...", RGB(255,128,64));
+
+	OnUpdate(this, 0, NULL);
 	
 /*	CBitmap		bitmap;
 
@@ -213,18 +246,17 @@ void CMetis3View::OnInitialUpdate()
 BOOL CMetis3View::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult) 
 {
 
-	if (wParam == IDC_SPLITTER_1)
-	{	
+	if (wParam == IDC_SPLITTER_1){	
 
 		SPC_NMHDR* pHdr = (SPC_NMHDR*) lParam;
 		DoResize1(pHdr->delta);
 	}	
-	else if (wParam == IDC_SPLITTER_2)
-	{	
+	else if (wParam == IDC_SPLITTER_2){	
 
 		SPC_NMHDR* pHdr = (SPC_NMHDR*) lParam;
 		DoResize2(pHdr->delta);
 	}	
+
 	return CFormView::OnNotify(wParam, lParam, pResult);
 }
 
@@ -276,11 +308,15 @@ CMetis3Doc* CMetis3View::GetDocument() // non-debug version is inline
 
 void CMetis3View::OnDestroy() 
 {
+	
+	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.RemoveButton(this);
+	KillTimer(TIMER_UPDATE);
+	KillTimer(TIMER_PING);
+
 	CFormView::OnDestroy();
 	
 	m_mxClient.Disconnect();
 	DeleteEmoticons();
-	
 }
 
 void CMetis3View::OnTimer(UINT nIDEvent) 
@@ -295,10 +331,18 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 		}
 		KillTimer(TIMER_CONNECT);
 		SetTimer(TIMER_PING, 5*60*1000, 0);
+		SetTimer(TIMER_UPDATE, 1000, 0);
 	}
 	else if(nIDEvent == TIMER_PING){
 
 		m_mxClient.Ping();
+	}
+	else if(nIDEvent == TIMER_UPDATE){
+
+		if(((CMainFrame*)GetApp()->m_pMainWnd)->GetActiveFrame() == GetParentFrame()){
+
+			OnUpdate(this, 0, NULL);
+		}
 	}
 	CFormView::OnTimer(nIDEvent);
 }
@@ -618,6 +662,18 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 	strMsg =  (pMsg+nNameLen);
 
 	if(strMsg.IsEmpty() && strName.IsEmpty()) return 0;
+	
+	if(strName == GetDocument()->m_strName){
+
+		UpdateAverageLag(FALSE);
+	}
+	
+	for(int i = 0; i < g_aIgnored.GetSize(); i++){
+
+		if(strName.Find(g_aIgnored[i], 0) == 0)
+			return 1;
+	}
+
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
 	
@@ -649,6 +705,18 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 	strMsg =  (pMsg+nNameLen);
 
 	if(strMsg.IsEmpty() && strName.IsEmpty()) return 0;
+
+	if(strName == GetDocument()->m_strName){
+
+		UpdateAverageLag(FALSE);
+	}
+	
+	for(int i = 0; i < g_aIgnored.GetSize(); i++){
+
+		if(strName.Find(g_aIgnored[i], 0) == 0)
+			return 1;
+	}
+
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
 	
@@ -686,7 +754,12 @@ LRESULT CMetis3View::OnUnknown(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+void CMetis3View::Input(CString strText)
+{
 
+	m_eInput.SetWindowText(strText);
+	m_eInput.PostMessage(WM_KEYDOWN, 13, 256);
+}
 
 LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 {
@@ -696,7 +769,7 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 
 		m_strInput = m_strInput.Left(400);
 	}
-
+	
 	BOOL bAction = FALSE;
 
 	if(m_strInput.Find("{\\rtf", 0) >= 0){
@@ -721,6 +794,8 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 	}
 
 	m_mxClient.SendMessage(m_strInput, m_strInput.GetLength(), bAction);
+	UpdateAverageLag();
+
 	m_strInput = "";
 	UpdateData(FALSE);
 	return 1;
@@ -819,6 +894,40 @@ LRESULT CMetis3View::OnSystem(WPARAM wParam, LPARAM lParam)
 	return 1;
 }
 
+LRESULT CMetis3View::OnRedirect(WPARAM wParam, LPARAM lParam)
+{
+
+	CString strOut, strTarget;
+	
+	strTarget = (LPCTSTR)lParam;
+	strOut.Format("Redirecting to %s", strTarget);
+	WriteSystemMsg(strOut, RGB(255,128,64));
+
+	// 0100007F1A2B
+	if((strTarget.GetLength() - strTarget.ReverseFind('_') -1) != 12){
+
+		strOut.Format("%s does not appear to be a valid room name. Redirect aborted.", strTarget);
+		WriteSystemMsg(strOut, RGB(150, 0, 0));
+		if(m_mxClient.m_bListen){
+
+			m_mxClient.Disconnect();
+		}
+	}
+	else{
+
+		if(m_mxClient.m_bListen){
+
+			m_mxClient.Disconnect();
+		}
+		m_lcUsers.DeleteAllItems();
+		m_mxClient.SetRoom(strTarget);
+		GetDocument()->m_strRoom = strTarget;
+		GetDocument()->SetTitle(GetDocument()->m_strName + "@" + GetDocument()->m_strRoom);
+		m_mxClient.Connect();
+	}
+	return 1;
+}
+
 void CMetis3View::OnLeave() 
 {
 
@@ -838,8 +947,7 @@ void CMetis3View::ReCalcLayout()
 	CRect	rcParent;
 
 	GetClientRect(rcParent);
-	
-
+	ShowScrollBar(SB_BOTH , FALSE);
 	// Get Button Position
 	m_btExit.GetWindowRect(rcItem2);
 	ScreenToClient(rcItem2);
@@ -917,6 +1025,23 @@ void CMetis3View::OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult)
 											point.y,
 											AfxGetMainWnd());
 	}
+
+	*pResult = 0;
+}
+
+void CMetis3View::OnRclickChat(NMHDR* pNMHDR, LRESULT* pResult)
+{
+
+	CMenu mContextMenu;
+	mContextMenu.LoadMenu(IDR_CHAT);
+
+	POINT point;
+	GetCursorPos(&point);
+
+	mContextMenu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+											point.x,
+											point.y,
+											AfxGetMainWnd());
 
 	*pResult = 0;
 }
@@ -1070,7 +1195,7 @@ void CMetis3View::OnUserlistCustomizethismenu()
 
 	CStdioFile ini;
 	CString strBuffer;
-	m_aRCMSMenu.RemoveAll();
+	//m_aRCMSMenu.RemoveAll();
 
 	TRY{
 
@@ -1114,6 +1239,57 @@ void CMetis3View::OnUserlistCopyusername()
 		strCmd = m_lcUsers.GetItemText(n, 0);
 		CClipboard::SetText((LPSTR)(LPCSTR)strCmd);
 	}	
+}
+
+
+void CMetis3View::OnUserlistIgnore() 
+{
+	
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strUser;
+	if(n >= 0){
+
+		strUser = m_lcUsers.GetItemText(n, 0);
+		strUser = m_lcUsers.GetItemText(n, 0);
+		n = strUser.ReverseFind('_');
+		if(n > 0){
+
+			strUser = strUser.Left(n);
+		}
+		for(int i = 0; i < g_aIgnored.GetSize(); i++){
+
+			if(g_aIgnored[i] == strUser)
+				return;
+		}
+		g_aIgnored.Add(strUser);
+	}	
+}
+
+void CMetis3View::OnUserlistUnignore() 
+{
+
+	int n = m_lcUsers.GetNextItem(-1, LVNI_FOCUSED);
+	CString strUser;
+	if(n >= 0){
+
+		strUser = m_lcUsers.GetItemText(n, 0);
+		n = strUser.ReverseFind('_');
+		if(n > 0){
+
+			strUser = strUser.Left(n);
+		}
+		for(int i = 0; i < g_aIgnored.GetSize(); i++){
+
+			if(g_aIgnored[i] == strUser)
+				g_aIgnored.RemoveAt(i);
+		}
+	}	
+}
+
+void CMetis3View::OnUpdateUserlistMenu(CCmdUI* pCmdUI) 
+{
+
+	pCmdUI->Enable(m_lcUsers.GetNextItem(-1, LVNI_SELECTED) != -1);
 }
 
 void CMetis3View::LoadRCMSMenu()
@@ -1179,3 +1355,221 @@ void CMetis3View::LoadRCMSMenu()
 	}
 }
 
+
+void CMetis3View::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint) 
+{
+
+	if(m_pStatusBar){
+
+		CString strText;
+		m_pStatusBar->SetPaneText(1, GetDocument()->m_strRoomShort);
+		strText.Format("Average Lag: %u ms", m_dwAvLag);
+		m_pStatusBar->SetPaneText(2, strText);
+		strText.Format("%0d users", m_lcUsers.GetItemCount());
+		m_pStatusBar->SetPaneText(3, strText);
+	}
+}
+
+void CMetis3View::UpdateAverageLag(BOOL bStart)
+{
+
+	if(bStart){
+
+		m_dwLastTic = GetTickCount();
+	}
+	else if(m_dwLastTic != 0){
+
+
+		DWORD dwTime = GetTickCount() - m_dwLastTic;
+
+		m_dwAvLag = (m_dwAvLag + dwTime) / 2;
+		m_dwLastTic = 0;
+	}
+}
+
+
+void CMetis3View::OnReconnect() 
+{
+
+	if(m_mxClient.m_bListen){
+
+		m_mxClient.Disconnect();
+	}
+	WriteSystemMsg("Reconnecting. Stand by...", RGB(255, 128, 64));
+	m_lcUsers.DeleteAllItems();
+	m_mxClient.Connect();
+}
+
+void CMetis3View::OnUpdateReconnect(CCmdUI* pCmdUI) 
+{
+
+	pCmdUI->Enable(!m_mxClient.m_bListen);
+}
+
+CString CMetis3View::GetUpTime()
+{
+
+	CString strUp;
+	DWORD nMS = GetTickCount();
+	int nSec = nMS / 1000;
+	int nMin = nMS / 60000;
+	int nHour = nMS / 3600000;
+	strUp.Format("System Uptime %02d days %02d hours %02d minutes %02d seconds %03d milliseconds",
+		nHour/24, nHour%24, nMin - nHour*60, nSec - nMin*60, nMS-nSec*1000);
+
+	return strUp;
+}
+
+CString CMetis3View::GetWinampSong()
+{
+
+	CString strWinamp, strOut;
+	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+	if(hwndWinamp != NULL){
+
+		::SendMessage(hwndWinamp, WM_WA_IPC,0,IPC_UPDTITLE);
+		TCHAR *buff = new TCHAR[250];
+		::GetWindowText(hwndWinamp, buff, 250);
+		strWinamp = buff;
+		strWinamp = strWinamp.Mid(strWinamp.Find(" ", 0)+1, strWinamp.Find(" - Winamp") - strWinamp.Find(" ", 0)-1);
+		delete buff;
+		buff = NULL;
+	}
+	else{
+
+		strWinamp = "Winamp - Not active";
+	}
+
+	return strWinamp;
+}
+
+
+BOOL CMetis3View::IsVideoPlaying()
+{
+
+	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+	BOOL bReturn = FALSE;
+	switch(::SendMessage(hwndWinamp, WM_WA_IPC, 0, IPC_IS_PLAYING_VIDEO)){
+
+	case 0:
+	case 1:
+		bReturn = FALSE;
+		break;
+	default:
+		bReturn = TRUE;
+	}
+
+	return bReturn;
+
+}
+
+
+CString CMetis3View::GetMySystemInfo()
+{
+
+	CString strInfo;
+	strInfo.Format(
+				"%s build=%d «» CPUs %d Speed %d MHz «» %s %s %s",
+				g_sSystem.GetOSType(), g_sSystem.GetBuildNumber(),
+				g_sSystem.GetNumProcessors(), g_sSystem.GetCPUSpeed(),
+				g_sSystem.GetCPUIdentifier(), g_sSystem.GetCPUVendorIdentifier(), g_sSystem.GetCPUNameString()
+			);
+	
+	return strInfo;
+}
+
+
+void CMetis3View::OnDisplayWinampsong() 
+{
+
+	if(!m_mxClient.m_bListen) return;
+	
+	CString strMsg;
+	if(IsVideoPlaying()){
+
+		strMsg.Format("/me watches »%s«", GetWinampSong());
+	}
+	else{
+
+		strMsg.Format("/me listens to »%s«", GetWinampSong());
+	}
+	Input(strMsg);
+}
+
+void CMetis3View::OnDisplaySystemuptime() 
+{
+	if(!m_mxClient.m_bListen) return;
+	
+	Input(GetUpTime());
+}
+
+void CMetis3View::OnDisplaySysteminfo() 
+{
+	if(!m_mxClient.m_bListen) return;
+	
+	Input(GetMySystemInfo());
+}
+
+void CMetis3View::OnDisplayAveragelag() 
+{
+	if(!m_mxClient.m_bListen) return;
+	
+	CString strMsg;
+	strMsg.Format("Average Lag in channel is %d seconds and %03d milliseconds", m_dwAvLag / 1000, m_dwAvLag % 1000);
+	Input(strMsg);
+}
+
+void CMetis3View::OnUpdateWinampsongMenu(CCmdUI* pCmdUI) 
+{
+
+	HWND hwndWinamp = ::FindWindow("Winamp v1.x",NULL);
+	pCmdUI->Enable(hwndWinamp != NULL);	
+}
+
+void CMetis3View::OnChatroomSelectall() 
+{
+
+	m_rChat.SetSel(0, -1);
+	m_rChat.HideSelection(FALSE, FALSE);
+}
+
+void CMetis3View::OnChatroomSearchongoogle() 
+{
+
+	CString strSearch = m_rChat.GetSelText();
+	if(!strSearch.IsEmpty()){
+
+		CString strTmp;
+		strTmp.Format("http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q=%s&btnG=Google+Search", strSearch);
+		ShellExecute(0, "open", strTmp, 0, 0, SW_SHOW);
+	}
+}
+
+void CMetis3View::OnChatroomQuote() 
+{
+
+	CString strQuote = m_rChat.GetSelText();
+	if(!strQuote.IsEmpty()){
+
+		m_eInput.SetWindowText(strQuote);
+	}
+}
+
+void CMetis3View::OnChatroomCopy() 
+{
+
+	m_rChat.Copy();
+}
+
+void CMetis3View::OnChatroomClearscreen() 
+{
+
+	m_rChat.SetSel(0, -1);
+	m_rChat.ReplaceSel("");
+}
+
+void CMetis3View::OnChatroomCopyroomname() 
+{
+
+	CClipboard::SetText((LPSTR)(LPCSTR)GetDocument()->m_strRoom);
+}

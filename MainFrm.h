@@ -24,6 +24,8 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+#include "docselect.h"
+
 class CMainFrame : public CMDIFrameWnd
 {
 	DECLARE_DYNAMIC(CMainFrame)
@@ -57,9 +59,23 @@ public:
 	virtual void Dump(CDumpContext& dc) const;
 #endif
 
+	CDocSelector	m_wndDocSelector;
+
 protected:  // control bar embedded members
 	CStatusBar  m_wndStatusBar;
 	CToolBar    m_wndToolBar;
+	
+	// used for full-screen mode
+	BOOL	  m_bFullScreenMode;
+	BOOL	  m_bStatusBarWasVisible;
+	BOOL	  m_bToolBarWasVisible;
+	CRect	  m_mainRect;
+	CToolBar* m_pwndFullScreenBar;
+	bool	  m_bChildMax;
+
+	void FullScreenModeOn();
+	void FullScreenModeOff();
+
 
 // Generated message map functions
 protected:
@@ -67,7 +83,8 @@ protected:
 	NOTIFYICONDATA m_nIconData;
 
 	//{{AFX_MSG(CMainFrame)
-	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void OnClose();
+	afx_msg int  OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnAppExit();
 	afx_msg void OnViewOptions();
 	afx_msg void OnDestroy();
@@ -75,6 +92,12 @@ protected:
 	afx_msg void OnChannelChannellist();
 	afx_msg void OnUpdateChannelChannellist(CCmdUI* pCmdUI);
 	afx_msg void OnFileNew();
+	afx_msg void OnStartNodeserver();
+	afx_msg void OnUpdateStartNodeserver(CCmdUI* pCmdUI);
+	afx_msg void OnViewFullScreen();
+	afx_msg void OnUpdateViewFullScreen(CCmdUI* pCmdUI);
+	afx_msg void OnIdsScnextwindow();
+	afx_msg void OnViewChannelbar();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 };

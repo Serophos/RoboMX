@@ -35,11 +35,16 @@ class CMySocket
 {
 public:
 	CMySocket();
+	CMySocket(SOCKET sSocket);
+	CMySocket(int nProtocol, u_short uPort);
+
 	virtual ~CMySocket();
 
-	BOOL Connect(LPCTSTR lpszIP, WORD wPort, int nWait = 0);
-	BOOL Connect(DWORD dwIP, WORD wPort, int nWait = 0);
+	BOOL Connect(LPCTSTR lpszIP, WORD wPort, int nWait = 0, int nProtocol = IPPROTO_TCP);
+	BOOL Connect(DWORD dwIP, WORD wPort, int nWait = 0, int nProtocol = IPPROTO_TCP);
 
+	SOCKET Accept();
+	
 	int Recv(char *pBuff, int nLen, int nWait = 0);
 	int RecvOnce(char *pBuff, int nMaxLen, int nWait = 0);
 	

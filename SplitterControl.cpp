@@ -103,8 +103,8 @@ void CSplitterControl::OnPaint()
 	dc.Draw3dRect(rcClient, GetSysColor(COLOR_BTNHIGHLIGHT), GetSysColor(COLOR_BTNSHADOW));	
 	rcClient.DeflateRect(1,1,1,1);
 	
-	pen.CreatePen(0, 1, RGB(200, 200, 200));
-	br.CreateSolidBrush(RGB(200, 220, 220));
+	pen.CreatePen(0, 1, GetSysColor(COLOR_BTNFACE));
+	br.CreateSolidBrush(GetSysColor(COLOR_BTNFACE));
 	pOB = dc.SelectObject(&br);
 	pOP = dc.SelectObject(&pen);
 	
@@ -126,7 +126,7 @@ void CSplitterControl::OnMouseMove(UINT nFlags, CPoint point)
 		ClientToScreen(&pt);
 		GetParent()->ScreenToClient(&pt);
 
-		if (pt.x < m_nMin)
+		/*if (pt.x < m_nMin)
 			pt.x = m_nMin;
 		if (pt.y < m_nMin)
 			pt.y = m_nMin;
@@ -134,7 +134,7 @@ void CSplitterControl::OnMouseMove(UINT nFlags, CPoint point)
 		if (pt.x > m_nMax)
 			pt.x = m_nMax;
 		if (pt.y > m_nMax)
-			pt.y = m_nMax;
+			pt.y = m_nMax;*/
 
 		GetParent()->ClientToScreen(&pt);
 		m_nX = pt.x;

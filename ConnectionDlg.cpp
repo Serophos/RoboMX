@@ -164,3 +164,4 @@ void CConnectionDlg::OnUsenode()
 
 	AfxMessageBox("Sorry, this features is not implemented yet");
 }
+

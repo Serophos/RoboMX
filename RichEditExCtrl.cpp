@@ -90,6 +90,7 @@ BEGIN_MESSAGE_MAP(CRichEditExCtrl, CRichEditCtrl)
 	//{{AFX_MSG_MAP(CRichEditExCtrl)
 	ON_WM_CREATE()
 	//}}AFX_MSG_MAP
+	ON_NOTIFY_REFLECT_EX(EN_LINK, OnLink)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -147,8 +148,6 @@ void CRichEditExCtrl::Init()
 void CRichEditExCtrl::SetText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 {
 
-	//AppendText(lpszText, text, bg);
-	
 	PARAFORMAT pf;
 
 	pf.cbSize = sizeof(PARAFORMAT);
@@ -207,7 +206,17 @@ void CRichEditExCtrl::InsertBitmap(HBITMAP hBitmap)
 void CRichEditExCtrl::AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 {
 
-	int nLen = GetWindowTextLength();
+	int nLines = 0;
+	int nLen = 0;
+
+	while((nLines = GetLineCount()) >= 500){
+
+		nLen = SendMessage(EM_LINEINDEX, 1, NULL);
+		SetSel(0, nLen);
+		ReplaceSel("");
+	}
+
+	nLen = GetWindowTextLength();
 	m_cfUse.crTextColor = text;
 	m_cfUse.crBackColor = bg;
 
@@ -218,19 +227,6 @@ void CRichEditExCtrl::AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 	SetSel(nEnd, nEnd);
 
 	SendMessage(WM_VSCROLL, SB_BOTTOM, 0);
-
-	/*CHARRANGE cr;
-
-	m_cfUse.crTextColor = text;
-	m_cfUse.crBackColor = bg;
-	
-	cr.cpMax = SendMessage(WM_GETTEXTLENGTH, NULL, NULL);
-	cr.cpMin = cr.cpMax;
-	
-	SendMessage(EM_EXSETSEL, NULL, (LPARAM)&cr);
-	//SendMessage(EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&m_cfUse);
-	SendMessage(EM_REPLACESEL, FALSE, (LPARAM)lpszText);
-	SendMessage(WM_VSCROLL, SB_BOTTOM, 0);*/
 }
 
 char* CRichEditExCtrl::stristr(const char * str1, const char * str2)
@@ -272,4 +268,43 @@ BOOL CRichEditExCtrl::SetSelectionCharFormat(CHARFORMAT2 &cf)
 	ASSERT(::IsWindow(m_hWnd));
 	cf.cbSize = sizeof(CHARFORMAT2);
 	return (BOOL)::SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+}
+
+void CRichEditExCtrl::OnLink(NMHDR *pNotifyHeader, LRESULT *pResult)
+{
+	ENLINK	  *pENLink = (ENLINK *) pNotifyHeader;
+	CString	  strURL ;
+	CHARRANGE cr ;
+
+	*pResult = 0;
+
+	switch (pNotifyHeader->code)
+	{
+	case EN_LINK:
+		pENLink = (ENLINK *) pNotifyHeader;
+	
+		switch (pENLink->msg)
+		{
+		case WM_LBUTTONDOWN:
+			GetSel(cr);
+			SetSel(pENLink->chrg);
+			strURL = GetSelText();
+			SetSel(cr);
+
+			{
+				CWaitCursor WaitCursor;
+
+				ShellExecute(GetSafeHwnd(), _T("open"), strURL, NULL, NULL, SW_SHOWNORMAL);
+				*pResult = 1;
+			}
+			
+			break;
+
+		case WM_LBUTTONUP:
+			*pResult = 1;
+			break ;
+		}
+		
+		break;
+	}
 }

@@ -83,6 +83,7 @@ public:
 	static void strstp(const char *in, char *before, const char *txt, char *after);
 	// Generated message map functions
 protected:
+	afx_msg void	OnLink(NMHDR *in_pNotifyHeader, LRESULT *out_pResult);
 	//{{AFX_MSG(CRichEditExCtrl)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG

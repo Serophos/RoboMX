@@ -117,6 +117,10 @@ SOURCE=.\ConnectionDlg.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\DocSelect.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\ImageDataObject.cpp
 # End Source File
 # Begin Source File
@@ -130,6 +134,10 @@ SOURCE=.\ListClient.cpp
 # Begin Source File
 
 SOURCE=.\MainFrm.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\MenuButton.cpp
 # End Source File
 # Begin Source File
 
@@ -184,6 +192,14 @@ SOURCE=.\SplitterControl.cpp
 SOURCE=.\StdAfx.cpp
 # ADD CPP /Yc"stdafx.h"
 # End Source File
+# Begin Source File
+
+SOURCE=.\SwitcherButton.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\SystemInfo.cpp
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
@@ -214,6 +230,10 @@ SOURCE=.\ConnectionDlg.h
 # End Source File
 # Begin Source File
 
+SOURCE=.\DocSelect.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\ImageDataObject.h
 # End Source File
 # Begin Source File
@@ -227,6 +247,10 @@ SOURCE=.\ListClient.h
 # Begin Source File
 
 SOURCE=.\MainFrm.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\MenuButton.h
 # End Source File
 # Begin Source File
 
@@ -284,6 +308,18 @@ SOURCE=.\SplitterControl.h
 
 SOURCE=.\StdAfx.h
 # End Source File
+# Begin Source File
+
+SOURCE=.\SwitcherButton.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\SystemInfo.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\winamp.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
@@ -331,6 +367,18 @@ SOURCE=.\res\metistyp.ico
 # Begin Source File
 
 SOURCE=.\res\Toolbar.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\toolbar1.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\toolbar2.bmp
+# End Source File
+# Begin Source File
+
+SOURCE=.\res\Toolbar_256.bmp
 # End Source File
 # End Group
 # Begin Source File

@@ -44,6 +44,7 @@ public:
 
 	void LoadToTray(HWND hWnd, UINT uCallbackMessage, CString strInfoTitle, CString strInfo, CString strTip, int uTimeout, HICON icon, DWORD dwIcon);
 
+	void OnTimer(UINT nIDEvent);
 // Overrides
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CMainFrame)
@@ -100,6 +101,8 @@ protected:
 	void DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon = NIIF_INFO);
 	CArray<HINSTANCE, HINSTANCE> m_aMods;
 	HICON m_hIcon;
+	HICON m_hIcon2;
+	int   m_nIcon;
 	NOTIFYICONDATA m_nIconData;
 
 	afx_msg void OnClose();
@@ -131,6 +134,10 @@ public:
 	BOOL DeletePlugin(CString strName);
 	void ReloadPlugins(void);
 	void CheckUpdate(void);
+	void ExecuteAutoJoins(void);
+	void ModifyTrayIcon(HICON hIcon);
+	void StopAni(void);
+	void StartAni(void);
 };
 
 /////////////////////////////////////////////////////////////////////////////

@@ -106,6 +106,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_COMMAND(ID_USERLIST_IGNORE, OnUserlistIgnore)
 	ON_COMMAND(ID_USERLIST_UNIGNORE, OnUserlistUnignore)
 	ON_COMMAND(ID_RECONNECT, OnReconnect)
+	ON_COMMAND(ID_CHATROOM_REJOIN, OnReconnect)
 	ON_UPDATE_COMMAND_UI(ID_RECONNECT, OnUpdateReconnect)
 	ON_UPDATE_COMMAND_UI(ID_CHATROOM_DISPLAYINCHANNEL_WINAMPSONG, OnUpdateWinampsongMenu)
 	ON_COMMAND(ID_CHATROOM_SELECTALL, OnChatroomSelectall)
@@ -149,6 +150,10 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_REGISTERED_MESSAGE(UWM_RENAMECL, OnRenameCl)
 	ON_COMMAND_RANGE(ID_AWAYCONTROL_ZZZZZZZZZZZZZZZZ, ID_AWAYCONTROL_ENTERREASON, OnAwayControl)
 	ON_COMMAND_RANGE(ID_BACK_SETBACK, ID_BACK_SETSI8LENTBACK, OnAwayControlBack)
+	ON_COMMAND(ID_VIEW_LOGFILE, OnViewLogfile)
+	ON_COMMAND(ID_CHATROOM_VIEWTOPIC, OnChatroomViewtopic)
+	ON_COMMAND(ID_CHATROOM_ADDTOAUTOJOIN, OnChatroomAddtoautojoin)
+	ON_COMMAND(ID_CHATROOM_VIEWCURRENTBANS, OnChatroomViewcurrentbans)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -166,6 +171,7 @@ CMetis3View::CMetis3View()
 	m_dwLastTic = 0;
 	m_bHasJoined = FALSE;
 	m_nServerType = SERVER_RCMS;
+	m_bFileOpened = FALSE;
 }
 
 CMetis3View::~CMetis3View()
@@ -189,8 +195,7 @@ void CMetis3View::DoDataExchange(CDataExchange* pDX)
 
 BOOL CMetis3View::PreCreateWindow(CREATESTRUCT& cs)
 {
-	// TODO: Modify the Window class or styles here by modifying
-	//  the CREATESTRUCT cs
+
 	return CFormView::PreCreateWindow(cs);
 }
 
@@ -199,13 +204,14 @@ void CMetis3View::OnInitialUpdate()
 	
 	CFormView::OnInitialUpdate();
     GetParentFrame()->RecalcLayout();
-
+	((CMainFrame*)AfxGetMainWnd())->StartAni();
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.AddButton( this, IDR_CHANNEL );
 	m_pStatusBar = (CColorStatusBar *)AfxGetApp()->m_pMainWnd->GetDescendantWindow(AFX_IDW_STATUS_BAR);
 	
 	LoadRCMSMenu();
 	CRect rc;
 	CWnd* pWnd = GetDlgItem(IDC_SPLITTER_1);
+	if(!pWnd){ AfxMessageBox("Fatal Error: Could not create splitter control!", MB_ICONSTOP);  return;}
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_sSplitter1.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_1);
@@ -213,21 +219,24 @@ void CMetis3View::OnInitialUpdate()
 	m_sSplitter1.SetRange(200, 200, 1);
 	
 	pWnd = GetDlgItem(IDC_SPLITTER_2);
+	if(!pWnd){ AfxMessageBox("Fatal Error: Could not create splitter control!", MB_ICONSTOP);  return;}
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_sSplitter2.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_2);
 	m_sSplitter2.SetStyle(SPS_HORIZONTAL);
 	m_sSplitter2.SetRange(150, 150, 1);
 
-	m_rSys.Init();
+	m_rSys.Init(IDC_SYS);
 	m_rSys.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
-	m_rChat.Init();
+
+	m_rChat.Init(IDC_CHAT);
+	m_rChat.SetEventMask(m_rChat.GetEventMask() | ENM_LINK);
 	m_rChat.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
 	m_rChat.SendMessage(EM_AUTOURLDETECT, TRUE, 0);
 
 
 	m_fFont.CreateFont(15, 6, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, OUT_STRING_PRECIS, 
-		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, "Arial");
+		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, g_sSettings.GetFont());
 	ListView_SetExtendedListViewStyle(m_lcUsers.m_hWnd, LVS_EX_FULLROWSELECT);
 
 	CBitmap		bitmap;
@@ -294,6 +303,30 @@ void CMetis3View::OnInitialUpdate()
 	m_mxClient.SetRoom(GetDocument()->m_strRoom);
 	WriteSystemMsg("Connecting. Stand by...", g_sSettings.GetRGBPend());
 
+	if(g_sSettings.GetLog()){
+
+		TRY{
+
+			Util::CreateDirs(g_sSettings.GetLogDir() + "\\");
+			m_bFileOpened = m_fLog.Open(g_sSettings.GetLogDir() + "\\" +  Util::MakeValidFilename(GetDocument()->m_strRoomShort) + Util::GetDateString() + ".txt", CFile::shareDenyNone|CFile::modeCreate|CFile::modeNoTruncate|CFile::modeWrite|CFile::typeText);
+			if(m_bFileOpened){
+
+				m_fLog.SeekToEnd();
+				m_fLog.WriteString("\n----- Started Logging ----\n\n");
+			}
+
+		}
+		CATCH(CFileException, e){
+
+			m_bFileOpened = FALSE;
+			WriteSystemMsg("Error: Could not open logfile.", g_sSettings.GetRGBErr());
+		}END_CATCH;
+	}
+	else{
+
+		m_bFileOpened = FALSE;
+	}
+
 	OnUpdate(this, 0, NULL);
 	
 	SetTimer(TIMER_CONNECT, 500, 0);
@@ -302,6 +335,12 @@ void CMetis3View::OnInitialUpdate()
 
 LRESULT CMetis3View::OnReloadCfg(WPARAM w, LPARAM l)
 {
+
+	m_fFont.DeleteObject();
+	m_fFont.CreateFont(15, 6, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, OUT_STRING_PRECIS, 
+		CLIP_STROKE_PRECIS, PROOF_QUALITY, FF_DONTCARE, g_sSettings.GetFont());
+	m_lcUsers.SetFont(&m_fFont);
+	m_eInput.SetFont(&m_fFont);
 
 	m_lcUsers.SetColors(
 		g_sSettings.GetRGBNormalMsg(),
@@ -320,9 +359,9 @@ LRESULT CMetis3View::OnReloadCfg(WPARAM w, LPARAM l)
 		m_lcUsers.SetHiLite(FALSE);
 	}
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
-	m_rSys.Init();
+	m_rSys.Init(IDC_SYS);
 	m_rSys.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
-	m_rChat.Init();
+	m_rChat.Init(IDC_CHAT);
 	m_rChat.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
 	Invalidate();
 
@@ -394,7 +433,10 @@ CMetis3Doc* CMetis3View::GetDocument() // non-debug version is inline
 void CMetis3View::OnDestroy() 
 {
 	
+	KillTimer(TIMER_PING);
+
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.RemoveButton(this);
+
 	m_lcUsers.SaveColumnInfo();
 
 	for(int i = 0; i < g_aPlugins.GetSize() && m_bHasJoined; i++){
@@ -402,7 +444,17 @@ void CMetis3View::OnDestroy()
 		PLUGIN->OnLeaveChannel((DWORD)m_hWnd);
 	}
 
-	KillTimer(TIMER_PING);
+	if(m_bFileOpened){
+
+		TRY{
+
+			m_fLog.Flush();
+			m_fLog.Close();
+		}
+		CATCH(CFileException, e){
+
+		}END_CATCH;
+	}
 	m_mxClient.Disconnect();
 
 	if(g_sSettings.GetSoundFX() && m_bHasJoined){
@@ -418,14 +470,17 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 
 	if(nIDEvent == TIMER_CONNECT){
 
-		if(!m_mxClient.Connect()){
-
-			KillTimer(TIMER_CONNECT);
-			return;	
-		}
 		KillTimer(TIMER_CONNECT);
+
+		if(m_mxClient.Connect()){
+
+			SetTimer(TIMER_PING, 5*60*1000, 0);
+		}
+		else{
+			
+			((CMainFrame*)AfxGetMainWnd())->StopAni();
+		}
 	
-		SetTimer(TIMER_PING, 5*60*1000, 0);
 	}
 	else if(nIDEvent == TIMER_PING){
 
@@ -450,12 +505,7 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 		}
 		else{
 
-			if(m_mxClient.m_bListen){
-
-				m_mxClient.Disconnect();
-			}
-			m_bHasJoined = FALSE;
-			m_lcUsers.DeleteAllItems();
+			Disconnect();
 			m_mxClient.SetRoom(m_strTarget);
 			GetDocument()->m_strRoom = m_strTarget;
 			GetDocument()->SetTitle(GetDocument()->m_strRoom, FALSE);
@@ -499,29 +549,10 @@ void CMetis3View::RemoveUser(const CString strUser, const CString strIP, WORD wP
 
 	int nPos = m_lcUsers.FindItem(&fi, -1);
 
-	if(g_sSettings.GetDisplayNode()){
+	if(nPos >= 0){
 
-		if(nPos >= 0){
-
-			if((m_lcUsers.GetItemText(nPos, 0) == strUser) &&
-				(m_lcUsers.GetItemText(nPos, 6) == Util::FormatInt(wPort)) &&
-				(m_lcUsers.GetItemText(nPos, 5) == strIP)){
-
-				m_lcUsers.DeleteItem(nPos);
-				m_lcUsers.Sort();
-			}
-		}
-	}
-	else{
-
-		if(nPos >= 0){
-
-			if(m_lcUsers.GetItemText(nPos, 0) == strUser){
-
-				m_lcUsers.DeleteItem(nPos);
-				m_lcUsers.Sort();
-			}
-		}
+		m_lcUsers.DeleteItem(nPos);
+		m_lcUsers.Sort();
 	}
 }
 
@@ -558,6 +589,7 @@ LRESULT CMetis3View::OnRoomRename(WPARAM wParam, LPARAM lParam)
 	strOut.Format("Roomname changed from %s to %s", strOldRoom, GetDocument()->m_strRoom);
 	
 	WriteSystemMsg(strOut, g_sSettings.GetRGBOK());
+	Log("System:", strOut);
 	
 	return 1;
 }
@@ -569,6 +601,8 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 
 	strTopic.Replace("\\rtf", "#rtf");
 
+	GetDocument()->m_strTopic = strTopic;
+
 	if(g_sSettings.GetPrintTime()){
 
 		CString strTime;
@@ -577,6 +611,8 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 	}
 
 	m_rChat.SetText(" Topic: " + strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
+
+	Log("Topic:", strTopic);
 
 	if(g_sSettings.GetSoundFX() && m_bHasJoined){
 
@@ -604,6 +640,7 @@ LRESULT CMetis3View::OnMotd(WPARAM wParam, LPARAM lParam)
 		}
 
 		m_rChat.SetText(" " + strOut + "\n", g_sSettings.GetRGBMotd(), g_sSettings.GetRGBBg());
+		Log("", strOut);
 	}
 	if(g_sSettings.GetSoundFX() && m_bHasJoined){
 
@@ -738,6 +775,7 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 	m_rChat.SetText(" " + strJoin + "\n", g_sSettings.GetRGBJoin(), g_sSettings.GetRGBBg());
 
+	Log(strJoin, "");
 
 	if(!m_bHasJoined){
 
@@ -748,6 +786,7 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 				PLUGIN->OnJoinChannel((DWORD)m_hWnd, GetDocument()->m_strRoom, &m_aUsers);
 			}
 
+			((CMainFrame*)AfxGetMainWnd())->StopAni();
 			m_bHasJoined = TRUE;
 			InputWelcome();
 		}
@@ -806,6 +845,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	fi.psz = lpOldName;
 
 	m_lcUsers.Sort();
+
 	int nPos = m_lcUsers.FindItem(&fi, -1);
 
 	if(GetDocument()->m_strName.Find(lpNewName, 0) == 0){
@@ -820,7 +860,6 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		// Find user...
 		for(int i = 0; i < m_aUsers.GetSize(); i++){
 
-			TRACE("%s %s\n", m_aUsers[i].strUser, lpOldName);
 			if(m_aUsers[i].strUser.Compare(lpOldName) == 0) break;
 		}
 		if(i >= m_aUsers.GetSize()){
@@ -853,13 +892,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		m_lcUsers.DeleteItem(nPos);
 		m_lcUsers.Sort();
 		AddUser(newUser.strUser, newUser.wLineType, newUser.dwNumFiles, newUser.strNodeIP, newUser.wNodePort, newUser.strRealIP, newUser.strHostname, newUser.wUserLever); 
-
-
-
-
-		/*m_lcUsers.AddItem(newUser.wUserLever, newUser.strUser, (LPCTSTR)Util::FormatInt(newUser.dwNumFiles), (LPCTSTR)Util::FormatLine(newUser.wLineType),
-			(LPCTSTR)newUser.strNodeIP, (LPCTSTR)Util::FormatInt(newUser.wNodePort), (LPCTSTR)newUser.strRealIP, (LPCTSTR)newUser.strHostname, newUser.wUserLever);
-		m_lcUsers.Sort();																																		   */
+		m_lcUsers.Sort();																																		   
 	}
 	else{
 
@@ -916,16 +949,20 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 
 			m_rChat.SetText(" " + g_sSettings.GetBrMsgFront() +  strName + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
 			m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+
+			Log(g_sSettings.GetBrMsgFront() +  strName + g_sSettings.GetBrMsgEnd(), strMsg);
 		}
 		else{
 
 			m_rChat.SetText(" " + strMsg + "\n", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
+			Log(strMsg, "");
 		}
 	}
 	else if(wType == 0x00D3){ // command echo
 
 		m_rChat.SetText(" " + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
 		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
+		Log(":", strMsg);
 	}
 	
 	return 1;
@@ -989,6 +1026,7 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 	Util::ReplaceVars(strPart);
 
 	m_rChat.SetText(" " + strPart + "\n", g_sSettings.GetRGBPart(), g_sSettings.GetRGBBg());
+	Log(strPart, "");
 
 	for(i = 0; i < g_aPlugins.GetSize(); i++){
 
@@ -1047,6 +1085,8 @@ LRESULT CMetis3View::OnMessage(WPARAM wParam, LPARAM lParam)
 	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
 	HandleHiLite();
 
+	Log(g_sSettings.GetBrMsgFront() +  strName + g_sSettings.GetBrMsgEnd(), strMsg);
+
 	if(g_sSettings.GetSfxChatSfx()){
 
 		for(int i = 0; i < g_sSettings.m_aSounds.GetSize(); i++){
@@ -1091,14 +1131,6 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 			return 1;
 	}
 
-/*	if(strName.IsEmpty() && (m_nServerType == SERVER_WINMX353)){
-
-		CTokenizer token(strMsg, "");
-		token.Next(strName);
-		strMsg = token.Tail();
-		bOperator = TRUE;
-	}		*/
-
 	strName.Replace("\\rtf", "#rtf");
 	strMsg.Replace("\\rtf", "#rtf");
 
@@ -1107,21 +1139,6 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 		PLUGIN->OnMessage((DWORD)m_hWnd, &strName, &strMsg, TRUE);
 	}
 	
-	/*if(bOperator){
-
-		if(g_sSettings.GetPrintTime()){
-
-
-			CString strTime;
-			strTime.Format("[%s]", Util::GetMyLocalTime());
-			m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBOp());
-		}
-
-		m_rChat.SetText(strName, g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
-		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
-	}
-	else{
-			*/
 	if(g_sSettings.GetPrintTime()){
 
 
@@ -1134,7 +1151,9 @@ LRESULT CMetis3View::OnAction(WPARAM wParam, LPARAM lParam)
 	m_rChat.SetText(strName, (g_sSettings.GetColorAcName() ? g_sSettings.GetRGBNormalName() : g_sSettings.GetRGBActionMsg()), g_sSettings.GetRGBBg());
 	m_rChat.SetText(g_sSettings.GetBrActionEnd() + " ", g_sSettings.GetRGBBrAction(), g_sSettings.GetRGBBg());
 	m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBActionMsg(), g_sSettings.GetRGBBg());
-	//}
+
+	Log(g_sSettings.GetBrActionFront() +  strName + g_sSettings.GetBrActionEnd(), strMsg);
+
 	HandleHiLite();
 
 	if(g_sSettings.GetSfxChatSfx()){
@@ -1176,8 +1195,8 @@ LRESULT CMetis3View::OnUnknown(WPARAM wParam, LPARAM lParam)
 void CMetis3View::Input(CString strText)
 {
 
-	//m_eInput.SetWindowText(strText);
-	//m_eInput.PostMessage(WM_KEYDOWN, 13, 256);
+	m_eInput.SetWindowText(strText);
+	m_eInput.PostMessage(WM_KEYDOWN, 13, 256);
 	OnInput(1, (LPARAM)(LPCTSTR)strText);
 }
 
@@ -1446,6 +1465,8 @@ void CMetis3View::OnRclickUserlist(NMHDR* pNMHDR, LRESULT* pResult)
 LRESULT CMetis3View::OnRclickChat(WPARAM w, LPARAM l)
 {
 
+	if((UINT)w == IDC_SYS) return 1;
+
 	CMenu mContextMenu;
 	CMenu mAway;
 	mContextMenu.LoadMenu(IDR_CHAT);
@@ -1462,6 +1483,10 @@ LRESULT CMetis3View::OnRclickChat(WPARAM w, LPARAM l)
 		mAway.LoadMenu(IDR_AWAY);
 	}
 
+	mContextMenu.GetSubMenu(0)->InsertMenu(0, MF_STRING|MF_BYPOSITION|MF_DISABLED, 0, GetDocument()->m_strRoomShort);
+	mContextMenu.GetSubMenu(0)->InsertMenu(1, MF_SEPARATOR|MF_BYPOSITION, 0, (LPCTSTR)0);
+	mContextMenu.ModifyMenu(ID_CHATROOM_REJOIN, MF_STRING|MF_BYCOMMAND, ID_CHATROOM_REJOIN, "R&ejoin " + GetDocument()->m_strRoomShort);
+	mContextMenu.ModifyMenu(ID_CHATROOM_ADDTOAUTOJOIN, MF_STRING|MF_BYCOMMAND, ID_CHATROOM_ADDTOAUTOJOIN, "Add " + GetDocument()->m_strRoomShort + " to Auto-&Join");
 	mContextMenu.ModifyMenu(IDM_AWAY, MF_POPUP|MF_BYCOMMAND, (UINT)mAway.GetSubMenu(0)->m_hMenu, "&Away Control");
 	mContextMenu.GetSubMenu(0)->TrackPopupMenu(TPM_LEFTALIGN|TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
 											point.x,
@@ -1695,7 +1720,7 @@ void CMetis3View::OnUserlistCustomizethismenu()
 	strRoom.Remove('|');
 	strRoom.Replace(1, '-');
 
-	strIniFile.Format("%s.menu", strRoom);
+	strIniFile.Format("%s\\%s.menu", g_sSettings.GetWorkingDir(), strRoom);
 
 
 	CStdioFile ini;
@@ -1716,7 +1741,7 @@ void CMetis3View::OnUserlistCustomizethismenu()
 				ini.WriteString("/ban %NAME%\n");
 				ini.WriteString("/unban %NAME%\n");
 				ini.WriteString("/setuserlevel %NAME% 5\n");
-				ini.WriteString("/setuserlevel %NAME% 65%\n");
+				ini.WriteString("/setuserlevel %NAME% 65\n");
 				ini.WriteString("/setuserlevel %NAME% 200\n");
 				ini.WriteString("/setuserlevel %NAME% 65\n");
 				ini.WriteString("/level %NAME%\n");
@@ -1861,7 +1886,7 @@ void CMetis3View::LoadRCMSMenu()
 	strRoom.Remove('|');
 	strRoom.Replace(1, '-');
 
-	strIniFile.Format("%s.menu", strRoom);
+	strIniFile.Format("%s\\%s.menu", g_sSettings.GetWorkingDir(), strRoom);
 
 
 	CStdioFile ini;
@@ -1983,13 +2008,8 @@ void CMetis3View::UpdateAverageLag(BOOL bStart)
 void CMetis3View::OnReconnect() 
 {
 
-	if(m_mxClient.m_bListen){
-
-		m_mxClient.Disconnect();
-	}
-	m_bHasJoined = FALSE;
+	Disconnect();
 	WriteSystemMsg("Reconnecting. Stand by...", g_sSettings.GetRGBPend());
-	m_lcUsers.DeleteAllItems();
 	m_mxClient.Connect();
 }
 
@@ -2209,7 +2229,37 @@ void CMetis3View::OnEnLinkChat(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	ENLINK *pEnLink = reinterpret_cast<ENLINK *>(pNMHDR);
 	
-	AfxMessageBox(":-)");
+	CString	  strURL ;
+	CHARRANGE cr ;
+
+	switch (pNMHDR->code)
+	{
+	case EN_LINK:
+	
+		switch (pEnLink->msg)
+		{
+		case WM_LBUTTONDOWN:
+			m_rChat.GetSel(cr);
+			m_rChat.SetSel(pEnLink->chrg);
+			strURL = m_rChat.GetSelText();
+			m_rChat.SetSel(cr);
+
+			{
+				CWaitCursor WaitCursor;
+
+				ShellExecute(GetSafeHwnd(), _T("open"), strURL, NULL, NULL, SW_SHOWNORMAL);
+				*pResult = 1;
+			}
+			
+			break;
+
+		case WM_LBUTTONUP:
+			*pResult = 1;
+			break ;
+		}
+		
+		break;
+	}
 	*pResult = 0;
 }
 
@@ -2374,4 +2424,113 @@ CString CMetis3View::GetUserInput(CString strReason)
 	dlg.DoModal();
 	
 	return dlg.m_strInput;
+}
+
+BOOL CMetis3View::Log(CString strName, CString strText)
+{
+
+	if(!m_bFileOpened) return FALSE; 
+
+	CString strTime = Util::GetMyLocalTime();
+	CString strLog;
+
+	if(strText.IsEmpty()){
+
+		strLog.Format("[%s] %s\n", strTime, strName);
+	}
+	else{
+		
+		strLog.Format("[%s] %s %s\n", strTime, strName, strText);
+	}
+
+	TRY{
+
+		m_fLog.WriteString(strLog);
+		m_fLog.Flush();
+	}
+	CATCH(CFileException, e){
+
+		WriteSystemMsg("Error: Could not write data to logfile.", g_sSettings.GetRGBErr());
+		m_bFileOpened = FALSE;
+		return FALSE;
+	}END_CATCH;
+
+	return TRUE;
+}
+
+void CMetis3View::OnViewLogfile()
+{
+
+	ShellExecute(0, "open", g_sSettings.GetLogDir() + "\\" +  Util::MakeValidFilename(GetDocument()->m_strRoomShort) + Util::GetDateString() + ".txt", 0,0, SW_SHOW);
+}
+
+void CMetis3View::Disconnect(void)
+{
+
+	if(m_mxClient.m_bListen){
+
+		m_mxClient.Disconnect();
+	}
+	m_bHasJoined = FALSE;
+	m_aUsers.RemoveAll();
+	m_lcUsers.DeleteAllItems();
+}
+
+void CMetis3View::OnChatroomViewtopic()
+{
+
+	if(g_sSettings.GetPrintTime()){
+
+		CString strTime;
+		strTime.Format("[%s]", Util::GetMyLocalTime());
+		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBTopic());
+	}
+
+	m_rChat.SetText(" Topic: " + GetDocument()->m_strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
+}
+
+void CMetis3View::OnChatroomAddtoautojoin()
+{
+
+	CIni ini;
+	int n = 0;
+	CString strTmp;
+	
+	ini.SetIniFileName(g_sSettings.GetWorkingDir() + "\\RoboMX.ini");
+	n = ini.GetValue("AutoJoins", "Num", 0);
+
+	for(int i = 1; i < n+1; i++){
+
+		strTmp.Format("AutoJoin_%03d", i);
+		if(ini.GetValue("AutoJoins", strTmp, "") == GetDocument()->m_strRoom){
+
+			ini.SetValue("AutoJoins", strTmp, "");			
+			WriteSystemMsg("Channel " + GetDocument()->m_strRoom + " was removed from Auto-Join list.", g_sSettings.GetRGBPend());
+			return;
+		}
+	}
+
+	for(i = 1; i < n+1; i++){
+
+		strTmp.Format("AutoJoin_%03d", i);
+		if(ini.GetValue("AutoJoins", strTmp, "").IsEmpty()) break;
+	}
+
+	strTmp.Format("AutoJoin_%03d", i);
+	ini.SetValue("AutoJoins", "Num", (i <= n ? n : n+1));
+	ini.SetValue("AutoJoins", strTmp, GetDocument()->m_strRoom);
+	WriteSystemMsg("Channel " + GetDocument()->m_strRoom + " added to Auto-Join list.", g_sSettings.GetRGBOK());
+}
+
+void CMetis3View::OnChatroomViewcurrentbans()
+{
+
+	if(m_mxClient.m_bListen && (m_nServerType == SERVER_WINMX353)){
+
+		m_mxClient.SendNew("/listbans");
+	}
+	else{
+
+		WriteSystemMsg("This feature only works with WinMX 3.53 rooms.", g_sSettings.GetRGBPend());
+	}
 }

@@ -44,6 +44,10 @@
 #define IDR_SYSTRAY                     177
 #define IDB_USERMODE                    180
 #define IDR_BACK                        181
+#define IDD_EXTENSIONS                  182
+#define IDB_PREVIEW                     183
+#define IDI_ICON1                       184
+#define IDI_ANI                         184
 #define IDC_CONNECT                     1000
 #define IDC_ROOM                        1001
 #define IDC_STATIC_ROOM                 1002
@@ -158,6 +162,7 @@
 #define IDC_EDITHILITE                  1107
 #define IDC_UNINSTALL                   1107
 #define IDC_PLAY_CONNECTED              1107
+#define IDC_SELECT_LOG_DIR              1107
 #define IDC_PLAY_DISCONNECTED           1108
 #define IDC_CANCELFILE                  1109
 #define IDC_ADD_EMOTICON                1109
@@ -185,8 +190,10 @@
 #define IDC_LISTCHANNEL                 1128
 #define IDC_OPMSG                       1129
 #define IDC_SCROLLER                    1130
-#define IDC_CHECK1                      1131
 #define IDC_MXCHATD                     1131
+#define IDC_LOG                         1132
+#define IDC_LOGDIR                      1133
+#define IDC_PREVIEW                     1134
 #define IDC_STATIC_LANG                 4102
 #define IDC_LANG                        4103
 #define IDC_REMOVE                      4104
@@ -367,15 +374,20 @@
 #define ID_BACK_SETBACK                 32857
 #define ID_BACK_SETSI8LENTBACK          32858
 #define IDM_AWAY                        32859
+#define ID_VIEW_LOGFILE                 32860
+#define ID_CHATROOM_REJOIN              32861
+#define ID_CHATROOM_VIEWTOPIC           32862
+#define ID_CHATROOM_VIEWCURRENTBANS     32863
+#define ID_CHATROOM_ADDTOAUTOJOIN       32864
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_3D_CONTROLS                     1
-#define _APS_NEXT_RESOURCE_VALUE        182
-#define _APS_NEXT_COMMAND_VALUE         32860
-#define _APS_NEXT_CONTROL_VALUE         1132
+#define _APS_NEXT_RESOURCE_VALUE        185
+#define _APS_NEXT_COMMAND_VALUE         32865
+#define _APS_NEXT_CONTROL_VALUE         1135
 #define _APS_NEXT_SYMED_VALUE           32920
 #endif
 #endif

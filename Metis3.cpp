@@ -122,24 +122,10 @@ void CMetis3App::ApplyPic(void)
 BOOL CMetis3App::InitInstance()
 {
 
-
-	InitCommonControls();
-
 	CWinApp::InitInstance();
 
-	// Initialize OLE libraries
-	if (!AfxOleInit())
-	{
-		AfxMessageBox("Could not initialize Ole-Interface");
-		return FALSE;
-	}
 
-	AfxEnableControlContainer();
-	AfxInitRichEdit();
-
-	SetRegistryKey(_T("RoboMX"));
-	LoadStdProfileSettings(0);  // Load standard INI file options (including MRU)
-
+	// First thing of buisness: check richedit dll
 	_TCHAR lpszModuleName[MAX_PATH + 1] = {'\0',};
 	
 	if(Util::FileExists(g_sSettings.GetWorkingDir(FALSE) + "\\RICHED32.DLL")){
@@ -165,6 +151,37 @@ BOOL CMetis3App::InitInstance()
 			return FALSE;
 		}
 	}
+	// check ok we may continue :-)
+	
+	// Initialize OLE libraries
+	if (!AfxOleInit())
+	{
+		AfxMessageBox("Could not initialize Ole-Interface.", MB_ICONSTOP);
+		return FALSE;
+	}
+
+	AfxEnableControlContainer();
+
+	INITCOMMONCONTROLSEX icc;
+	icc.dwSize = sizeof(INITCOMMONCONTROLSEX);
+	icc.dwICC = ICC_BAR_CLASSES|ICC_COOL_CLASSES|ICC_DATE_CLASSES|ICC_HOTKEY_CLASS|ICC_INTERNET_CLASSES|ICC_LISTVIEW_CLASSES|ICC_PAGESCROLLER_CLASS|ICC_PROGRESS_CLASS|ICC_TAB_CLASSES|ICC_TREEVIEW_CLASSES|ICC_UPDOWN_CLASS|ICC_USEREX_CLASSES|ICC_WIN95_CLASSES;  
+
+	if(!InitCommonControlsEx(&icc)){
+
+		AfxMessageBox("Could not initialzie Common Conttrols.", MB_ICONSTOP);
+		return FALSE;
+	}
+
+	if(!AfxInitRichEdit2()){
+
+		AfxMessageBox("Could not initialize Richedit 2.0 Interface.", MB_ICONSTOP);
+		return FALSE;
+	}
+
+
+	SetRegistryKey(_T("RoboMX"));
+	LoadStdProfileSettings(0);  // Load standard INI file options (including MRU)
+
 
 
 	WSADATA wsaData;
@@ -173,7 +190,7 @@ BOOL CMetis3App::InitInstance()
 	
 	if(m_nWSA){
 
-		AfxMessageBox("Winsock initialisation failed.", MB_OK+MB_ICONSTOP);
+		AfxMessageBox("Could not initialize Winsock.", MB_OK+MB_ICONSTOP);
 		return FALSE;
 	}
 
@@ -258,7 +275,10 @@ BOOL CMetis3App::InitInstance()
 
 		((CMainFrame*)pMainFrame)->OnChannelChannellist();
 	}
+	
+	((CMainFrame*)pMainFrame)->ExecuteAutoJoins();
 
+	((CMainFrame*)pMainFrame)->StopAni();
 	return TRUE;
 }
 

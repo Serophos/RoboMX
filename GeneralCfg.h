@@ -41,7 +41,6 @@ public:
 // Dialog Data
 	//{{AFX_DATA(CGeneralCfg)
 	enum { IDD = IDD_GENERAL };
-	CListCtrl	m_lcPlugins;
 	CListBox	m_lbChannels;
 	CListBox	m_lbGreetings;
 
@@ -57,6 +56,8 @@ public:
 	int		m_nTime;
 	BOOL	m_bPing;
 	BOOL	m_bMiniTray;
+	CString m_strPath;
+	BOOL    m_bLog;
 	//}}AFX_DATA
 
 
@@ -79,17 +80,14 @@ protected:
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 public:
-	afx_msg void OnBnClickedReloadAll();
-	afx_msg void OnBnClickedConfigure();
 	BOOL m_bEmoticons;
 	BOOL m_bHiliteUsers;
-	afx_msg void OnBnClickedRescan();
-	afx_msg void OnBnClickedUninstall();
 	BOOL m_bMaxi;
 	BOOL m_bUpdate;
 	afx_msg void OnBnClickedAddchannel2();
 	afx_msg void OnBnClickedRemovechannel2();
 	BOOL m_bScroller;
+	afx_msg void OnBnClickedSelectLogDir();
 };
 
 //{{AFX_INSERT_LOCATION}}

@@ -36,6 +36,7 @@
 #include "SfxCfg.h"
 #include "FunCfg.h"
 #include "PeerCfg.h"
+#include "ExtCfg.h"
 
 class CSettingsView : public CFormView
 {
@@ -67,6 +68,7 @@ protected:
 	CGeneralCfg cfgGen;
 	CColorCfg cfgColor;
 	CMessageCfg cfgMsg;
+	CExtCfg  cfgExt;
 	CSfxCfg  cfgSfx;
 	CFunCfg  cfgFun;
 	CPeerCfg cfgPeer;

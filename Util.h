@@ -3,6 +3,7 @@
 class Util
 {
 public:
+	static BOOL CreateDirs(CString strFilename);
 	static int ScanMessage(char *pBuff, WORD wMaxSize, char *lpszFormat, ...);
 	static WORD FormatMXMessage(WORD wType, char *pBuff, char *lpszFormat, ...);
 	static CString FormatIP(DWORD dwIP);
@@ -22,4 +23,6 @@ public:
 
 	static BOOL CheckRichEdit(_TCHAR *lpszModuleName);
 	static BOOL FileExists(LPCTSTR lpszFile);
+	static CString MakeValidFilename(CString strName);
+	static CString GetDateString(void);
 };

@@ -59,7 +59,7 @@ void CConnectionDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_FILES, m_dwFiles);
 	DDV_MinMaxDWord(pDX, m_dwFiles, 0, 65535);
 	DDX_Text(pDX, IDC_USERNAME, m_strName);
-	DDV_MaxChars(pDX, m_strName, 38);
+	DDV_MaxChars(pDX, m_strName, 44);
 	DDX_CBString(pDX, IDC_ROOM, m_strRoom);
 	DDX_Check(pDX, IDC_MXCHATD, m_bOldJoin);
 	//}}AFX_DATA_MAP
@@ -137,9 +137,14 @@ void CConnectionDlg::OnOK()
 		return;
 	}
 
-	
-
 	Util::MakeValidUserName(m_strName);
+
+	if(m_strName.GetLength() > 44){
+		
+		AfxMessageBox("Username is too long. Must not be longer then 38 characters (without ID).", MB_ICONINFORMATION);
+		return;
+	}
+
 	FixRoomName(m_strRoom);
 
 	UpdateData(FALSE);

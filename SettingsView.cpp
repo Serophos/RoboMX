@@ -21,7 +21,6 @@
 #include "SettingsView.h"
 #include "MainFrm.h"
 #include "Settings.h"
-#include ".\settingsview.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -136,12 +135,16 @@ void CSettingsView::OnInitialUpdate()
 	cfgFun.Create(IDD_FUN, this);
 	cfgFun.MoveWindow(rcClient);
 
+	cfgExt.Create(IDD_EXTENSIONS, this);
+	cfgExt.MoveWindow(rcClient);
+
 	AddCategory(&cfgGen, 0, "General");
 	AddCategory(&cfgColor, 1, "Colors");
-	AddCategory(&cfgPeer, 5, "Server");
 	AddCategory(&cfgMsg, 2, "Messages");
 	AddCategory(&cfgSfx, 3, "Sound FX");
 	AddCategory(&cfgFun, 4, "Fun :-)");
+	AddCategory(&cfgPeer, 5, "Server");
+	AddCategory(&cfgExt, 6, "Add-Ons");
 
 	m_lcCat.SetItemState(0, LVNI_SELECTED, LVNI_SELECTED);
 	cfgGen.ShowWindow(SW_SHOW);
@@ -163,6 +166,7 @@ void CSettingsView::OnApply()
 		((CCfgDlg*)m_aDlgs[i])->Apply();
 	}
 	g_sSettings.Save();
+	g_sSettings.Load();
 
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.BroadcastMessage(UWM_LOAD_SETTINGS, 0, 0);
 }

@@ -65,6 +65,14 @@ CMetis3Doc::~CMetis3Doc()
 BOOL CMetis3Doc::OnNewDocument()
 {
 
+	if (!CDocument::OnNewDocument()){
+
+		CString strTmp;
+		strTmp.Format("Fatal internal error: The framework failed to create an empty Document (0x%X)", GetLastError());
+		AfxMessageBox(strTmp, MB_ICONSTOP);
+		return FALSE;
+	}
+
 	if(((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin){
 
 		m_dwFiles = g_sSettings.GetFiles();
@@ -88,11 +96,6 @@ BOOL CMetis3Doc::OnNewDocument()
 		m_bOldJoin = dlg.m_bOldJoin;
 	}
 
-	if (!CDocument::OnNewDocument()){
-
-		return FALSE;
-	}
-	
 	((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin = FALSE;
 	((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom.Empty();
 

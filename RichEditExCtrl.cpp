@@ -66,11 +66,21 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl message handlers
 
-void CRichEditExCtrl::Init()
+void CRichEditExCtrl::Init(UINT nID)
 {
 
 	m_cfDefault = g_sSettings.GetDefaultFormat();
+	m_cfUse = m_cfDefault;
+
+	CHARFORMAT2 cfTemp = m_cfDefault;
+	cfTemp.dwMask = CFM_SIZE|CFM_FACE;
+	SetSel(0,-1);
+	SetSelectionCharFormat(cfTemp);
+ 	int nEnd = 	GetWindowTextLength();
+	SetSel(nEnd, nEnd);
+
 	SetBackgroundColor(FALSE, m_cfDefault.crBackColor);
+	m_nID = nID;
 }
 
 void CRichEditExCtrl::SetText(LPCSTR lpszText, COLORREF text, COLORREF bg)
@@ -203,45 +213,6 @@ BOOL CRichEditExCtrl::SetSelectionCharFormat(CHARFORMAT2 &cf)
 	ASSERT(::IsWindow(m_hWnd));
 	cf.cbSize = sizeof(CHARFORMAT2);
 	return (BOOL)::SendMessage(m_hWnd, EM_SETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
-}
-
-void CRichEditExCtrl::OnLink(NMHDR *pNotifyHeader, LRESULT *pResult)
-{
-	ENLINK	  *pENLink = (ENLINK *) pNotifyHeader;
-	CString	  strURL ;
-	CHARRANGE cr ;
-
-	*pResult = 0;
-
-	switch (pNotifyHeader->code)
-	{
-	case EN_LINK:
-		pENLink = (ENLINK *) pNotifyHeader;
-	
-		switch (pENLink->msg)
-		{
-		case WM_LBUTTONDOWN:
-			GetSel(cr);
-			SetSel(pENLink->chrg);
-			strURL = GetSelText();
-			SetSel(cr);
-
-			{
-				CWaitCursor WaitCursor;
-
-				ShellExecute(GetSafeHwnd(), _T("open"), strURL, NULL, NULL, SW_SHOWNORMAL);
-				*pResult = 1;
-			}
-			
-			break;
-
-		case WM_LBUTTONUP:
-			*pResult = 1;
-			break ;
-		}
-		
-		break;
-	}
 }
 
 BOOL CRichEditExCtrl::PreTranslateMessage(MSG* pMsg) 

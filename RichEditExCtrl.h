@@ -172,7 +172,7 @@ public:
 // Implementation
 public:
 	BOOL SetSelectionCharFormat(CHARFORMAT2& cf);
-	void Init();
+	void Init(UINT m_nID);
 	void InsertBitmap(HBITMAP hBitmap);
 	void SetText(LPCSTR lpszText, COLORREF text, COLORREF bg);
 	virtual ~CRichEditExCtrl();
@@ -181,7 +181,6 @@ public:
 	static void strstp(const char *in, char *before, const char *txt, char *after);
 	// Generated message map functions
 protected:
-	afx_msg void	OnLink(NMHDR *in_pNotifyHeader, LRESULT *out_pResult);
 	//{{AFX_MSG(CRichEditExCtrl)
 	//}}AFX_MSG
 
@@ -189,6 +188,7 @@ protected:
 
 protected:
 	UINT m_nID;
+
 	void AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg);
 	// datamembers for bitmap storage
 };

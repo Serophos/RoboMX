@@ -45,7 +45,8 @@ public:
 	virtual ~CSettings();
 
 	// Set Functions
-
+	void    SetLogDir(CString strValue){ m_strLogDir = strValue; }
+	void	SetLog(BOOL bValue){m_bLog = bValue; }
 	void    SetEnableScroller(BOOL bValue){ m_bScroller = bValue; }
 	void	SetMessageItalic(BOOL bValue){ m_bMsItalic = bValue; }
 	void	SetMessageLine(BOOL bValue){ m_bMsLine = bValue; }
@@ -141,7 +142,9 @@ public:
 	void	SetSoundFX(BOOL bValue){ m_bSoundFX = bValue; }
 
 	// Access functions
-	CString GetWorkingDir(BOOL bCached = TRUE);
+    CString GetWorkingDir(BOOL bCached = TRUE);
+	CString GetLogDir(){return m_strLogDir;}
+	BOOL    GetLog(){return m_bLog;}
 	CString GetLanguage(){ return m_strLanguage; }
 	BOOL    GetUseImage(){ return m_bImage; }
 	CString GetImage(){ return m_strImage; }
@@ -268,7 +271,9 @@ public: // public attributes
 
 protected:
 	CString m_strWd;
+	CString m_strLogDir;
 
+	BOOL    m_bLog;
 	BOOL	m_bMsItalic;
 	BOOL	m_bMsLine;
 	BOOL	m_bMsBold;

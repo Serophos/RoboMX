@@ -32,6 +32,7 @@ CFunCfg::CFunCfg(CWnd* pParent /*=NULL*/)
 	m_strName = _T("");
 	//}}AFX_DATA_INIT
 	m_nAct = 0;
+	m_hPreview = NULL;
 }
 
 
@@ -49,26 +50,38 @@ void CFunCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_NAMES, m_lcNames);
 	DDX_Control(pDX, IDC_SUFFIXES, m_lcSuff);
 	DDX_Control(pDX, IDC_EMOTICONLIST, m_lcEmo);
+	DDX_Control(pDX, IDC_PREVIEW, m_stPreview);
 }
 
 
 BEGIN_MESSAGE_MAP(CFunCfg, CCfgDlg)
-	//{{AFX_MSG_MAP(CFunCfg)
+	ON_WM_DESTROY()
 	ON_BN_CLICKED(IDC_BTN_VENDOR_ADD, OnBtnVendorAdd)
 	ON_BN_CLICKED(IDC_BTN_NAME_ADD, OnBtnNameAdd)
 	ON_BN_CLICKED(IDC_BTN_SUFFIX_ADD, OnBtnSuffixAdd)
-	//}}AFX_MSG_MAP
 	ON_NOTIFY(NM_DBLCLK, IDC_VENDORS, OnNMDblclkVendors)
 	ON_NOTIFY(NM_DBLCLK, IDC_NAMES, OnNMDblclkNames)
 	ON_NOTIFY(NM_DBLCLK, IDC_SUFFIXES, OnNMDblclkSuffixes)
 	ON_BN_CLICKED(IDC_SELECTBMP, OnBnClickedSelectbmp)
 	ON_BN_CLICKED(IDC_ADD_EMOTICON, OnBnClickedAddEmoticon)
 	ON_BN_CLICKED(IDC_DELETE_EMOTICON, OnBnClickedDeleteEmoticon)
+	ON_NOTIFY(LVN_ITEMCHANGED, IDC_EMOTICONLIST, OnLvnItemchangedEmoticonlist)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CFunCfg message handlers
 
+
+void CFunCfg::OnDestroy()
+{
+
+	CCfgDlg::OnDestroy();
+
+	if(m_hPreview != NULL){
+
+		DeleteObject(m_hPreview);
+	}
+}
 BOOL CFunCfg::OnInitDialog() 
 {
 	CCfgDlg::OnInitDialog();
@@ -88,7 +101,6 @@ BOOL CFunCfg::OnInitDialog()
 	m_lcSuff.SetColumnWidth(0, LVSCW_AUTOSIZE);
 	m_lcNames.SetColumnWidth(0, LVSCW_AUTOSIZE);
 	m_lcVendors.SetColumnWidth(0, LVSCW_AUTOSIZE);
-
 
 	POSITION pos;
 	CList<Emoticon *, Emoticon*> &lEmoticons = ((CMainFrame*)GetApp()->m_pMainWnd)->m_lEmoticons;
@@ -344,4 +356,25 @@ void CFunCfg::WriteEmoticons(void)
 
 	((CMainFrame*)GetApp()->m_pMainWnd)->DeleteEmoticons();
 	((CMainFrame*)GetApp()->m_pMainWnd)->LoadEmoticons();
+}
+
+void CFunCfg::OnLvnItemchangedEmoticonlist(NMHDR *pNMHDR, LRESULT *pResult)
+{
+	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
+	NM_LISTVIEW* pNMListView = (NM_LISTVIEW*)pNMHDR;
+
+	int n = m_lcEmo.GetNextItem(-1, LVNI_SELECTED);
+	
+	if(n >= 0){
+
+        CString strIcon = m_lcEmo.GetItemText(n, 1);
+
+		if(m_hPreview != NULL){
+
+			DeleteObject(m_hPreview);
+		}
+		m_hPreview = (HBITMAP)::LoadImage(NULL, strIcon, IMAGE_BITMAP, 0, 0, LR_DEFAULTSIZE|LR_LOADTRANSPARENT|LR_LOADFROMFILE);
+		m_stPreview.SetBitmap(m_hPreview);
+	}
+	*pResult = 0;
 }

@@ -52,7 +52,7 @@ void CRenameDlg::DoDataExchange(CDataExchange* pDX)
 	CDialog::DoDataExchange(pDX);
 	//{{AFX_DATA_MAP(CRenameDlg)
 	DDX_Text(pDX, IDC_NAME, m_strName);
-	DDV_MaxChars(pDX, m_strName, 38);
+	DDV_MaxChars(pDX, m_strName, 44);
 	DDX_CBIndex(pDX, IDC_LINE, m_nLine);
 	DDX_Text(pDX, IDC_FILES, m_dwFiles);
 	DDV_MinMaxDWord(pDX, m_dwFiles, 0, 65535);
@@ -87,6 +87,13 @@ void CRenameDlg::OnOK()
 	}
 
 	Util::MakeValidUserName(m_strName);
+
+	if(m_strName.GetLength() > 44){
+		
+		AfxMessageBox("Username is too long. Must not be longer then 38 characters (without ID).", MB_ICONINFORMATION);
+		return;
+	}
+
 	UpdateData(FALSE);
 	
 	g_sSettings.SetNickname(m_strName);

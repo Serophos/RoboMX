@@ -95,7 +95,6 @@ BOOL CChatClient::Connect()
 UINT CChatClient::RecvProc(PVOID pParam)
 {
 
-	TRACE("Entering recv proc\n");
 	CChatClient* pClient = (CChatClient*)pParam;
 	ASSERT(pClient);
 
@@ -112,7 +111,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	if(!pClient->m_mSocket.Connect(pClient->m_strRoomIP, pClient->m_wRoomTCPPort, 5)){
 
 		CString strError;
-		strError.Format("Robo-Panic: Could not Connect to %s. %s", pClient->m_strRoomIP, pClient->m_mSocket.GetLastErrorStr());
+		strError.Format("Error. RoboMX was unable to establish a connection to %s. [%s]", pClient->m_strRoomIP, pClient->m_mSocket.GetLastErrorStr());
 		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
@@ -125,7 +124,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	
 	if(buffer[0] != 0x31){
 		
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. Login failed.",  g_sSettings.GetRGBErr());
+		pClient->WriteMessage("Error. RoboMX got an unexpected response from the remote computer :(",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -136,7 +135,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	// Send UP Key Block
 	if(pClient->m_mSocket.Send(buffer, 16, 5) != 16){
 		
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. Send Keyblock failed.",  g_sSettings.GetRGBErr());
+		pClient->WriteMessage("Error. Sorry, but RoboMX could not send the login-key to the remote computer :(",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -145,8 +144,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	// Recv DW Key Block
 	if(pClient->m_mSocket.Recv(buffer, 16, 5) != 16){
 		
-		//AfxMessageBox(pClient->m_mSocket.GetLastErrorStr());
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. Recieve Keyblock failed.",  g_sSettings.GetRGBErr());
+		pClient->WriteMessage("Error. Sorry, but the remote host did not send the login-key back :(",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -156,7 +154,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	if(GetCryptKeyID((BYTE *)buffer) != 0x58){
 	
 		// this was not crypt key from Chatserver :-(
-		pClient->WriteMessage("Robo-Panic: Error nogotiating. ID missmatch.",  g_sSettings.GetRGBErr());
+		pClient->WriteMessage("Error. Sorry, the remote host does not appear to be hosting a chat-room.",  g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
@@ -185,7 +183,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 		if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
 
 			CString strError;
-			strError.Format("Robo-Panic: Sending WinMX 3.52 pre-login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
+			strError.Format("Error :( RoboMX was unable to complete the login. Windows told me the error was '%s'", pClient->m_mSocket.GetLastErrorStr());
 			pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 			pClient->m_bListen  = FALSE;
 			pClient->m_eClose.SetEvent();
@@ -208,7 +206,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	if(pClient->m_mSocket.Send(buffer, nLen, 5) != nLen){
 
 		CString strError;
-		strError.Format("Robo-Panic: Sending login data failed: %s", pClient->m_mSocket.GetLastErrorStr());
+		strError.Format("Error. Sorry, RoboMX could not send the final login request. [%s]", pClient->m_mSocket.GetLastErrorStr());
 		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
@@ -219,7 +217,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 	if(pClient->m_mSocket.Recv(buffer, 5, 0) != 5){
 
 		CString strError;
-		strError.Format("Robo-Panic: Handshake failed. %s", pClient->m_mSocket.GetLastErrorStr());
+		strError.Format("Error. Sorry, the handshake failed. Windows told me: %s", pClient->m_mSocket.GetLastErrorStr());
 		pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
@@ -230,13 +228,13 @@ UINT CChatClient::RecvProc(PVOID pParam)
 
 	if((*(WORD*)buffer) != 0x0066){
 
-		pClient->WriteMessage("Login rejected.", RGB(150,0,0));
+		pClient->WriteMessage("Login rejected :(", RGB(150,0,0));
 		pClient->m_bListen  = FALSE;
 		pClient->m_eClose.SetEvent();
 		return FALSE;
 	}
 	pClient->m_wNumUsers = *(WORD*)(buffer+2);
-	pClient->WriteMessage("Login granted.", RGB(0, 120, 0));
+	pClient->WriteMessage("Login granted :)", RGB(0, 120, 0));
 	
 	pClient->m_bListen = TRUE;
 	
@@ -251,7 +249,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			if((pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT) && pClient->m_bListen){
 
 				CString strError;
-				strError.Format("Robo-Panic [a]: %s :'(", pClient->m_mSocket.GetLastErrorStr());
+				strError.Format("Error: %s :'(", pClient->m_mSocket.GetLastErrorStr());
 				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 				pClient->m_bListen  = FALSE;
 				break;
@@ -264,7 +262,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			
 			Sleep(100);
 			CString strError;
-			strError.Format("Stream Error? %s", buffer);
+			strError.Format("Warning: Unexpected data %s", buffer);
 			pClient->WriteMessage(strError, RGB(150, 150, 150));
 			continue;
 		}
@@ -292,7 +290,7 @@ UINT CChatClient::RecvProc(PVOID pParam)
 			if(pClient->m_mSocket.GetLastError() != SOCK_TIMEOUT){
 
 				CString strError;
-				strError.Format("Robo-Panic [b]: %s :'(", pClient->m_mSocket.GetLastErrorStr());
+				strError.Format("Error: %s :'(", pClient->m_mSocket.GetLastErrorStr());
 				pClient->WriteMessage(strError, g_sSettings.GetRGBErr());
 				pClient->m_bListen  = FALSE;
 				break;
@@ -319,13 +317,9 @@ BOOL CChatClient::Disconnect()
 	if(m_bListen){
 
 		m_bListen = FALSE;
-		TRACE("Wating for shutdown\n");
-		WaitForSingleObject(m_eClose.m_hObject, INFINITE);
-		Sleep(100);
-		TRACE("Closing socket\n");
+		Sleep(200);
+		WaitForSingleObject(m_eClose.m_hObject, 10000);
 		m_mSocket.Close();
-		//delete m_pThread;
-		//m_pThread = NULL;
 	}
 
 	return TRUE;
@@ -357,7 +351,7 @@ BOOL CChatClient::SendRename(CString strUser, DWORD dwFiles, WORD wLine)
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic [i]: %s :'(", m_mSocket.GetLastErrorStr());
+			strError.Format("Error [i]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 			return FALSE;
@@ -388,7 +382,7 @@ void CChatClient::SendMessage(LPCTSTR lpszMessage, int nLen, BOOL bAction)
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic[j]: %s :'(", m_mSocket.GetLastErrorStr());
+			strError.Format("Error [j]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
@@ -414,7 +408,7 @@ BOOL CChatClient::SendNew(LPCTSTR lpszKey)
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic[z]: %s :'(", m_mSocket.GetLastErrorStr());
+			strError.Format("Error [z]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
@@ -445,7 +439,7 @@ void CChatClient::Ping()
 		if(nSend == SOCKET_ERROR){
 
 			CString strError;
-			strError.Format("Robo-Panic [k]: %s :'(", m_mSocket.GetLastErrorStr());
+			strError.Format("Error [k]: %s :'(", m_mSocket.GetLastErrorStr());
 			WriteMessage(strError, g_sSettings.GetRGBErr());
 			m_bListen  = FALSE;
 		}
@@ -543,7 +537,7 @@ void CChatClient::DecodeCommand(WORD wType, WORD wLen, char *cmd)
 		WriteMessage("Info: Room is powered by WinMX 3.53.", g_sSettings.GetRGBOp());
 		if(m_bOldJoin){
 
-			WriteMessage("Warning: You used the MXChatd compatible join method to enter this room. Please only use that option for rooms that are actually hosted by MXChatd ;)", RGB(150,0,0));
+			WriteMessage("Warning: You used the MXChatd compatible join method to enter this room. To enjoy the full potential of the new chatroom engine, please join normally :)", RGB(150,0,0));
 		}
 		::SendMessage(m_pView->m_hWnd, UWM_SERVERTYPE, SERVER_WINMX353, 0);
 		break;

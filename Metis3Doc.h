@@ -57,6 +57,7 @@ public:
 
 	CString m_strRoom;
 	CString m_strName;
+	CString m_strTopic;
 	DWORD   m_dwFiles;
 	WORD    m_wLine;
 	WORD    m_wUserMode;

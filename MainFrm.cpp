@@ -30,7 +30,7 @@
 #include <mmsystem.h>
 #include "Tokenizer.h"
 #include "SystemInfo.h"
-
+#include "ini.h"
 #include "RoboEx.h"
 #include ".\mainfrm.h"
 
@@ -55,11 +55,12 @@ extern CSettings    g_sSettings;
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame
 #define WM_TRAY_ICON_NOTIFY_MESSAGE (WM_USER + 1)
-
+#define TIMER_ANIMATE 101010
 
 IMPLEMENT_DYNAMIC(CMainFrame, CMDIFrameWnd)
 
 BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
+	ON_WM_TIMER()
 	ON_WM_CLOSE()
 	ON_WM_CREATE()
 	ON_COMMAND(ID_VIEW_OPTIONS, OnViewOptions)
@@ -106,6 +107,9 @@ CMainFrame::CMainFrame()
 	m_bSettings       = FALSE;
 	m_bAway			  = FALSE;
 	m_bQuickJoin	  = FALSE;
+	m_hIcon			  = NULL;
+	m_hIcon2		  = NULL;
+	m_nIcon			  = 0;
 }
 
 CMainFrame::~CMainFrame()
@@ -113,6 +117,10 @@ CMainFrame::~CMainFrame()
 
 	UnloadPlugins();
 	DeleteEmoticons();
+	if(m_hIcon)
+		DeleteObject(m_hIcon);
+	if(m_hIcon2)
+		DeleteObject(m_hIcon2);
 }
 
 int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -120,6 +128,23 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	if (CMDIFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
+
+	m_hIcon = (HICON)LoadImage(GetApp()->m_hInstance, MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR );
+	m_hIcon2 = (HICON)LoadImage(GetApp()->m_hInstance, MAKEINTRESOURCE(IDI_ANI), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR );
+
+	m_cmSystray.LoadMenu(IDR_SYSTRAY);
+	LoadToTray(
+		m_hWnd,
+		WM_TRAY_ICON_NOTIFY_MESSAGE, 
+		GetApp()->m_strAppTitle, 
+		"",
+		GetApp()->m_strAppTitle, 
+		1, 
+		m_hIcon,
+		NIIF_INFO
+	); 
+
+	StartAni();
 
 	if (!m_wndToolBarStd.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
 		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
@@ -177,25 +202,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndStatusBar.SetPaneInfo(3,ID_SEPARATOR,SBPS_NORMAL,100);
 	m_wndStatusBar.GetStatusBarCtrl().SetText("", 2, SBT_OWNERDRAW); 
 
-	m_hIcon = (HICON)LoadImage(GetApp()->m_hInstance, MAKEINTRESOURCE(IDR_MAINFRAME), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR );
-
-	//m_wndDocSelector.EnableDocking(CBRS_ALIGN_TOP|CBRS_ALIGN_BOTTOM);
-	
-
-	//DockControlBar(&m_wndDocSelector);
 	RecalcLayout();
-
-	m_cmSystray.LoadMenu(IDR_SYSTRAY);
-	LoadToTray(
-		m_hWnd,
-		WM_TRAY_ICON_NOTIFY_MESSAGE, 
-		GetApp()->m_strAppTitle, 
-		"",
-		GetApp()->m_strAppTitle, 
-		1, 
-		m_hIcon,
-		NIIF_INFO
-	); 
 
 	SetWindowText(GetApp()->m_pszAppName);
 
@@ -244,6 +251,72 @@ void CMainFrame::Dump(CDumpContext& dc) const
 
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame message handlers
+
+
+void CMainFrame::StopAni(void)
+{
+
+	if(m_nIcon < 2){
+
+		KillTimer(TIMER_ANIMATE);
+		m_nIcon = 2;
+		ModifyTrayIcon(m_hIcon);
+	}
+}
+
+void CMainFrame::StartAni(void)
+{
+	if(m_nIcon == 2){
+
+		m_nIcon = 0;
+		SetTimer(TIMER_ANIMATE, 500, 0);
+	}
+}
+
+void CMainFrame::OnTimer(UINT nIDEvent)
+{
+
+	if(nIDEvent == TIMER_ANIMATE){
+
+		if(m_nIcon == 0){
+
+			m_nIcon = 1;
+			ModifyTrayIcon(m_hIcon);
+		}
+		else{
+
+            m_nIcon = 0;
+			ModifyTrayIcon(m_hIcon2);
+		}
+	}
+	else{
+
+		CMDIFrameWnd::OnTimer(nIDEvent);
+	}
+
+}
+
+void CMainFrame::DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon)
+{
+
+	m_nIconData.uFlags		     = NIF_TIP | NIF_INFO;
+	m_nIconData.dwInfoFlags      = dwIcon; // add an icon to a balloon ToolTip
+	m_nIconData.uTimeout         = uTimeout * 1000;
+	strcpy( m_nIconData.szInfo, strMessage);
+
+	Shell_NotifyIcon(NIM_MODIFY, &m_nIconData); // add to the taskbar's status area
+}
+
+
+
+void CMainFrame::ModifyTrayIcon(HICON hIcon)
+{
+
+	m_nIconData.uFlags	= NIF_ICON;
+	m_nIconData.hIcon	= hIcon;
+
+	Shell_NotifyIcon(NIM_MODIFY, &m_nIconData);
+}
 
 // dwIcon may be
 // - NIIF_ERROR     An error icon. 
@@ -394,8 +467,7 @@ void CMainFrame::OnFileNew()
 	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
 	CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
-	pTemplate->OpenDocumentFile(NULL); 
-	
+	pTemplate->OpenDocumentFile(NULL);
 }
 
 
@@ -425,6 +497,16 @@ void CMainFrame::OnViewOptions()
 		pTemplate = GetApp()->GetNextDocTemplate(pos);
 		pTemplate->OpenDocumentFile(NULL); 
 		m_bSettings = TRUE;
+	}
+	else{
+
+		CString strText;
+		MDIGetActive()->GetWindowText(strText);
+		while(strText != "Settings"){
+			
+			this->MDINext();
+			MDIGetActive()->GetWindowText(strText);
+		}
 	}
 }
 
@@ -590,7 +672,6 @@ void CMainFrame::OnUpdateFrameTitle(BOOL bAddToTitle)
 
 		// set title if changed, but don't remove completely
 		SetWindowText(szText);
-		//lstrcat(szText, " - ");
 		lstrcat(szText, (char *)((LPCTSTR) strTitle));
 		AfxGetMainWnd()->SetWindowText(szText);
 	}
@@ -659,7 +740,6 @@ void CMainFrame::DeleteEmoticons(void)
 	{
 		Emoticon *eEmoticon = m_lEmoticons.GetNext(pos);
 		DeleteObject(eEmoticon->hBitmap);
-		//eEmoticon->iImage.Destroy();
 		m_lEmoticons.RemoveAt(m_lEmoticons.Find(eEmoticon));
 		delete eEmoticon;
 	}
@@ -817,22 +897,6 @@ void CMainFrame::OnSystrayRestore()
 	ShowWindow(SW_RESTORE);
 }
 
-void CMainFrame::DisplayToolTip(CString strMessage, UINT uTimeout, DWORD dwIcon)
-{
-
-	
-	
-	m_nIconData.uFlags		      = NIF_TIP | NIF_INFO;
-
-	m_nIconData.dwInfoFlags      = dwIcon; // add an icon to a balloon ToolTip
-
-	m_nIconData.uTimeout         = uTimeout * 1000;
-
-	strcpy( m_nIconData.szInfo, strMessage);
-
-	Shell_NotifyIcon(NIM_MODIFY, &m_nIconData); // add to the taskbar's status area
-}
-
 void CMainFrame::CheckUpdate(void)
 {
 
@@ -879,3 +943,29 @@ void CMainFrame::CheckUpdate(void)
 		DisplayToolTip(strTmp, 30);
 	}
 }
+
+void CMainFrame::ExecuteAutoJoins(void)
+{
+
+	CIni ini;
+	int n = 0;
+	CString strTmp, strRoom;
+	
+	ini.SetIniFileName(g_sSettings.GetWorkingDir(FALSE) + "\\RoboMX.ini");
+	n = ini.GetValue("AutoJoins", "Num", 0);
+
+	for(int i = 1; i < n+1; i++){
+
+		strTmp.Format("AutoJoin_%03d", i);
+		strRoom = ini.GetValue("AutoJoins", strTmp, "");
+		if(!strRoom.IsEmpty()){
+
+
+			m_strRoom = strRoom;
+			m_bQuickJoin = TRUE;
+			OnFileNew();
+			Sleep(100);
+		}	
+	}
+}
+

@@ -404,15 +404,10 @@ int CMySocket::SendOnce(char *pBuff, int nMaxLen, int nWait)
 BOOL CMySocket::Close(void)
 {
 
-	//m_dwLastError = SOCK_NOERROR;
-
-	// check if we are actually connected ;)
 	if(m_sSocket != INVALID_SOCKET){
 
-		//char Char;
-
 		shutdown(m_sSocket, SD_BOTH);
-		//while(recv(m_sSocket, &Char, 1, 0) == 1); // recv left data...
+
 		closesocket(m_sSocket);
 		m_sSocket = INVALID_SOCKET;
 	}
@@ -437,13 +432,13 @@ CString CMySocket::GetLastErrorStr(void)
 	switch(GetLastError()){
 
 	case SOCK_NOERROR:
-		strError = "No software-error occured. Probably Disconnected / Kicked / Banned?";
+		strError = "There was no network error. May be you have been kicked or banned?";
 		break;
 	case SOCK_TIMEOUT:
-		strError = "Connection timeout";
+		strError = "The connection timed out.";
 		break;
 	case SOCK_SOCKINVALID:
-		strError = "Invalid Socket";
+		strError = "Invalid Socket.";
 		break;
 	default:
 		strError = GetErrorString(GetLastError());
@@ -517,7 +512,7 @@ CString CMySocket::GetErrorString(DWORD dwError){
             NULL) == 0){
 
 		// Unknown error code %08x (%d)
-		 strError.Format("Unknown error 0x%08x (%d)", dwError, LOWORD(dwError));
+		 strError.Format("Sorry, the error number 0x%08x is unknown (%d)", dwError, LOWORD(dwError));
     }
 	else{
 
@@ -578,14 +573,13 @@ int CMySocket::RecvFrom(char *pBuff, int nLen, int nWait)
 CString CMySocket::GetHostName(CString strIP)
 {
 
-	if(strIP.IsEmpty() || strIP == "0.0.0.0") return CString();
+	if(strIP.IsEmpty() || strIP == "0.0.0.0") return strIP;
 
 	CString strHost;
 	HOSTENT *host = NULL;
-	if(inet_addr(strIP)==INADDR_NONE){
+	if(inet_addr(strIP) == INADDR_NONE){
 
-		TRACE("Not a valid IP address: %s\n", strIP);
-		return CString();
+		return strIP;
 	}
 	else{
 
@@ -594,14 +588,11 @@ CString CMySocket::GetHostName(CString strIP)
 	}
 	if(host == NULL){
 
-		TRACE("Could not resolve hostname of %s\n", strIP);
 		strHost = strIP;
 	}
 	else{
 
 		strHost = host->h_name;
-		TRACE("Hostname: %s %s\n", host->h_name);
-
 	}
 
 	return strHost;

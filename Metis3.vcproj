@@ -380,6 +380,12 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ExtCfg.cpp">
+			</File>
+			<File
+				RelativePath=".\FolderDialog.cpp">
+			</File>
+			<File
 				RelativePath="FunCfg.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -930,6 +936,12 @@
 				RelativePath="DocSelect.h">
 			</File>
 			<File
+				RelativePath=".\ExtCfg.h">
+			</File>
+			<File
+				RelativePath=".\FolderDialog.h">
+			</File>
+			<File
 				RelativePath="FunCfg.h">
 			</File>
 			<File
@@ -1046,6 +1058,9 @@
 			Filter="ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe">
 			<File
 				RelativePath=".\res\about.bmp">
+			</File>
+			<File
+				RelativePath=".\res\Ani.ico">
 			</File>
 			<File
 				RelativePath="res\bg.bmp">

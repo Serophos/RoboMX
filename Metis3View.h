@@ -106,6 +106,11 @@ protected:
 	CImageList	m_iImageList;
 	CString		 m_strTarget;
 
+	// logging stuff
+	CStdioFile     m_fLog;
+	BOOL		   m_bFileOpened;
+	BOOL Log(CString strName, CString strText);
+
 // Generated message map functions
 protected:
 	BOOL m_bHasJoined;
@@ -184,6 +189,12 @@ public:
 	afx_msg LRESULT OnRenameCl(WPARAM wParam, LPARAM lParam);
 protected:
 	CString GetUserInput(CString strReason = "");
+public:
+	afx_msg void OnViewLogfile();
+	void Disconnect(void);
+	afx_msg void OnChatroomViewtopic();
+	afx_msg void OnChatroomAddtoautojoin();
+	afx_msg void OnChatroomViewcurrentbans();
 };
 
 #ifndef _DEBUG  // debug version in Metis3View.cpp

@@ -71,6 +71,7 @@ IDR_SETTINGS            ICON                    "res\\icon1.ico"
 IDR_CHANNEL             ICON                    "res\\metistyp.ico"
 IDR_LIST                ICON                    "res\\list.ico"
 IDR_SERVER              ICON                    "res\\idr_serv.ico"
+IDI_ANI                 ICON                    "res\\Ani.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -86,6 +87,7 @@ IDB_ABOUTBG             BITMAP                  "res\\about.bmp"
 IDB_TOOLBAR256_DEACT    BITMAP                  "res\\toolbar2.bmp"
 IDB_TOOLBAR256          BITMAP                  "res\\Toolbar_256.bmp"
 IDB_USERMODE            BITMAP                  "res\\usermodes.bmp"
+IDB_PREVIEW             BITMAP                  "res\\bitmap3.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -229,6 +231,7 @@ BEGIN
         MENUITEM "&Toolbar",                    ID_VIEW_TOOLBAR
         MENUITEM "&Status Bar",                 ID_VIEW_STATUS_BAR
         MENUITEM SEPARATOR
+        MENUITEM "&Logfile",                    ID_VIEW_LOGFILE
         MENUITEM "&Options",                    ID_VIEW_OPTIONS
     END
     POPUP "&Window"
@@ -327,8 +330,16 @@ IDR_CHAT MENU
 BEGIN
     POPUP "Chatroom"
     BEGIN
+        MENUITEM "View Channel &Log",           32860
+        MENUITEM SEPARATOR
         MENUITEM "&Select All",                 ID_CHATROOM_SELECTALL
         MENUITEM "&Copy",                       ID_CHATROOM_COPY
+        MENUITEM SEPARATOR
+        MENUITEM "R&ejoin",                     ID_CHATROOM_REJOIN
+        MENUITEM "Add to Auto-&Join",           ID_CHATROOM_ADDTOAUTOJOIN
+        MENUITEM SEPARATOR
+        MENUITEM "View To&pic",                 ID_CHATROOM_VIEWTOPIC
+        MENUITEM "View current &bans",          ID_CHATROOM_VIEWCURRENTBANS
         MENUITEM SEPARATOR
         POPUP "&Display in Channel"
         BEGIN
@@ -653,56 +664,53 @@ IDD_GENERAL DIALOGEX 0, 0, 361, 256
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Options",IDC_STATIC_OPTIONS,1,1,183,104
     CONTROL         "Enable &History",IDC_ENABLE_HISTORY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,10,85,10
-    EDITTEXT        IDC_HISTORDEPTH,100,9,40,12,ES_AUTOHSCROLL
-    CONTROL         "&Limit Chatwindow to ",IDC_LINES,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,24,85,9
-    EDITTEXT        IDC_LINESNUM,100,22,40,12,ES_AUTOHSCROLL
-    CONTROL         "Minimize to &tray",IDC_MINITRAY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,35,85,10
-    CONTROL         "Check for &Updates",IDC_UPDATE,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,100,35,75,10
-    CONTROL         "Print &PING notification",IDC_PING,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,47,85,10
-    CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,100,47,77,10
-    CONTROL         "Maximize &Clientwindows",IDC_MDIMAXI,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,58,93,10
-    CONTROL         "Use &Keyword Higlightning for Userlist too",
-                    IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,
-                    90,167,10
-    CONTROL         "Auto&load Channellist",IDC_LISTCHANNEL,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,80,162,10
-    GROUPBOX        "Auto &Greet Channels",IDC_STATIC,189,1,171,155
-    EDITTEXT        IDC_CHANNELNAME,194,14,103,14,ES_AUTOHSCROLL
-    PUSHBUTTON      "&Add",IDC_ADDCHANNEL,303,14,50,14
-    LISTBOX         IDC_CHANNELLIST,194,28,103,57,LBS_SORT | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "&Remove",IDC_REMOVECHANNEL,303,42,50,16
-    CONTROL         "All Channe&ls",IDC_ALLCHANNELS,"Button",BS_AUTOCHECKBOX | 
-                    BS_MULTILINE | WS_TABSTOP,303,62,50,29
-    LTEXT           "Gre&etings:",IDC_STATIC_GREETING,194,87,159,8
-    EDITTEXT        IDC_GREETING,194,99,105,12,ES_AUTOHSCROLL
-    GROUPBOX        "Time",IDC_STATIC_TIMEFORMAT,1,112,183,44
-    CONTROL         "Print Time&stamp in front of messages",IDC_TIMESTAMP,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,123,168,10
-    COMBOBOX        IDC_TIME,7,140,160,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
-    GROUPBOX        "Plugins",IDC_STATIC_PLUGINS,3,156,357,99
-    CONTROL         "List1",IDC_PLUGINLIST,"SysListView32",LVS_REPORT | 
-                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
-                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,7,169,289,79
-    PUSHBUTTON      "&Configure",IDC_CONFIGURE,304,169,50,14
-    PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,304,234,50,14
-    PUSHBUTTON      "&Rescan",IDC_RESCAN,304,217,50,14
-    PUSHBUTTON      "&Add",IDC_ADDCHANNEL2,304,98,50,14
-    PUSHBUTTON      "&Remove",IDC_REMOVECHANNEL2,304,115,50,16
-    LISTBOX         IDC_WELCOMES,194,112,103,40,LBS_SORT | 
-                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,8,85,10
+    EDITTEXT        IDC_HISTORDEPTH,100,7,40,12,ES_AUTOHSCROLL
+    CONTROL         "L&imit Chatwindow to ",IDC_LINES,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,184,9,81,9
+    EDITTEXT        IDC_LINESNUM,269,7,40,12,ES_AUTOHSCROLL
     CONTROL         "Enable Command-Scroller",IDC_SCROLLER,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,7,69,165,10
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,19,171,10
+    CONTROL         "Check for &Updates",IDC_UPDATE,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,184,19,170,10
+    CONTROL         "Show &Emoticons",IDC_EMOTICONS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,7,29,171,10
+    CONTROL         "Print &PING notification",IDC_PING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,184,29,170,10
+    CONTROL         "Ma&ximize Clientwindows",IDC_MDIMAXI,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,39,171,10
+    CONTROL         "Minimize to &tray",IDC_MINITRAY,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,184,39,170,10
+    CONTROL         "Auto&load Channellist",IDC_LISTCHANNEL,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,7,49,171,10
+    CONTROL         "Use &Keyword Higlightning for Userlist too",
+                    IDC_USERHILITE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,184,
+                    49,171,10
+    CONTROL         "Enable logging and store logs in this folder:",IDC_LOG,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,60,171,10
+    EDITTEXT        IDC_LOGDIR,7,71,146,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      "...",IDC_SELECT_LOG_DIR,154,71,25,14
+    CONTROL         "Print Time&stamp in front of messages",IDC_TIMESTAMP,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,7,90,156,10
+    COMBOBOX        IDC_TIME,184,89,170,70,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP
+    GROUPBOX        "Auto-Greet Channels",IDC_STATIC,1,111,359,144
+    LTEXT           "&Channels:",IDC_STATIC,7,121,93,8
+    EDITTEXT        IDC_CHANNELNAME,7,135,103,14,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_ADDCHANNEL,114,135,50,14
+    LISTBOX         IDC_CHANNELLIST,7,150,103,98,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_REMOVECHANNEL,113,151,50,15
+    CONTROL         "&All Channels",IDC_ALLCHANNELS,"Button",BS_AUTOCHECKBOX | 
+                    BS_MULTILINE | WS_TABSTOP,117,187,50,29
+    LTEXT           "&Greetings:",IDC_STATIC_GREETING,184,121,156,8
+    EDITTEXT        IDC_GREETING,184,137,115,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Add",IDC_ADDCHANNEL2,304,135,50,14
+    LISTBOX         IDC_WELCOMES,184,150,115,98,LBS_SORT | 
+                    LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "Remove",IDC_REMOVECHANNEL2,304,151,50,14
+    GROUPBOX        "",IDC_STATIC,1,1,359,106
 END
 
 IDD_COLORS DIALOGEX 0, 0, 363, 242
@@ -804,33 +812,33 @@ BEGIN
     LTEXT           "",IDC_STATIC_OPMSG,183,153,22,13,0,WS_EX_STATICEDGE
 END
 
-IDD_MESSAGES DIALOGEX 0, 0, 357, 233
+IDD_MESSAGES DIALOGEX 0, 0, 357, 249
 STYLE DS_SETFONT | WS_CHILD
 FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
-    GROUPBOX        "Quick Messages",IDC_STATIC_QUICK,2,1,354,74
-    EDITTEXT        IDC_MSG_ADD,8,12,288,12,ES_AUTOHSCROLL
-    PUSHBUTTON      "Add",IDC_MSG_ADD_BTN,301,12,50,12
-    LISTBOX         IDC_QUICKCMDS,8,28,288,42,LBS_NOINTEGRALHEIGHT | 
-                    WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "Remove",IDC_QUICKREM,301,28,50,12
-    PUSHBUTTON      "Up",IDC_QUICKUP,301,43,50,12
-    PUSHBUTTON      "Down",IDC_QUICKDOWN,301,58,50,13
-    GROUPBOX        "Join / Part Messages",IDC_STATIC_JOINPART,2,76,354,81
-    EDITTEXT        IDC_JOIN,54,91,297,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_PART,54,106,297,12,ES_AUTOHSCROLL
-    LTEXT           "Join",IDC_STATIC_JOIN,8,93,40,8
-    LTEXT           "Part",IDC_STATIC_PART,8,108,40,8
-    GROUPBOX        "MP3 / Video Announcement (F8) [Requires Winamp 2.x or 5.x]",
-                    IDC_STATIC_WINAMP,2,161,354,71
-    LTEXT           "MP3 / Audio:",IDC_STATIC_MUSIC,5,175,46,8
-    EDITTEXT        IDC_NOWLISTENING,54,173,297,12,ES_AUTOHSCROLL
-    LTEXT           "Video:",IDC_STATIC_VIDEO,8,191,40,8
-    EDITTEXT        IDC_NOW_WATCHING,54,189,297,12,ES_AUTOHSCROLL
-    LTEXT           "%WA-SONG% %WA-ARTIST% %WA-REMTIME% %WA-ELATIME% %WA-TOTALTIME%\n%WA-BITRATE% %WA-SAMPLERATE% %WA-CHANNELS% %WA-VERSION%",
-                    IDC_STATIC_VARS,8,208,343,19
+    GROUPBOX        "Join / Part Messages",IDC_STATIC_JOINPART,2,1,354,81
+    LTEXT           "&Join:",IDC_STATIC_JOIN,8,18,40,8
+    EDITTEXT        IDC_JOIN,54,16,297,12,ES_AUTOHSCROLL
+    LTEXT           "&Part:",IDC_STATIC_PART,8,33,40,8
+    EDITTEXT        IDC_PART,54,31,297,12,ES_AUTOHSCROLL
     LTEXT           "Variables:\n%NAME%  %FILES%  %LINE%  %IP%  %HOSTNAME%  %NUMUSERS%  %TIME%  %ROOMNAME%\nAnd in the Part message: %STAYTIME%\nPlus all Winamp variables of course",
-                    IDC_STATIC,8,122,343,32
+                    IDC_STATIC,8,47,343,32,SS_SUNKEN
+    GROUPBOX        "MP3 / Video Announcement (F8) [Requires Winamp 2.x or 5.x]",
+                    IDC_STATIC_WINAMP,1,85,354,71
+    LTEXT           "MP3 / &Audio:",IDC_STATIC_MUSIC,5,100,46,8
+    EDITTEXT        IDC_NOWLISTENING,54,98,297,12,ES_AUTOHSCROLL
+    LTEXT           "&Video:",IDC_STATIC_VIDEO,8,116,40,8
+    EDITTEXT        IDC_NOW_WATCHING,54,114,297,12,ES_AUTOHSCROLL
+    LTEXT           "%WA-SONG% %WA-ARTIST% %WA-REMTIME% %WA-ELATIME% %WA-TOTALTIME%\n%WA-BITRATE% %WA-SAMPLERATE% %WA-CHANNELS% %WA-VERSION%",
+                    IDC_STATIC_VARS,8,133,343,19,SS_SUNKEN
+    GROUPBOX        "&Quick Messages",IDC_STATIC_QUICK,1,160,355,88
+    EDITTEXT        IDC_MSG_ADD,8,171,288,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "Ad&d",IDC_MSG_ADD_BTN,301,171,50,12
+    LISTBOX         IDC_QUICKCMDS,8,185,288,60,LBS_NOINTEGRALHEIGHT | 
+                    WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "&Remove",IDC_QUICKREM,301,185,50,12
+    PUSHBUTTON      "&Up",IDC_QUICKUP,301,200,50,12
+    PUSHBUTTON      "&Down",IDC_QUICKDOWN,301,214,50,13
 END
 
 IDD_SOUND DIALOGEX 0, 0, 360, 261
@@ -951,6 +959,8 @@ BEGIN
                     WS_BORDER | WS_TABSTOP,7,164,275,78
     PUSHBUTTON      "Remove",IDC_DELETE_EMOTICON,288,164,50,14
     PUSHBUTTON      "Add",IDC_ADD_EMOTICON,288,147,50,14
+    CONTROL         183,IDC_PREVIEW,"Static",SS_BITMAP,288,200,21,20
+    LTEXT           "Preview:",IDC_STATIC,288,190,50,8
 END
 
 IDD_PAGERCFG DIALOGEX 0, 0, 333, 237
@@ -958,6 +968,21 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
     LTEXT           "Placeholder",IDC_STATIC,148,102,36,8
+END
+
+IDD_EXTENSIONS DIALOGEX 0, 0, 363, 237
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_CHILD
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    GROUPBOX        "Add-Ons",IDC_STATIC_PLUGINS,2,2,357,231
+    CONTROL         "",IDC_PLUGINLIST,"SysListView32",LVS_REPORT | 
+                    LVS_SINGLESEL | LVS_SHOWSELALWAYS | LVS_SORTASCENDING | 
+                    LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,8,59,344,145
+    PUSHBUTTON      "&Configure",IDC_CONFIGURE,302,210,50,14
+    PUSHBUTTON      "&Uninstall",IDC_UNINSTALL,61,210,50,14
+    PUSHBUTTON      "&Rescan",IDC_RESCAN,8,210,50,14
+    LTEXT           "This dialog displays all Add-Ons currently loaded into RoboMX.\nYou can configure, add or remove Add-Ons here.\nIf you want to add new Add-Ons, put them them into the Add-Ons folder of your RoboMX installation.\nThen click on 'Rescan'.",
+                    IDC_STATIC,8,18,344,38
 END
 
 
@@ -1091,20 +1116,22 @@ BEGIN
         VERTGUIDE, 7
         VERTGUIDE, 92
         VERTGUIDE, 100
+        VERTGUIDE, 178
         VERTGUIDE, 184
-        VERTGUIDE, 194
         VERTGUIDE, 354
         TOPMARGIN, 1
         BOTTOMMARGIN, 255
-        HORZGUIDE, 63
-        HORZGUIDE, 73
+        HORZGUIDE, 13
+        HORZGUIDE, 24
+        HORZGUIDE, 34
+        HORZGUIDE, 44
+        HORZGUIDE, 54
+        HORZGUIDE, 65
         HORZGUIDE, 85
         HORZGUIDE, 95
-        HORZGUIDE, 105
-        HORZGUIDE, 123
-        HORZGUIDE, 156
-        HORZGUIDE, 160
-        HORZGUIDE, 169
+        HORZGUIDE, 111
+        HORZGUIDE, 129
+        HORZGUIDE, 149
         HORZGUIDE, 248
     END
 
@@ -1139,11 +1166,11 @@ BEGIN
         VERTGUIDE, 8
         VERTGUIDE, 351
         TOPMARGIN, 1
-        BOTTOMMARGIN, 232
+        BOTTOMMARGIN, 248
         HORZGUIDE, 97
         HORZGUIDE, 112
-        HORZGUIDE, 179
-        HORZGUIDE, 195
+        HORZGUIDE, 177
+        HORZGUIDE, 185
     END
 
     IDD_SOUND, DIALOG
@@ -1200,6 +1227,7 @@ BEGIN
         VERTGUIDE, 247
         VERTGUIDE, 282
         VERTGUIDE, 288
+        VERTGUIDE, 313
         VERTGUIDE, 338
         TOPMARGIN, 3
         BOTTOMMARGIN, 250
@@ -1222,6 +1250,17 @@ BEGIN
         TOPMARGIN, 2
         BOTTOMMARGIN, 233
         HORZGUIDE, 32
+    END
+
+    IDD_EXTENSIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 2
+        RIGHTMARGIN, 359
+        VERTGUIDE, 8
+        VERTGUIDE, 352
+        TOPMARGIN, 2
+        BOTTOMMARGIN, 233
+        HORZGUIDE, 217
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -1490,6 +1529,12 @@ STRINGTABLE
 BEGIN
     ID_POPUP_COPYROOMNAME   "Copy the room name"
     ID_POPUP_COPYTOPIC      "Copies the room topic"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_VIEW_LOGFILE         "View Channel Logfile"
+    ID_CHATROOM_REJOIN      "Rejoin the channel"
 END
 
 #endif    // English (U.S.) resources

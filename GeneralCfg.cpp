@@ -22,8 +22,8 @@
 #include "GeneralCfg.h"
 #include "Settings.h"
 #include ".\generalcfg.h"
-#include "RoboEx.h"
 #include "MainFrm.h"
+#include "FolderDialog.h"
 
 extern CSettings g_sSettings;
 
@@ -35,8 +35,6 @@ static char THIS_FILE[] = __FILE__;
 
 /////////////////////////////////////////////////////////////////////////////
 // CGeneralCfg dialog
-
-extern CPtrArray g_aPlugins;
 
 CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 	: CCfgDlg(CGeneralCfg::IDD, pParent)
@@ -64,7 +62,6 @@ CGeneralCfg::CGeneralCfg(CWnd* pParent /*=NULL*/)
 void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_PLUGINLIST, m_lcPlugins);
 	DDX_Control(pDX, IDC_CHANNELLIST, m_lbChannels);
 	DDX_Control(pDX, IDC_WELCOMES, m_lbGreetings);
 	DDX_Text(pDX, IDC_HISTORDEPTH, m_nHistory);
@@ -84,6 +81,8 @@ void CGeneralCfg::DoDataExchange(CDataExchange* pDX)
 	DDX_Check(pDX, IDC_UPDATE, m_bUpdate);
 	DDX_Check(pDX, IDC_LISTCHANNEL, m_bAutoList);
 	DDX_Check(pDX, IDC_SCROLLER, m_bScroller);
+	DDX_Check(pDX, IDC_LOG, m_bLog);
+	DDX_Text(pDX, IDC_LOGDIR, m_strPath);
 }
 
 
@@ -93,11 +92,9 @@ BEGIN_MESSAGE_MAP(CGeneralCfg, CCfgDlg)
 	ON_BN_CLICKED(IDC_ADDCHANNEL, OnAddchannel)
 	ON_BN_CLICKED(IDC_REMOVECHANNEL, OnRemovechannel)
 	//}}AFX_MSG_MAP
-	ON_BN_CLICKED(IDC_CONFIGURE, OnBnClickedConfigure)
-	ON_BN_CLICKED(IDC_RESCAN, OnBnClickedRescan)
-	ON_BN_CLICKED(IDC_UNINSTALL, OnBnClickedUninstall)
 	ON_BN_CLICKED(IDC_ADDCHANNEL2, OnBnClickedAddchannel2)
 	ON_BN_CLICKED(IDC_REMOVECHANNEL2, OnBnClickedRemovechannel2)
+	ON_BN_CLICKED(IDC_SELECT_LOG_DIR, OnBnClickedSelectLogDir)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -108,16 +105,10 @@ BOOL CGeneralCfg::OnInitDialog()
 
 	CCfgDlg::OnInitDialog();
 	
-	m_lcPlugins.InsertColumn(0, "Plugin", LVCFMT_LEFT, 100);
-	m_lcPlugins.InsertColumn(1, "Description", LVCFMT_LEFT, 150);
-	m_lcPlugins.InsertColumn(2, "Author", LVCFMT_LEFT, 120);
-	ListView_SetExtendedListViewStyle(m_lcPlugins.m_hWnd, LVS_EX_FULLROWSELECT);
-
 	m_bHistory     = g_sSettings.GetSaveHistory();
 	m_nHistory     = g_sSettings.GetHistoryDepth();
 	m_bLimit       = g_sSettings.GetLimitChat();
 	m_nLimit       = g_sSettings.GetMaxLines();
-	//m_strGreeting  = g_sSettings.GetEnterMsg();
 	m_bAllChannels = g_sSettings.GetDoEnterMsg();
 	m_bTimeStamp   = g_sSettings.GetPrintTime();
 	m_nTime		   = g_sSettings.GetTimeFmt();
@@ -129,18 +120,12 @@ BOOL CGeneralCfg::OnInitDialog()
 	m_bAutoList	   = g_sSettings.GetAutoList();
 	m_bMaxi		   = g_sSettings.GetMaxi();
 	m_bScroller    = g_sSettings.GetEnableScroller();
+	m_bLog		   = g_sSettings.GetLog();
+	m_strPath	   = g_sSettings.GetLogDir();
 
 	UpdateData(FALSE);
 	LoadRooms();
 	OnAllchannels();
-	
-	int i = 0, j = 0;
-	for(i = 0; i < g_aPlugins.GetSize(); i++){
-
-		j = m_lcPlugins.InsertItem(0, ((CRoboEx*)g_aPlugins[i])->m_strName, 0);
-		m_lcPlugins.SetItemText(j, 1, ((CRoboEx*)g_aPlugins[i])->m_strDescription);
-		m_lcPlugins.SetItemText(j, 2, ((CRoboEx*)g_aPlugins[i])->m_strAuthor);
-	}
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
@@ -232,7 +217,6 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetHistoryDepth(m_nHistory);
 	g_sSettings.SetLimitChat(m_bLimit);
 	g_sSettings.SetMaxLines(m_nLimit);
-	//g_sSettings.SetEnterMsg(m_strGreeting);
 	g_sSettings.SetPrintTime(m_bTimeStamp);
 	g_sSettings.SetPing(m_bPing);
 	g_sSettings.SetTimeFmt(m_nTime);
@@ -243,7 +227,8 @@ void CGeneralCfg::Apply()
 	g_sSettings.SetAutoList(m_bAutoList);
 	g_sSettings.SetMaxi(m_bMaxi);
 	g_sSettings.SetEnableScroller(m_bScroller);
-
+	g_sSettings.SetLog(m_bLog);
+	g_sSettings.SetLogDir(m_strPath);
 	SaveRooms();
 	LoadRooms();
 }
@@ -289,48 +274,14 @@ void CGeneralCfg::OnBnClickedRemovechannel2()
 	}
 }
 
-
-void CGeneralCfg::OnBnClickedConfigure()
+void CGeneralCfg::OnBnClickedSelectLogDir()
 {
 
-	int nSel = m_lcPlugins.GetNextItem(-1, LVNI_SELECTED);
-	if(nSel >= 0){
+	UpdateData(TRUE);
+	CFolderDialog dlg;
+	if(dlg.DoModal() == IDOK){
 
-		CString strName = m_lcPlugins.GetItemText(nSel, 0);
-		for(int i = 0; i < g_aPlugins.GetSize(); i++){
-
-			if(((CRoboEx*)g_aPlugins[i])->m_strName == strName){
-
-				((CRoboEx*)g_aPlugins[i])->Configure();
-			}
-		}
-	}
-	else{
-
-		AfxMessageBox("You need to select a plugin first.", MB_ICONINFORMATION);
-	}
-}
-
-void CGeneralCfg::OnBnClickedRescan()
-{
-
-	((CMainFrame*)GetApp()->m_pMainWnd)->ReloadPlugins();
-}
-
-void CGeneralCfg::OnBnClickedUninstall()
-{
-
-	int nSel = m_lcPlugins.GetNextItem(-1, LVNI_SELECTED);
-	if(nSel >= 0){
-
-		CString strName = m_lcPlugins.GetItemText(nSel, 0);
-
-		if(AfxMessageBox("Remove Plugin '" + strName + "'?", MB_ICONQUESTION+MB_YESNO) == IDYES){
-
-			if(!((CMainFrame*)GetApp()->m_pMainWnd)->DeletePlugin(strName)){
-
-				AfxMessageBox("Error: Could not delete Plugin " + strName, MB_ICONSTOP);
-			}
-		}
+		m_strPath = dlg.GetPathName();
+		UpdateData(FALSE);
 	}
 }

@@ -115,6 +115,8 @@ void CSettings::Load()
 	if(m_dwFiles > 65535) m_dwFiles = 1;
 	
 	m_bUpdate		= ini.GetValue("General", "CheckUpdate", TRUE);
+	m_strLogDir     = ini.GetValue("General", "LogDir", m_strWd + "\\Logs");
+	m_bLog			= ini.GetValue("General", "Log", 0);
 	m_bAutoList		= ini.GetValue("Look & Feel", "AutoList", TRUE);
 	m_bMaxi			= ini.GetValue("Look & Feel", "AlwaysMaximizeMDI", FALSE);	
 
@@ -304,6 +306,9 @@ void CSettings::Save()
 	ini.SetValue("UserInfo", "Line", m_wLine);
 
 	ini.SetValue("General", "CheckUpdate", m_bUpdate);
+	ini.SetValue("General", "LogDir", m_strLogDir);
+	ini.SetValue("General", "Log", m_bLog);
+
 	ini.SetValue("Look & Feel", "AutoList", m_bAutoList);
 	ini.SetValue("Look & Feel", "AlwaysMaximizeMDI", m_bMaxi);	
 

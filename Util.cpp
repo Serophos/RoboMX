@@ -5,6 +5,8 @@
 #include "SystemInfo.h"
 #include "Tokenizer.h"
 #include "winamp.h"
+#include <stdio.h>
+#include <direct.h>
 
 extern CSettings g_sSettings;
 CSystemInfo  g_sSystem;
@@ -269,12 +271,21 @@ CString Util::GetMyLocalTime()
 				 );
 
 	strTime = szTime;
-
-
-	//strTime.Format("%02d:%02d:%02d", time.wHour, time.wMinute, time.wSecond);
-
-	return strTime;
+    return strTime;
 }
+
+CString Util::GetDateString(void)
+{
+
+	CString strData;
+	SYSTEMTIME time;
+	
+	GetLocalTime(&time);
+
+	strData.Format("_%04d%02d%02d", time.wYear, time.wMonth, time.wDay);
+	return strData;
+}
+
 
 void Util::ReplaceVars(CString &strMsg)
 {
@@ -510,4 +521,55 @@ BOOL Util::FileExists(LPCTSTR lpszFile)
 	END_CATCH;
 
 	return FALSE;
+}
+
+BOOL Util::CreateDirs(CString strFilename)
+{
+
+	int nStart = 3;
+	int nEnd = 0;
+	
+	CString validated = strFilename.Left(2);
+	_tchdir(validated);
+	
+	while(TRUE){
+
+		nEnd = strFilename.Find('\\', nStart);
+		if(nEnd == -1){
+
+			return TRUE;
+		}
+
+		if(_tchdir(validated + "\\" + strFilename.Mid(nStart, nEnd - nStart)) != 0){
+
+			_tchdir(validated);
+			if(_tmkdir(strFilename.Mid(nStart, nEnd - nStart)) != 0){
+
+				return FALSE;
+			}
+			
+		}
+		validated += "\\" + strFilename.Mid(nStart, nEnd - nStart);
+		nStart = nEnd + 1;		
+	}
+
+	return FALSE;
+}
+
+CString Util::MakeValidFilename(CString strName)
+{
+
+	strName.Remove('?');
+	strName.Remove(':');
+	strName.Remove(',');
+	strName.Remove('\\');
+	strName.Remove('/');
+	strName.Remove('<');
+	strName.Remove('>');
+	strName.Remove('\"');
+	strName.Remove('*');
+	strName.Remove('|');
+	strName.Replace(1, '-');
+	
+	return strName;
 }

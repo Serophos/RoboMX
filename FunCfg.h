@@ -9,6 +9,7 @@
 
 #include "CfgDlg.h"
 #include "afxcmn.h"
+#include "afxwin.h"
 /////////////////////////////////////////////////////////////////////////////
 // CFunCfg dialog
 
@@ -53,6 +54,8 @@ public:
 	CListCtrl m_lcVendors;
 	CListCtrl m_lcNames;
 	CListCtrl m_lcSuff;
+	HBITMAP m_hPreview;
+	afx_msg void OnDestroy();
 	afx_msg void OnNMDblclkVendors(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkNames(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnNMDblclkSuffixes(NMHDR *pNMHDR, LRESULT *pResult);
@@ -63,6 +66,8 @@ public:
 	CString m_strPath;
 	CListCtrl m_lcEmo;
 	void WriteEmoticons(void);
+	CStatic m_stPreview;
+	afx_msg void OnLvnItemchangedEmoticonlist(NMHDR *pNMHDR, LRESULT *pResult);
 };
 
 //{{AFX_INSERT_LOCATION}}

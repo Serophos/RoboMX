@@ -41,7 +41,7 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CMetis3Doc)
 	public:
-	virtual void SetTitle(LPCTSTR lpszTitle);
+	virtual void SetTitle(LPCTSTR lpszTitle, BOOL bShort);
 	virtual BOOL OnNewDocument();
 	virtual void Serialize(CArchive& ar);
 	//}}AFX_VIRTUAL

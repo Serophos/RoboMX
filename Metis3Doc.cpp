@@ -22,13 +22,17 @@
 
 #include "Metis3Doc.h"
 #include "ConnectionDlg.h"
-#include ".\metis3doc.h"
+#include "MainFrm.h"
+#include "Settings.h"
+#include "util.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+extern CSettings g_sSettings;
 
 /////////////////////////////////////////////////////////////////////////////
 // CMetis3Doc
@@ -60,11 +64,26 @@ CMetis3Doc::~CMetis3Doc()
 BOOL CMetis3Doc::OnNewDocument()
 {
 
-	CConnectionDlg dlg;
+	if(((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin){
 
-	if(dlg.DoModal() == IDCANCEL){
+		m_dwFiles = g_sSettings.GetFiles();
+		m_wLine   = g_sSettings.GetLine();
+		m_strRoom = ((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom;
+		m_strName = g_sSettings.GetNickname();
+		Util::MakeValidUserName(m_strName);
+	}
+	else{
 
-		return FALSE;
+		CConnectionDlg dlg;
+
+		if(dlg.DoModal() == IDCANCEL){
+
+			return FALSE;
+		}
+		m_dwFiles = dlg.m_dwFiles;
+		m_wLine   = (WORD)dlg.m_nLine;
+		m_strRoom = dlg.m_strRoom;
+		m_strName = dlg.m_strName;
 	}
 
 	if (!CDocument::OnNewDocument()){
@@ -72,11 +91,9 @@ BOOL CMetis3Doc::OnNewDocument()
 		return FALSE;
 	}
 	
-	m_dwFiles = dlg.m_dwFiles;
-	m_wLine   = (WORD)dlg.m_nLine;
-	m_strRoom = dlg.m_strRoom;
-	m_strName = dlg.m_strName;
-	
+	((CMainFrame*)GetApp()->m_pMainWnd)->m_bQuickJoin = FALSE;
+	((CMainFrame*)GetApp()->m_pMainWnd)->m_strRoom.Empty();
+
 	int n = m_strRoom.ReverseFind('_');
 	if(n > 0){
 
@@ -88,22 +105,34 @@ BOOL CMetis3Doc::OnNewDocument()
 }
 
 
-void CMetis3Doc::SetTitle(LPCTSTR lpszTitle)
+void CMetis3Doc::SetTitle(LPCTSTR lpszTitle, BOOL bShort)
 {
 
-	CString strAppendix;
-	
-	int n = m_strRoom.ReverseFind('_');
+	if(bShort){ // the roomname doesnt have the numbers at the end
 
-	m_strRoomShort = lpszTitle;
-	
-	if(n > 0){
+		CString strAppendix;
+		
+		int n = m_strRoom.ReverseFind('_');
 
-		strAppendix = m_strRoom.Mid(n);
-    }
+		m_strRoomShort = lpszTitle;
+		
+		if(n > 0){
 
-	m_strRoom = m_strRoomShort + strAppendix;
+			strAppendix = m_strRoom.Mid(n);
+		}
 
+		m_strRoom = m_strRoomShort + strAppendix;
+	}
+	else{ // the roomname has numbers at the end
+
+
+		m_strRoom = lpszTitle;
+		int n = m_strRoom.ReverseFind('_');
+		if(n > 0){
+
+			m_strRoomShort = m_strRoom.Left(n);
+		}
+	}
 	CDocument::SetTitle(m_strRoom + " (" + m_strName + ")");
 }
 /////////////////////////////////////////////////////////////////////////////

@@ -24,6 +24,8 @@
 #include "settings.h"
 #include "MainFrm.h"
 #include "Util.h"
+#include "Tokenizer.h"
+#include ".\connectiondlg.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -75,11 +77,8 @@ BOOL CConnectionDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	
-	TCHAR szBuffer[_MAX_PATH]; 
-	::GetModuleFileName(GetApp()->m_hInstance, szBuffer, _MAX_PATH);
 	CString strTmp;
-	m_strWd.Format("%s", szBuffer);
-	m_strWd = m_strWd.Left(m_strWd.ReverseFind('\\'));
+	m_strWd = g_sSettings.GetWorkingDir();
 
 	CIni ini;
 	ini.SetIniFileName(m_strWd + "\\RoboMX.ini");
@@ -103,7 +102,10 @@ BOOL CConnectionDlg::OnInitDialog()
 	
 	UpdateData(FALSE);
 
-	return TRUE;  // return TRUE unless you set the focus to a control
+	m_cbRoom.SetFocus();
+	m_cbRoom.SetEditSel(m_strRoom.GetLength()-12, -1);
+
+	return FALSE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
 
@@ -132,8 +134,12 @@ void CConnectionDlg::OnOK()
 		AfxMessageBox("Username contains illegal characters!", MB_ICONINFORMATION);
 		return;
 	}
+
 	
+
 	Util::MakeValidUserName(m_strName);
+	FixRoomName(m_strRoom);
+
 	UpdateData(FALSE);
 
 	if(m_cbRoom.FindStringExact(-1, m_strRoom) == CB_ERR){
@@ -180,4 +186,50 @@ void CConnectionDlg::OnClear()
 
 		ini.SetValue("RoomList", strTmp, "");
 	}
+}
+
+void CConnectionDlg::FixRoomName(CString& strRoom)
+{
+
+	CString strAppendix;
+	
+	int n = strRoom.ReverseFind('_');
+	
+	if(n > 0){
+
+		strAppendix = strRoom.Mid(n);
+    }
+	else return;
+
+	strAppendix.Remove('_');
+	
+	if(strAppendix.GetLength() == 12) return; // this is the normal case
+
+	// if we are here the rommane has format
+	// room_XXX.XXX.XXX.XXX:XXXX
+
+	CTokenizer token(strAppendix, ".:");
+	
+	CString strTmp;
+	int nA = 0, nB = 0, nC = 0, nD = 0, nPort = 0;
+
+	token.Next(strTmp);
+	nA = atoi(strTmp);
+
+	token.Next(strTmp);
+	nB = atoi(strTmp);
+
+	token.Next(strTmp);
+	nC = atoi(strTmp);
+
+	token.Next(strTmp);
+	nD = atoi(strTmp);
+
+	token.Next(strTmp);
+	nPort = atoi(strTmp);
+
+	strTmp = strRoom.Left(n+1);
+	strAppendix.Format("%02X%02X%02X%02X%04X", nD, nC, nB, nA, nPort);
+
+	strRoom = strTmp + strAppendix;
 }

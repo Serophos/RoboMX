@@ -63,6 +63,8 @@ protected:
 	afx_msg void OnClear();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
+public:
+	static void FixRoomName(CString& strRoom);
 };
 
 //{{AFX_INSERT_LOCATION}}

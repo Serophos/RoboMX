@@ -103,6 +103,7 @@ CMainFrame::CMainFrame()
 	m_bFullScreenMode = FALSE;
 	m_bSettings       = FALSE;
 	m_bAway			  = FALSE;
+	m_bQuickJoin	  = FALSE;
 }
 
 CMainFrame::~CMainFrame()

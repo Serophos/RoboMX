@@ -58,9 +58,9 @@ public:
 	void JoinChannel();
 	
 	CString m_strRoom;
-	CImage  m_iBgImage;
-	BOOL  m_bChannelList;
-	BOOL  m_bSettings;
+	//CImage  m_iBgImage;
+	BOOL    m_bChannelList;
+	BOOL    m_bSettings;
 
 	CList<Emoticon*, Emoticon*> m_lEmoticons;
 
@@ -74,10 +74,11 @@ public:
 #endif
 
 	CDocSelector	m_wndDocSelector;
-	CMenu   m_cmSystray;
-	BOOL	m_bAway;
-	CString m_strAway;
-	UINT    m_uAwayStart;
+	CMenu           m_cmSystray;
+	BOOL	        m_bAway;
+	CString			m_strAway;
+	UINT			m_uAwayStart;
+	BOOL			m_bQuickJoin;
 protected:  // control bar embedded members
 
 	CColorStatusBar  m_wndStatusBar;

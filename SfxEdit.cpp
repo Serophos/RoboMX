@@ -72,9 +72,10 @@ void CSfxEdit::OnBrowseSound()
 	
 	UpdateData(TRUE);
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files (*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", NULL, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strReaction, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 	
 	if(dlg.DoModal() == IDOK){
 
@@ -95,11 +96,6 @@ void CSfxEdit::Init(int nEventType, CString strTrigger, CString strReaction)
 BOOL CSfxEdit::OnInitDialog() 
 {
 	CDialog::OnInitDialog();
-	//m_tooltip.Create(this);
-	//m_tooltip.SetBehaviour(PPTOOLTIP_MULTIPLE_SHOW | PPTOOLTIP_TRACKING_MOUSE | PPTOOLTIP_CLOSE_LEAVEWND, -1);
-
-	//m_tooltip.AddTool(GetDlgItem(IDC_TRIGGER), "Word(s) that trigger the sound event.", IDI_TIP);
-	//m_tooltip.AddTool(GetDlgItem(IDC_REACTION), "Filename of sound to be played (must be a valid Wave Audio file).", IDI_TIP);
 
 	UpdateData(FALSE);
 	

@@ -47,7 +47,7 @@ protected:
 // Attributes
 public:
 	enum { IDD = IDD_SETTINGS };
-	void AddCategory(CCfgDlg* pCat, int nICon, LPCTSTR lpszName);
+	void AddCategory(CCfgDlg* pCat, int nICon, UINT nID);
 
 // Operations
 public:

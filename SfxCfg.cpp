@@ -105,8 +105,11 @@ BOOL CSfxCfg::OnInitDialog()
 	
 	ListView_SetExtendedListViewStyle(m_lcSounds.m_hWnd, LVS_EX_FULLROWSELECT);
 
-	m_lcSounds.InsertColumn(0, "Trigger", LVCFMT_LEFT, 150);
-	m_lcSounds.InsertColumn(1, "Sound", LVCFMT_LEFT, 250);
+	CString strTitle;
+	strTitle.LoadString(IDS_TRIGGER);
+	m_lcSounds.InsertColumn(0, strTitle, LVCFMT_LEFT, 150);
+	strTitle.LoadString(IDS_SOUND);
+	m_lcSounds.InsertColumn(1, strTitle, LVCFMT_LEFT, 250);
 	
 	m_strConnect = g_sSettings.GetSfxJoin();
 	m_strDisconnect = g_sSettings.GetSfxPart();
@@ -190,9 +193,10 @@ void CSfxCfg::WriteSounds()
 void CSfxCfg::OnConnected() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strConnect, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strConnect, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -204,9 +208,10 @@ void CSfxCfg::OnConnected()
 void CSfxCfg::OnDisconnected() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strDisconnect, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strDisconnect, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -218,9 +223,10 @@ void CSfxCfg::OnDisconnected()
 void CSfxCfg::OnMotd() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strMotd, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strMotd, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -232,9 +238,10 @@ void CSfxCfg::OnMotd()
 void CSfxCfg::OnRedirected() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strRedirect, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strRedirect, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -246,9 +253,10 @@ void CSfxCfg::OnRedirected()
 void CSfxCfg::OnStartup() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strStart, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strStart, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -260,9 +268,10 @@ void CSfxCfg::OnStartup()
 void CSfxCfg::OnSyserror() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strError, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strError, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -274,9 +283,10 @@ void CSfxCfg::OnSyserror()
 void CSfxCfg::OnTopic() 
 {
 
-	static char BASED_CODE szFilter[] = "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_WAVE_FILTER);
 
-	CFileDialog dlg(TRUE, ".wav", m_strTopic, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".wav", m_strTopic, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -312,7 +322,7 @@ void CSfxCfg::OnDelete()
 
 	if(m_lcSounds.GetSelectedCount() == 0){
 
-		AfxMessageBox("Please select Event to delete first!", MB_OK+MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_SELECTEVENT, MB_OK+MB_ICONINFORMATION);
 		return;
 	}
 	LVITEM iItem = {0};
@@ -328,7 +338,7 @@ void CSfxCfg::OnEdit()
 
 	if(m_lcSounds.GetSelectedCount() == 0){
 
-		AfxMessageBox("Please select Event to edit first!", MB_OK+MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_SELECTEVENT, MB_OK+MB_ICONINFORMATION);
 		return;
 	}
 
@@ -362,7 +372,7 @@ void CSfxCfg::OnPlay()
 
 	if(m_lcSounds.GetSelectedCount() == 0){
 
-		AfxMessageBox("Please select Event to play first!", MB_OK+MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_SELECTEVENT, MB_OK+MB_ICONINFORMATION);
 		return;
 	}
 
@@ -372,7 +382,9 @@ void CSfxCfg::OnPlay()
 	m_lcSounds.GetItem(&iItem);
 	if(!PlaySound(m_lcSounds.GetItemText(iItem.iItem, 1), NULL, SND_FILENAME|SND_ASYNC)){
 
-		AfxMessageBox("Could not play file " + m_lcSounds.GetItemText(iItem.iItem, 1), MB_ICONSTOP);
+		CString strError;
+		strError.Format(IDS_ERROR_PLAYWAVE,	m_lcSounds.GetItemText(iItem.iItem, 1));
+		AfxMessageBox(strError, MB_ICONSTOP);
 	}
 }
 

@@ -79,7 +79,7 @@ public:
 	void SendMotd();
 	void SendMsg(CString strUser, CString strMsg);
 	void SendAction(CString strUser, CString strMsg);
-	void SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles);
+	void SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel, DWORD dwRealIP);
 	void SendPart(const CString strUser, DWORD dwIP, WORD wPort);
 	void SendRename(DWORD dwSrcIP, WORD wSrcPort, const CString strOldName, DWORD dwOldIP, WORD wOldPort, const CString strNewName, DWORD dwNewIP, WORD wNewPort, WORD wLine, DWORD dwFiles);
 	void SendMode(const CString strSender, const CString strMode);

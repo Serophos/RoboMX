@@ -138,13 +138,13 @@ void CSettingsView::OnInitialUpdate()
 	cfgExt.Create(IDD_EXTENSIONS, this);
 	cfgExt.MoveWindow(rcClient);
 
-	AddCategory(&cfgGen, 0, "General");
-	AddCategory(&cfgColor, 1, "Colors");
-	AddCategory(&cfgMsg, 2, "Messages");
-	AddCategory(&cfgSfx, 3, "Sound FX");
-	AddCategory(&cfgFun, 4, "Fun :-)");
-	AddCategory(&cfgPeer, 5, "Server");
-	AddCategory(&cfgExt, 6, "Add-Ons");
+	AddCategory(&cfgGen, 0, IDS_CFG_GENERAL);
+	AddCategory(&cfgColor, 1, IDS_CFG_COLORS);
+	AddCategory(&cfgMsg, 2, IDS_CFG_MSG);
+	AddCategory(&cfgSfx, 3, IDS_CFG_SND);
+	AddCategory(&cfgFun, 4, IDS_CFG_FUN);
+	AddCategory(&cfgPeer, 5, IDS_CFG_SERVER);
+	AddCategory(&cfgExt, 6, IDS_CFG_EXT);
 
 	m_lcCat.SetItemState(0, LVNI_SELECTED, LVNI_SELECTED);
 	cfgGen.ShowWindow(SW_SHOW);
@@ -196,11 +196,13 @@ void CSettingsView::OnItemchangedCat(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
-void CSettingsView::AddCategory(CCfgDlg *pCat, int nIcon, LPCTSTR lpszName)
+void CSettingsView::AddCategory(CCfgDlg *pCat, int nIcon, UINT nID)
 {
-
+	
+	CString strName;
+	strName.LoadString(nID);
 	m_aDlgs.Add(pCat);
-	m_lcCat.InsertItem(m_lcCat.GetItemCount(), lpszName, nIcon);
+	m_lcCat.InsertItem(m_lcCat.GetItemCount(), strName, nIcon);
 }
 
 

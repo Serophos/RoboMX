@@ -58,13 +58,11 @@ CRichEditExCtrl::~CRichEditExCtrl()
 
 
 BEGIN_MESSAGE_MAP(CRichEditExCtrl, CRichEditCtrl)
-	//{{AFX_MSG_MAP(CRichEditExCtrl)
-	ON_WM_CREATE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
 // CRichEditExCtrl message handlers
+
 
 void CRichEditExCtrl::Init(UINT nID)
 {
@@ -126,7 +124,8 @@ void CRichEditExCtrl::SetText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 			{
 				strstp(lpszText, before, next, after);
 				AppendText(before, text, bg);
-				InsertBitmap(hNext);
+				if(!InsertBitmap(hNext))
+					AppendText(next, text, bg);
 				lpszText = after;
 			}
 			else
@@ -138,14 +137,14 @@ void CRichEditExCtrl::SetText(LPCSTR lpszText, COLORREF text, COLORREF bg)
 	}
 }
 
-void CRichEditExCtrl::InsertBitmap(HBITMAP hBitmap)
+BOOL CRichEditExCtrl::InsertBitmap(HBITMAP hBitmap)
 {
 
 	LineScroll(1);
 	int nLen = GetWindowTextLength();
 	SetSel(nLen, nLen);
 
-	CImageDataObject::InsertBitmap(GetIRichEditOle(), this, hBitmap);
+	return CImageDataObject::InsertBitmap(this, hBitmap);
 }
 
 void CRichEditExCtrl::AppendText(LPCSTR lpszText, COLORREF text, COLORREF bg)

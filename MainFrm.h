@@ -138,6 +138,7 @@ public:
 	void ModifyTrayIcon(HICON hIcon);
 	void StopAni(void);
 	void StartAni(void);
+	afx_msg void OnReconnectAll();
 };
 
 /////////////////////////////////////////////////////////////////////////////

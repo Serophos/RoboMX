@@ -44,6 +44,7 @@ CClientSocket::CClientSocket(SOCKET sSocket) :
 	m_wClientID  = 0;
 	m_hMsgTarget = 0;
 	m_eDone.SetEvent();
+	m_wClientType = CLIENT_WINMX331;
 
 	ZeroMemory(m_cBuffer, MAX_BUFFER_SIZE);
 }
@@ -74,7 +75,6 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 	
 	GetCryptKey((BYTE*)btKey, &m_dwUPKey, &m_dwDWKey);
 
-	Hex_Trace((BYTE*)btKey, 16);
 
 	// Recieve Client Keyblock
 	if(Recv(m_cBuffer, 16, 5) != 16){
@@ -83,8 +83,6 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 		m_eDone.SetEvent();
 		return FALSE;
 	}
-
-	Hex_Trace(m_cBuffer, 16);
 
 	// Send up key block
 	if(Send((char*)btKey, 16, 5) != 16){
@@ -102,7 +100,7 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 		return FALSE;
 	}
 
-	
+	ZeroMemory(m_cBuffer, MAX_BUFFER_SIZE);
 
 	// Recv Login info
 	if(Recv(m_cBuffer, 4, 5) != 4){
@@ -117,6 +115,33 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 
 	wType = *(WORD*)m_cBuffer;
 	wLen  = *(WORD*)(m_cBuffer+2);
+
+	// changed for WinMX 3.53 support:
+	if((wType == 0x13ED) && (wLen == 0x0001)){
+
+		m_wClientType  = CLIENT_WINMX353;
+		if(Recv(m_cBuffer, 1, 5) != 1){	  // recieve rest of data
+
+			TRACE("Login recv error\n");
+			m_eDone.SetEvent();
+			Close();
+			return FALSE;
+		}
+		m_dwUPKey = DecryptMXTCP((BYTE*)m_cBuffer, 1, m_dwUPKey);		
+		// now recieve start of next package ;)
+ 		if(Recv(m_cBuffer, 4, 5) != 4){
+
+			TRACE("Login recv error\n");
+			m_eDone.SetEvent();
+			Close();
+			return FALSE;
+		}
+		
+		m_dwUPKey = DecryptMXTCP((BYTE*)m_cBuffer, 4, m_dwUPKey);
+		wType = *(WORD*)m_cBuffer;
+		wLen  = *(WORD*)(m_cBuffer+2);
+
+	}
 
 	if(wType != 0x0064 || wLen > MAX_BUFFER_SIZE){
 
@@ -160,17 +185,19 @@ BOOL CClientSocket::HandShake(const CString strRoom)
 		return FALSE;
 	}
 
-	/**(WORD*)m_cBuffer = 0x68;
-	*(WORD*)(m_cBuffer+2) = 1;
+	if(m_wClientType = CLIENT_WINMX353){
 
-	if(SendCrypted(m_cBuffer, 5, 5) != 5){
+		*(WORD*)m_cBuffer = 0x68;
+		*(WORD*)(m_cBuffer+2) = 1;
 
-		TRACE("Error sending login grant 2\n");
-		m_eDone.SetEvent();
-		Close();
-		return FALSE;
+		if(SendCrypted(m_cBuffer, 5, 5) != 5){
+
+			TRACE("Error sending login grant 2\n");
+			m_eDone.SetEvent();
+			Close();
+			return FALSE;
+		}
 	}
-*/
 	return TRUE;
 }
 
@@ -181,6 +208,7 @@ BOOL CClientSocket::HighlevelHandshake(const CString strKey)
 	if(!strKey.IsEmpty()){
 
 		wLen = Util::FormatMXMessage(0x00CB, (char*)m_cBuffer, "SS", "Server Notice:", "This channel is password protected. Please enter the keyword now.\nYou have 60 seconds. After that you will get automatically disconnected.");
+
 		if(SendCrypted(m_cBuffer, wLen, 5) != wLen){
 
 			TRACE("Error performing highlevel Handshake\n");
@@ -235,7 +263,7 @@ BOOL CClientSocket::HighlevelHandshake(const CString strKey)
 
 	}		
 	
-	wLen = Util::FormatMXMessage(0x00C9, (char*)m_cBuffer, "SS", "Server Notice", "\nThis room is powered by RoboMX v0.1. Note that the software is still Alpha and not all features work properly yet. This message will be removed in the stable version.\nEnjoy your stay! :-)\n\n");
+	wLen = Util::FormatMXMessage(0x00C9, (char*)m_cBuffer, "SS", "Server Notice", "\nThis room is powered by RoboMX. Note that the software is still Alpha and not all features work properly yet. This message will be removed in the stable version.\nEnjoy your stay! :-)\n\n");
 
 	if(SendCrypted(m_cBuffer, wLen, 5) != wLen){
 
@@ -340,6 +368,36 @@ UINT CClientSocket::RecvProc(LPVOID pParam)
 void CClientSocket::HandlePacket(WORD wType, WORD wLen, char* buffer)
 {
 
+	if((wType == 0x1450) && ((m_uMode % UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){
+
+		// this is the new WinMX 3.53 send method, we have to handle the /me part too -sigh-
+		BOOL bAction = FALSE;
+
+		ClientMessage* cm = new ClientMessage();
+		cm->dwIP	= m_dwSrcIP;
+		cm->wPort   = m_wPort;
+		cm->strName = m_strName;
+		cm->strText = buffer;
+		cm->strText.Replace("{\\rtf", "#####");
+		if(cm->strText.Find("/me ", 0) == 0){
+
+			cm->strText = cm->strText.Mid(4);
+			bAction = TRUE;
+		}
+		else if(cm->strText.Find("/action ", 0) == 0){
+
+			cm->strText = cm->strText.Mid(9);
+			bAction = TRUE;
+		}
+		else if(cm->strText.Find("/emote ", 0) == 0){
+
+			cm->strText = cm->strText.Mid(8);
+			bAction = TRUE;
+		}
+
+		SendNotify(bAction ? CC_ACTION : CC_MSG, (LPARAM)cm);
+
+	}
 	if((wType == 0x00C8) && ((m_uMode & UM_SPEAKPERMIT) || (m_uMode & UM_OPERATOR))){ // message
 
 		ClientMessage* cm = new ClientMessage();
@@ -419,20 +477,45 @@ BOOL CClientSocket::SendAction(const CString strUser, const CString strMsg)
 	return SendCrypted(buffer, wLen, 5) == wLen;
 }
 
-BOOL CClientSocket::SendUserlist(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles)
+BOOL CClientSocket::SendUserlist(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel)
 {
 
 	char buffer[MAX_BUFFER_SIZE];
-	WORD wLen = Util::FormatMXMessage(0x006F, (char*)buffer, "SDWWD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles);
+
+	WORD wLen = 0;
+
+	if(m_wClientType == CLIENT_WINMX353){
+
+		wLen = Util::FormatMXMessage(0x0072, (char*)buffer, "SDWWDW", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel);
+	}
+	else{
+
+		wLen = Util::FormatMXMessage(0x006F, (char*)buffer, "SDWWD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles);
+	}
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
 }
 
-BOOL CClientSocket::SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles)
+BOOL CClientSocket::SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel, DWORD dwRealIP)
 {
 
 	char buffer[MAX_BUFFER_SIZE];
-	WORD wLen = Util::FormatMXMessage(0x006E, (char*)buffer, "SDWWD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles);
+	WORD wLen = 0;
+
+	if((m_wClientType == CLIENT_WINMX353) && (m_uMode & UM_OPERATOR)){
+
+		// user is admin so send IP too
+		wLen = Util::FormatMXMessage(0x006E, (char*)buffer, "SDWWDBD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel, dwRealIP);
+	}
+	else if(m_wClientType == CLIENT_WINMX353){
+
+		// this user is no admin so dont send IP :P
+		wLen = Util::FormatMXMessage(0x006E, (char*)buffer, "SDWWDB", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles, wUserLevel);
+	}
+	else{
+
+		wLen = Util::FormatMXMessage(0x006E, (char*)buffer, "SDWWD", (LPCSTR)strUser, dwIP, wPort, wLine, dwFiles);
+	}
 
 	return SendCrypted(buffer, wLen, 5) == wLen;
 }

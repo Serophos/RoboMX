@@ -32,10 +32,10 @@
 class Emoticon
 {
 public:
-	Emoticon(){}
-	~Emoticon(){}
+	Emoticon(){ hBitmap = 0;}
+	~Emoticon(){ if(hBitmap) DeleteObject(hBitmap);}
+
 	HBITMAP hBitmap;
-	//CImage iImage;
 	char szFileName[1024];
 	char szActivationText[64];
 
@@ -142,7 +142,6 @@ public:
 		}
 		return hRetBmp;
 	}
-
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -173,7 +172,7 @@ public:
 public:
 	BOOL SetSelectionCharFormat(CHARFORMAT2& cf);
 	void Init(UINT m_nID);
-	void InsertBitmap(HBITMAP hBitmap);
+	BOOL InsertBitmap(HBITMAP hBitmap);
 	void SetText(LPCSTR lpszText, COLORREF text, COLORREF bg);
 	virtual ~CRichEditExCtrl();
 

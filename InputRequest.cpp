@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "Metis3.h"
 #include "InputRequest.h"
+#include "Settings.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -14,6 +15,7 @@ static char THIS_FILE[] = __FILE__;
 /////////////////////////////////////////////////////////////////////////////
 // CInputRequest dialog
 extern UINT UWM_INPUT;
+extern CSettings g_sSettings;
 
 CInputRequest::CInputRequest(CWnd* pParent /*=NULL*/)
 	: CDialog(CInputRequest::IDD, pParent)
@@ -164,6 +166,7 @@ BOOL CInputRequest::OnInitDialog()
 	
 	m_eInput.SetFont(m_pFont);
 	m_eInput.SetExtended();
+	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
 
 	if(m_dwMode == 5){
 

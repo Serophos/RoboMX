@@ -27,10 +27,13 @@ static char THIS_FILE[]=__FILE__;
 #define new DEBUG_NEW
 #endif
 
-void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl *Conv, HBITMAP hBitmap)
+//void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl *Conv, HBITMAP hBitmap)
+BOOL CImageDataObject::InsertBitmap(CRichEditExCtrl *Conv, HBITMAP hBitmap)
 {
 
-	ASSERT(pRichEditOle);
+	BOOL bSuccess = TRUE;
+	//ASSERT(pRichEditOle);
+	ASSERT(Conv);
 	TRY{
 
 		CoInitialize(NULL);
@@ -43,6 +46,12 @@ void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl 
 		pods->SetBitmap(hBitmap);
 
 		IOleClientSite *pOleClientSite;	
+		
+		// added july 17th
+		IRichEditOle *pRichEditOle;
+		pRichEditOle = Conv->GetIRichEditOle();
+		// end
+
 		pRichEditOle->GetClientSite(&pOleClientSite);
 
 		IStorage *pStorage;	
@@ -60,7 +69,7 @@ void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl 
 			lpLockBytes = NULL;
 			AfxThrowOleException(sc);
 		}
-		ASSERT(pStorage != NULL);
+		ASSERT(pStorage != NULL);   
 
 		IOleObject *pOleObject; 
 		pOleObject = pods->GetOleObject(pOleClientSite, pStorage);
@@ -88,6 +97,10 @@ void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl 
 		pOleObject->Release();
 		pOleClientSite->Release();
 
+		// added july 17th
+		pRichEditOle->Release();
+		// end
+
 		lpLockBytes->Release();
 
 		pStorage->Release();
@@ -95,14 +108,11 @@ void CImageDataObject::InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl 
 	}
 	CATCH(CException, e)
     {
-
-		char lpszError[400];
-		e->GetErrorMessage(lpszError, 400);
-		CString strOut;
-		strOut.Format("Could not insert emoticon due to OleException. Returned error message was:\n%s", lpszError);
-        AfxMessageBox(strOut, MB_ICONSTOP);
+		  bSuccess = FALSE;
     }
     END_CATCH
+
+	return bSuccess;
 }
 
 void CImageDataObject::SetBitmap(HBITMAP hBitmap)

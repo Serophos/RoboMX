@@ -132,6 +132,7 @@ protected:
 	afx_msg LRESULT OnRedirect(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRenameMsg(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnRclickChat(WPARAM w, LPARAM l);
+	afx_msg LRESULT OnOpMessage(WPARAM wParam, LPARAM lParam);
 
 	afx_msg void OnUpdateUserlistMenu(CCmdUI* pCmdUI);
 	afx_msg void OnRename();
@@ -177,7 +178,6 @@ protected:
 	afx_msg void OnChatTexttricks3dbuttonsaction();
 	afx_msg LRESULT OnRoomRename(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSetServerType(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnRenNotify(WPARAM wParam, LPARAM lParam);
 	DECLARE_MESSAGE_MAP()
 public:
 	CRichEditExCtrl m_rSys;
@@ -195,6 +195,10 @@ public:
 	afx_msg void OnChatroomViewtopic();
 	afx_msg void OnChatroomAddtoautojoin();
 	afx_msg void OnChatroomViewcurrentbans();
+	BOOL HandleCustomCmds(CString& rString);
+	void WriteSystemMsg(UINT nID, COLORREF rColor);
+	afx_msg void OnMute();
+	afx_msg void OnUpdateMute(CCmdUI *pCmdUI);
 };
 
 #ifndef _DEBUG  // debug version in Metis3View.cpp

@@ -432,13 +432,13 @@ CString CMySocket::GetLastErrorStr(void)
 	switch(GetLastError()){
 
 	case SOCK_NOERROR:
-		strError = "There was no network error. May be you have been kicked or banned?";
+		strError.LoadString(IDS_ERROR_KICKED);
 		break;
 	case SOCK_TIMEOUT:
-		strError = "The connection timed out.";
+		strError.LoadString(IDS_ERROR_TIMEOUT);
 		break;
 	case SOCK_SOCKINVALID:
-		strError = "Invalid Socket.";
+		strError.LoadString(IDS_ERROR_INVALID_SOCKET);
 		break;
 	default:
 		strError = GetErrorString(GetLastError());
@@ -512,7 +512,7 @@ CString CMySocket::GetErrorString(DWORD dwError){
             NULL) == 0){
 
 		// Unknown error code %08x (%d)
-		 strError.Format("Sorry, the error number 0x%08x is unknown (%d)", dwError, LOWORD(dwError));
+		 strError.Format(IDS_ERROR_UNKNOWN_ID, dwError, LOWORD(dwError));
     }
 	else{
 
@@ -584,7 +584,7 @@ CString CMySocket::GetHostName(CString strIP)
 	else{
 
 		unsigned long addr = inet_addr(strIP);
-		host=gethostbyaddr((char*)&addr,sizeof(addr),AF_INET);
+		host = gethostbyaddr((char*)&addr, sizeof(addr), AF_INET);
 	}
 	if(host == NULL){
 

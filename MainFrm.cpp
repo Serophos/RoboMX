@@ -82,6 +82,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CMDIFrameWnd)
 	ON_MESSAGE(WM_ECHOSYSTEXT, OnPluginSysEcho)
 	ON_COMMAND(IDR_START_NODESERVER, OnStartNodeserver)
 	ON_COMMAND(ID_SYSTRAY_RESTORE, OnSystrayRestore)
+	ON_COMMAND(ID_RECONNECT_ALL, OnReconnectAll)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -144,7 +145,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		NIIF_INFO
 	); 
 
-	StartAni();
+	//StartAni();
 
 	if (!m_wndToolBarStd.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP
 		| CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
@@ -475,12 +476,12 @@ void CMainFrame::OnStartNodeserver()
 {
 
 	// Create a new ChatServerDocument
-	/*POSITION pos = GetApp()->GetFirstDocTemplatePosition();
+/*	POSITION pos = GetApp()->GetFirstDocTemplatePosition();
 	CDocTemplate* pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
 	pTemplate = GetApp()->GetNextDocTemplate(pos);
-	pTemplate->OpenDocumentFile(NULL);*/
+	pTemplate->OpenDocumentFile(NULL);	  */
 	AfxMessageBox("Sorry, the roomserver is disabled in this release.", MB_ICONINFORMATION);
 }
 
@@ -501,8 +502,10 @@ void CMainFrame::OnViewOptions()
 	else{
 
 		CString strText;
+		CString strSettings;
+		strSettings.LoadString(IDS_SETTINGS);
 		MDIGetActive()->GetWindowText(strText);
-		while(strText != "Settings"){
+		while(strText.Compare(strSettings) != 0){
 			
 			this->MDINext();
 			MDIGetActive()->GetWindowText(strText);
@@ -723,21 +726,23 @@ void CMainFrame::AddEmoticon(char* szFileName, char* szActivationText)
 	eEmoticon->hBitmap = Emoticon::ReplaceColor(hTmp, RGB(255,0,255), g_sSettings.GetRGBBg(), 0);
 	DeleteObject(hTmp);
 
-	if (!eEmoticon->hBitmap)
-	{
+	if (!eEmoticon->hBitmap){
+
 		delete eEmoticon;
 		return;
 	}
+
 
 	m_lEmoticons.AddTail(eEmoticon);
 }
 
 void CMainFrame::DeleteEmoticons(void)
 {
+
 	POSITION pos;
 	pos = m_lEmoticons.GetHeadPosition();
-	while (pos)
-	{
+	while(pos){
+
 		Emoticon *eEmoticon = m_lEmoticons.GetNext(pos);
 		DeleteObject(eEmoticon->hBitmap);
 		m_lEmoticons.RemoveAt(m_lEmoticons.Find(eEmoticon));
@@ -761,7 +766,9 @@ void CMainFrame::LoadPlugins(void)
 		HINSTANCE hDLL = LoadLibrary(strFilename);
 		if(hDLL == NULL){
 		
-			AfxMessageBox("Failed to load Plugin " + strFilename, MB_ICONSTOP);
+			CString strError;
+			strError.Format(IDS_ERROR_PLUGIN_LOAD, strFilename);
+			AfxMessageBox(strError, MB_ICONSTOP);
 			continue;
 		}
 		
@@ -769,7 +776,9 @@ void CMainFrame::LoadPlugins(void)
 
 		if(pRegister == NULL){
 		
-			AfxMessageBox(finder.GetFileName() + " is not a valid RoboMX extension.", MB_ICONSTOP);
+			CString strError;
+			strError.Format(IDS_ERROR_INVALID_PLUGIN, finder.GetFileName());
+			AfxMessageBox(strError, MB_ICONSTOP);
 			continue;
 		}
 	
@@ -777,7 +786,9 @@ void CMainFrame::LoadPlugins(void)
 
 		if(pEx == NULL){
 
-			AfxMessageBox(finder.GetFileName() + ": Error loading API object.", MB_ICONSTOP);
+			CString strError;
+			strError.Format(IDS_ERROR_PLUGIN_INIT, finder.GetFileName());
+			AfxMessageBox(strError, MB_ICONSTOP);
 			continue;
 		}
 		
@@ -930,6 +941,7 @@ void CMainFrame::CheckUpdate(void)
 		pEx->GetErrorMessage(szCause, 255);
 		strFormatted.Format("Error during Update Query: %s\n", szCause);
 		TRACE(strFormatted);
+		return;
 	}
 
 	CString strOldVersion = STR_VERSION_DLG;
@@ -938,8 +950,7 @@ void CMainFrame::CheckUpdate(void)
 
 	if(strNewVersion != strOldVersion){
 
-		strTmp.Format("There is a new version of RoboMX available!\n\n -> You are running %s\n -> The newest version is %s\n\nClick here to go to the download page",
-			strOldVersion, strNewVersion);
+		strTmp.Format(IDS_UPDATE_AVAILABLE, strOldVersion, strNewVersion);
 		DisplayToolTip(strTmp, 30);
 	}
 }
@@ -969,3 +980,8 @@ void CMainFrame::ExecuteAutoJoins(void)
 	}
 }
 
+void CMainFrame::OnReconnectAll()
+{
+
+	m_wndDocSelector.BroadcastMessage(WM_COMMAND, MAKEWPARAM(ID_RECONNECT, 0), 0);
+}

@@ -181,7 +181,7 @@ void CGeneralCfg::SaveRooms()
 	}
 	CATCH(CFileException, e){
 
-		AfxMessageBox("Error during file operation.", MB_OK+MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 
 	}END_CATCH;
 
@@ -202,7 +202,7 @@ void CGeneralCfg::SaveRooms()
 	}
 	CATCH(CFileException, e){
 
-		AfxMessageBox("Error during file operation.", MB_OK+MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 
 	}END_CATCH;
 }

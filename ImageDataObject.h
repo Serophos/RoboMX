@@ -36,7 +36,7 @@ public:
 	// After calling the function, it inserts the image in the current 
 	//    position of the RichEdit
 	//
-	static void InsertBitmap(IRichEditOle* pRichEditOle, CRichEditExCtrl *, HBITMAP hBitmap);
+	static BOOL InsertBitmap(CRichEditExCtrl *, HBITMAP hBitmap);
 
 private:
 	ULONG	m_ulRefCnt;

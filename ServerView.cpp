@@ -153,10 +153,10 @@ BOOL CServerView::PreTranslateMessage(MSG* pMsg)
 
 		if(pMsg->wParam == VK_RETURN){
 
+			WriteText("\n");
 			int n = GetRichEditCtrl().GetLineCount();
 			char pszLine[256];
-			GetRichEditCtrl().GetLine(n-1, (LPTSTR)&pszLine, 256);
-			WriteText("\n");
+			GetRichEditCtrl().GetLine(n-2, (LPTSTR)&pszLine, 256);
 			HandleCommand(pszLine);
 			return 1;
 		}
@@ -412,7 +412,9 @@ UINT CServerView::LoginThread(LPVOID pParam)
 							  pServer->m_aClients[i]->m_dwIP, 
 							  pServer->m_aClients[i]->m_wPort, 
 			                  pServer->m_aClients[i]->m_wLineType,
-							  pServer->m_aClients[i]->m_dwFiles);
+							  pServer->m_aClients[i]->m_dwFiles,
+							  pServer->m_aClients[i]->m_uMode & UM_OPERATOR ? 1 : 0);
+
 	}
 	
 	mClient->SendMotd(pServer->m_strMotd);
@@ -421,7 +423,7 @@ UINT CServerView::LoginThread(LPVOID pParam)
 	pServer->m_aClients[wPos]->m_wClientID = wPos;
 	pServer->m_aClients[wPos]->m_hMsgTarget = pServer->m_hWnd;
 
-	pServer->SendJoin(mClient->m_strName, mClient->m_dwIP, mClient->m_wPort, mClient->m_wLineType, mClient->m_dwFiles);
+	pServer->SendJoin(mClient->m_strName, mClient->m_dwIP, mClient->m_wPort, mClient->m_wLineType, mClient->m_dwFiles, (mClient->m_uMode & UM_OPERATOR ? 1 : 0), mClient->m_dwSrcIP);
 	TRACE("Login Complete\n");
 	return 1;
 }
@@ -520,12 +522,12 @@ void CServerView::SendAction(CString strUser, CString strMsg)
 	}
 }
 
-void CServerView::SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles)
+void CServerView::SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel, DWORD dwRealIP)
 {
 
 	for(int i = 0; i < m_aClients.GetSize(); i++){
 
-		m_aClients[i]->SendJoin(strUser, dwIP, wPort, wLine, dwFiles);
+		m_aClients[i]->SendJoin(strUser, dwIP, wPort, wLine, dwFiles, wUserLevel, dwRealIP);
 	}
 }
 

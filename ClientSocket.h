@@ -4,6 +4,8 @@
 
 #define MAX_BUFFER_SIZE 1024
 
+#define CLIENT_WINMX331    0x001
+#define CLIENT_WINMX353	   0x002
 
 #define UM_NORMAL	        0x00000000L
 #define UM_PENDING          0x40000000L
@@ -93,6 +95,7 @@ public: // attributes
 	HWND    m_hMsgTarget;
 	BOOL	m_bListen;
 	CEvent  m_eDone;
+	WORD    m_wClientType;
 
 	char    m_cBuffer[MAX_BUFFER_SIZE];
 
@@ -111,10 +114,10 @@ public: // Interface
 	BOOL SendMotd(const CString strMotd);
 	BOOL SendMsg(const CString strUser, const CString strMsg);
 	BOOL SendAction(const CString strUser, const CString strMsg);
-	BOOL SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles);
+	BOOL SendJoin(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel = 0, DWORD dwRealIP = 0);
 	BOOL SendRename(const CString strOldName, DWORD dwOldIP, WORD wOldPort, const CString strNewName, DWORD dwNewIP, WORD wNewPort, WORD wLine, DWORD dwFiles);
 	BOOL SendPart(const CString strUser, DWORD dwIP, WORD wPort);
-	BOOL SendUserlist(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles);
+	BOOL SendUserlist(const CString strUser, DWORD dwIP, WORD wPort, WORD wLine, DWORD dwFiles, WORD wUserLevel = 0);
 	static UINT RecvProc(LPVOID pParam);
 	
 	// Note all users start as UM_PENDING and have no rights

@@ -493,9 +493,10 @@ void CColorCfg::OnBnClickedDochi()
 void CColorCfg::OnSelectImage() 
 {
 
-	static char BASED_CODE szFilter[] = "Image Files (*.bmp;*.jpg;*.gif;*.png;*.tiff)|*.bmp;*.jpg;*.gif;*.png;*.tiff|All Files (*.*)|*.*||";
+	CString strFilter;
+	strFilter.LoadString(IDS_IMAGE_FILTER);
 
-	CFileDialog dlg(TRUE, ".bmp", m_strImage, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CFileDialog dlg(TRUE, ".bmp", m_strImage, OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -519,5 +520,5 @@ void CColorCfg::OnBnClickedEdithilite()
 	strParam.Format("%s\\hilite.ini", g_sSettings.GetWorkingDir());
 	Util::ShellExecuteWait(strExec, strParam);
 	g_sSettings.LoadHiLite();
-	AfxMessageBox("Hilight list was loaded", MB_ICONINFORMATION);
+	AfxMessageBox(IDS_HILITE_LOADED, MB_ICONINFORMATION);
 }

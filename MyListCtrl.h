@@ -105,6 +105,7 @@ protected:
 public:
 	void SetHiLite(BOOL bHiLite = TRUE);
 	void Sort(void);
+	int SafeFind(LPCTSTR lpszItem);
 };
 
 /////////////////////////////////////////////////////////////////////////////

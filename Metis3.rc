@@ -88,6 +88,8 @@ IDB_TOOLBAR256_DEACT    BITMAP                  "res\\toolbar2.bmp"
 IDB_TOOLBAR256          BITMAP                  "res\\Toolbar_256.bmp"
 IDB_USERMODE            BITMAP                  "res\\usermodes.bmp"
 IDB_PREVIEW             BITMAP                  "res\\bitmap3.bmp"
+IDB_HDRDOWN             BITMAP                  "res\\hdrdown.bmp"
+IDB_HDRUP               BITMAP                  "res\\hdrup.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -104,6 +106,8 @@ BEGIN
     BUTTON      IDR_START_NODESERVER
     SEPARATOR
     BUTTON      ID_RENAME
+    SEPARATOR
+    BUTTON      ID_MUTE
     SEPARATOR
     BUTTON      AFX_IDS_SCNEXTWINDOW
     SEPARATOR
@@ -153,13 +157,14 @@ BEGIN
     POPUP "&RoboMX"
     BEGIN
         MENUITEM "&Enter New Channel\tCtrl+N",  ID_MYFILE_NEW
-        MENUITEM "&Close this Channel",         ID_FILE_CLOSE
-        MENUITEM SEPARATOR
         MENUITEM "&Channellist\tCtrl+L",        ID_CHANNEL_CHANNELLIST
-        MENUITEM SEPARATOR
         MENUITEM "&Start Serverconsole",        IDR_START_NODESERVER
         MENUITEM SEPARATOR
-        MENUITEM "&Change User Details",        ID_RENAME
+        MENUITEM "&Reconnect",                  32806
+        MENUITEM "Reconnect All",               32866
+        MENUITEM "&Close this Channel",         ID_FILE_CLOSE
+        MENUITEM SEPARATOR
+        MENUITEM "&Change User-Details",        ID_RENAME
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_APP_EXIT
     END
@@ -201,6 +206,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Copy &Roomname",              ID_CHATROOM_COPYROOMNAME
         MENUITEM SEPARATOR
+        MENUITEM "&Mute Chatsounds",            32865
         MENUITEM "Clear &Window",               ID_CHATROOM_CLEARSCREEN
     END
     POPUP "&User"
@@ -571,13 +577,13 @@ BEGIN
     CONTROL         "",IDC_SYS,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
                     ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
                     2,293,52
-    CONTROL         "",IDC_CHAT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
-                    ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
-                    57,293,160
     CONTROL         "",IDC_SPLITTER_1,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,294,2,2,215
     CONTROL         "",IDC_SPLITTER_2,"Static",SS_BLACKFRAME | NOT 
                     WS_VISIBLE,1,54,293,3
+    CONTROL         "",IDC_CHAT,"RichEdit20A",ES_MULTILINE | ES_AUTOVSCROLL | 
+                    ES_READONLY | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP,1,
+                    57,293,160
 END
 
 IDD_CONNECT DIALOGEX 0, 0, 339, 134
@@ -1382,6 +1388,13 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Cursor
+//
+
+IDC_HAND                CURSOR                  "res\\hand.cur"
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // String Table
 //
 
@@ -1537,48 +1550,146 @@ BEGIN
     ID_CHATROOM_REJOIN      "Rejoin the channel"
 END
 
-#endif    // English (U.S.) resources
-/////////////////////////////////////////////////////////////////////////////
-
-
-/////////////////////////////////////////////////////////////////////////////
-// Neutral (Sys. Default) resources
-
-#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEUSD)
-#ifdef _WIN32
-LANGUAGE LANG_NEUTRAL, SUBLANG_SYS_DEFAULT
-#pragma code_page(1252)
-#endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Bitmap
-//
-
-IDR_TEST                BITMAP                  "res\\mainfram.bmp"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Toolbar
-//
-
-IDR_TEST TOOLBAR  16, 16
+STRINGTABLE 
 BEGIN
-    BUTTON      ID_MYFILE_NEW
-    BUTTON      ID_RECONNECT
-    BUTTON      ID_FILE_CLOSE
-    SEPARATOR
-    BUTTON      ID_CHANNEL_CHANNELLIST
-    BUTTON      IDR_START_NODESERVER
-    SEPARATOR
-    BUTTON      ID_RENAME
-    SEPARATOR
-    BUTTON      AFX_IDS_SCNEXTWINDOW
-    SEPARATOR
-    BUTTON      ID_APP_ABOUT
+    IDS_ERROR_CONNECTING    "Error. RoboMX was unable to establish a connection to %s. [%s]"
+    IDS_HANDSHAKE_START     "Starting handshake"
+    IDS_ERROR_LOGIN_UNKNOWN "Error. Login failed because the remote host answered in an unexpected way."
+    IDS_ERROR_LOGIN_KEY     "Error during key-exchange"
+    IDS_ERROR_NO_CHATSERVER "Error. No chat server is running on the address specified."
+    IDS_ERROR_NETWORK       "A network operation failed. %s"
+    IDS_ERROR_LOGIN_REJECTED "Login rejected :("
+    IDS_LOGIN_OK            "Login granted :)"
+    IDS_ERROR_FIXME         "Fixme: Unexpected stream state or unknown packet: '%s'"
+    IDS_CONNECTING          "Connecting. Stand by..."
+    IDS_SERVER_RCMS         "Info: Room is powered by RCMS."
+    IDS_SERVER_WINMX353     "Info: Room is powered by WinMX 3.53."
+    IDS_WINMX353_WRONGJOIN_WARNING 
+                            "Warning: You used the MXChatd compatible join method to enter this room. To enjoy the full potential of the new chatroom engine, please join normally :)"
+    IDS_ERROR_LOGFILE_OPEN  "Error: Could not open logfile."
+    IDS_REDIRECTING         "Redirecting to %s"
 END
 
-#endif    // Neutral (Sys. Default) resources
+STRINGTABLE 
+BEGIN
+    IDS_ERROR_REDIRECT_ROOMNAMEINVALID 
+                            "%s does not appear to be a valid room name. Redirect aborted."
+    IDS_ROOMRENAME          "Roomname changed from %s to %s"
+    IDS_FIXME_NAME_ERROR    "Fix-me: Could not find user %s"
+    IDS_FIXME_UNKNOWN_COMMAND "Fixme: Unknown Command 0x%X len=%d cmd=%s"
+    IDS_RTF_BLOCK           "Sorry, I made a futile attemp to send an RTF exploit to the room. RoboMX outsmarted me though and blocked it. Please kick my butt!"
+    IDS_EDIT_MENU           "RoboMX will now open the a configuration file in notepad. Please adjust the RCMS commands to the one used in this room, save the document and re-join the channel. Do not change the order of the commands in the file."
+    IDS_IGNORED_MX353       "/me ignored user '%s'"
+    IDS_IGNORED             "ignored user '%s'"
+    IDS_UNIGNORE_MX353      "/me un-ignored user '%s'"
+    IDS_UNIGNORE            "un-ignored user '%s'"
+    IDS_AVERAGE_LAG         "Average Lag: %u ms"
+    IDS_USERS               "%03d users"
+    IDS_RECONNECTING        "Reconnecting. Stand by..."
+    IDS_AVERAGE_LAG_CHAT    "Average Lag in channel is %d seconds and %03d milliseconds"
+    IDS_GOOGLE_STR          "http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q=%s&btnG=Google+Search"
+    IDS_ZZZZZZZZ            "zZzZZZZZzzZzZzz"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_WORK                "Work"
+    IDS_SLEEP               "Sleep"
+    IDS_FRESHAIR            "Getting Fresh Air"
+    IDS_BATH                "Bathroom"
+    IDS_SMOKE               "Smoke"
+    IDS_FOOD                "Food"
+    IDS_BEER                "Beer"
+    IDS_TV                  "Watching TV"
+    IDS_STORE               "Run to the store"
+    IDS_NOTYOURBUISNESS     "Wont tell you :-P"
+    IDS_AWAYCTRL            "/me is AFK, %s"
+    IDS_AWAY_BACK           "/me is now back from »%s«. %s was away for %s"
+    IDS_AWAY_SILENTBACK     "You are now back from »%s«. You have been away for %s\n"
+    IDS_ERROR_LOGFILE_WRITE "Error: Could not write data to logfile."
+    IDS_ERROR_MX353ONLY     "This feature only works with WinMX 3.53 rooms."
+    IDS_AUTOJOIN_REMOVE     "Channel %s was removed from Auto-Join list."
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_AUTOJOIN_ADD        "Channel %s added to Auto-Join list."
+    IDS_ERROR_KICKED        "May be you have been kicked or banned?"
+    IDS_ERROR_TIMEOUT       "The connection timed out."
+    IDS_ERROR_INVALID_SOCKET "Invalid Socket."
+    IDS_ERROR_UNKNOWN_ID    "Sorry, the error number 0x%08x is unknown (%d)"
+    IDS_ERROR_RICHEDIT      "Your RICHED32.DLL is too old to run RoboMX. You need at least version 5.0 to run it.\nDo you want to download the necessary files now?"
+    IDS_ERROR_OLE           "Could not initialize Ole-Interface."
+    IDS_ERROR_COMCTRL       "Could not initialzie Common Controls."
+    IDS_ERROR_RICHEDIT_INIT "Could not initialize Richedit 2.0 Interface."
+    IDS_ERROR_WINSOCK       "Could not initialize Winsock."
+    IDS_ERROR_BG_LOAD       "Error. Could not load Background image."
+    IDS_SETTINGS            "Settings"
+    IDS_ERROR_INVALID_PLUGIN "%s is not a valid RoboMX extension."
+    IDS_ERROR_PLUGIN_LOAD   "Failed to load Plugin %s."
+    IDS_ERROR_PLUGIN_INIT   "Could not initialize %s."
+    IDS_UPDATE_AVAILABLE    "There is a new version of RoboMX available!\n\n -> You are running %s\n -> The newest version is %s\n\nClick here to go to the download page."
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_CFG_GENERAL         "General"
+    IDS_CFG_COLORS          "Colors"
+    IDS_CFG_MSG             "Messages"
+    IDS_CFG_SND             "Sound FX"
+    IDS_CFG_FUN             "Fun :-)"
+    IDS_CFG_SERVER          "Server"
+    IDS_CFG_EXT             "Add-Ons"
+    IDS_TRIGGER             "Trigger"
+    IDS_SOUND               "Sound"
+    IDS_WAVE_FILTER         "Wave Audio Files(*.wav)|*.wav|All Files (*.*)|*.*||"
+    IDS_ERROR_SELECTEVENT   "Please select Event to delete first!"
+    IDS_ERROR_PLAYWAVE      "Error. Could not play %s."
+    IDS_IMAGE_FILTER        "Image Files (*.bmp;*.jpg;*.gif;*.png;*.tiff)|*.bmp;*.jpg;*.gif;*.png;*.tiff|All Files (*.*)|*.*||"
+    IDS_HILITE_LOADED       "Hilight word-list was loaded."
+    IDS_ERROR_ROOMNAME_EMPTY "Roomname must not be emtpy!"
+    IDS_ERROR_ROOMNAME_INVALID "Roomname does not appear to be valid!"
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_ERROR_NAME_SHORT    "Username is too short."
+    IDS_ERROR_NAME_INVALID  "Username contains illegal characters!"
+    IDS_ERROR_NAME_LONG     "Username is too long. Length may not exceed 38 characters (without ID)."
+    IDS_PLUGIN              "Plugin"
+    IDS_DESC                "Description"
+    IDS_AUTHOR              "Author"
+    IDS_ERROR_SELECT_PLUGIN "You need to select a plugin first."
+    IDS_REMOVE_PLUGIN       "Remove plugin '%s'?"
+    IDS_ERROR_REMOVE_PLUGIN "Could not delete plugin '%s'."
+    IDS_ERROR_NAMES_EMPTY   "Warning: One of the name lists is empty.!"
+    IDS_EMO_ACT             "Activation"
+    IDS_EMO_FILE            "Image-File"
+    IDS_BITMAP_FILTER       "Bitmap Files (*.bmp)|*.bmp|All Files (*.*)|*.*||"
+    IDS_ERROR_MISSING_INPUT "Error: Enter an activation text and/or a file."
+    IDS_ERROR_NO_SELECTION  "No Item selected!"
+    IDS_ERROR_FILE_GENERIC  "Error during file operation."
+END
+
+STRINGTABLE 
+BEGIN
+    IDS_USERLIST_NODE       "User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150;Node-IP,120;Node-Port,80"
+    IDS_USERLIST_SHORT      "User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150"
+    IDS_LOG_START           "\n----- Started Logging ----\n\n"
+    IDS_TOPIC               " Topic: %s\n"
+    IDS_ROOMLIST            "Room,300;Users,50;Limit,50;Topic,300"
+    IDS_FINISHED            "Finished."
+    IDS_ROOMS_ETA           "%04d Rooms (ETA: %s, %s, %s)"
+    IDS_CHANNELLIST         "Channel List"
+    IDS_NUMCHANNELS         "%d channels"
+END
+
+STRINGTABLE 
+BEGIN
+    ID_MUTE                 "Mute/Activate sound effects.\nMute"
+END
+
+#endif    // English (U.S.) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

@@ -626,8 +626,7 @@ void CSettings::LoadHiLite(void)
 	}
 	CATCH(CFileException, e){
 
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 	}END_CATCH;
 }
 
@@ -656,6 +655,7 @@ void CSettings::LoadQuickCmds()
 	}
 	CATCH(CFileException, e){
 
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 	}END_CATCH;
 }
 
@@ -683,6 +683,7 @@ void CSettings::LoadRCMS()
 	}
 	CATCH(CFileException, e){
 
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 	}END_CATCH;
 
 	///////////////////////////
@@ -729,6 +730,7 @@ void CSettings::LoadRCMS()
 	}
 	CATCH(CFileException, e){
 
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 	}END_CATCH;
 }
 
@@ -757,8 +759,7 @@ void CSettings::LoadRooms(void)
 	}
 	CATCH(CFileException, e){
 
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 	}END_CATCH;
 
 	strIniFile = GetWorkingDir() + "\\hello.ini";
@@ -780,8 +781,7 @@ void CSettings::LoadRooms(void)
 	}
 	CATCH(CFileException, e){
 
-		//AfxMessageBox("Error while reading Autocompletion text!", MB_OK+MB_ICONSTOP);
-		return;
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 	}END_CATCH;
 }
 
@@ -857,7 +857,7 @@ void CSettings::LoadSounds(void)
 	}
 	CATCH(CFileException, e){
 
-		AfxMessageBox("Error during file operation!", MB_OK+MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 
 	}END_CATCH;
 }

@@ -92,8 +92,11 @@ BOOL CFunCfg::OnInitDialog()
 	ListView_SetExtendedListViewStyle(m_lcNames.m_hWnd, LVS_EX_FULLROWSELECT);
 	ListView_SetExtendedListViewStyle(m_lcVendors.m_hWnd, LVS_EX_FULLROWSELECT);
 
-	m_lcEmo.InsertColumn(0, "Activation", LVCFMT_LEFT, 60);
-	m_lcEmo.InsertColumn(1, "Image-File", LVCFMT_LEFT, 350);
+	CString strTitle;
+	strTitle.LoadString(IDS_EMO_ACT);
+	m_lcEmo.InsertColumn(0, strTitle, LVCFMT_LEFT, 60);
+	strTitle.LoadString(IDS_EMO_FILE);
+	m_lcEmo.InsertColumn(1, strTitle, LVCFMT_LEFT, 350);
 	ListView_SetExtendedListViewStyle(m_lcEmo.m_hWnd, LVS_EX_FULLROWSELECT);
 
 	Load();
@@ -123,7 +126,7 @@ void CFunCfg::Apply()
 
 	if(!m_lcVendors.GetItemCount() || !m_lcNames.GetItemCount() || !m_lcSuff.GetItemCount()){
 
-		AfxMessageBox("Warning: One of the name lists is empty.!", MB_ICONWARNING);
+		AfxMessageBox(IDS_ERROR_NAMES_EMPTY, MB_ICONWARNING);
 	}
 	Save();
 	WriteEmoticons();
@@ -282,10 +285,11 @@ void CFunCfg::OnBnClickedSelectbmp()
 {
 
 	UpdateData(TRUE);
-	//static char BASED_CODE szFilter[] = "Image Files (*.bmp;*.jpg;*.gif;*.png;*.tiff)|*.bmp;*.jpg;*.gif;*.png;*.tiff|All Files (*.*)|*.*||";
-	static char BASED_CODE szFilter[] = "Bitmap Files (*.bmp)|*.bmp|All Files (*.*)|*.*||";
 
-	CFileDialog dlg(TRUE, ".png", m_strPath, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, szFilter, this);
+	CString strFilter;
+	strFilter.LoadString(IDS_BITMAP_FILTER);
+
+	CFileDialog dlg(TRUE, ".bmp", m_strPath, OFN_HIDEREADONLY|OFN_FILEMUSTEXIST, strFilter, this);
 
 	if(dlg.DoModal() == IDOK){
 
@@ -303,7 +307,7 @@ void CFunCfg::OnBnClickedAddEmoticon()
 	UpdateData(TRUE);
 	if(m_strPath.IsEmpty() || m_strActivation.IsEmpty()){
 
-		AfxMessageBox("Error: Enter an activation text and/or a file", MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_MISSING_INPUT, MB_ICONINFORMATION);
 		return;
 	}
 	int nPos = m_lcEmo.InsertItem(m_lcEmo.GetItemCount(), m_strActivation);
@@ -323,7 +327,7 @@ void CFunCfg::OnBnClickedDeleteEmoticon()
 	}
 	else{
 
-		AfxMessageBox("No Item selected!", MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_NO_SELECTION, MB_ICONSTOP);
 	}
 }
 
@@ -350,7 +354,7 @@ void CFunCfg::WriteEmoticons(void)
 	}
 	CATCH(CFileException, e){
 
-		AfxMessageBox("Error during file operation.", MB_OK+MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_FILE_GENERIC, MB_OK+MB_ICONSTOP);
 
 	}END_CATCH;
 

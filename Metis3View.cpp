@@ -64,7 +64,7 @@ extern UINT UWM_LOAD_SETTINGS;
 extern UINT UWM_RCLICK;
 extern UINT UWM_ROOMRENAME;
 extern UINT UWM_SERVERTYPE;
-extern UINT UWM_RENOTIFY;
+extern UINT UWM_OPMESSAGE;
 
 #define WM_ECHOTEXT WM_APP+1
 #define WM_ECHOSYSTEXT WM_APP+2
@@ -146,7 +146,7 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_MESSAGE(WM_ECHOSYSTEXT, OnEchoSysText)
 	ON_REGISTERED_MESSAGE(UWM_ROOMRENAME, OnRoomRename)
 	ON_REGISTERED_MESSAGE(UWM_SERVERTYPE, OnSetServerType)
-	ON_REGISTERED_MESSAGE(UWM_RENOTIFY, OnRenNotify)
+	ON_REGISTERED_MESSAGE(UWM_OPMESSAGE, OnOpMessage)
 	ON_REGISTERED_MESSAGE(UWM_RENAMECL, OnRenameCl)
 	ON_COMMAND_RANGE(ID_AWAYCONTROL_ZZZZZZZZZZZZZZZZ, ID_AWAYCONTROL_ENTERREASON, OnAwayControl)
 	ON_COMMAND_RANGE(ID_BACK_SETBACK, ID_BACK_SETSI8LENTBACK, OnAwayControlBack)
@@ -154,6 +154,8 @@ BEGIN_MESSAGE_MAP(CMetis3View, CFormView)
 	ON_COMMAND(ID_CHATROOM_VIEWTOPIC, OnChatroomViewtopic)
 	ON_COMMAND(ID_CHATROOM_ADDTOAUTOJOIN, OnChatroomAddtoautojoin)
 	ON_COMMAND(ID_CHATROOM_VIEWCURRENTBANS, OnChatroomViewcurrentbans)
+	ON_COMMAND(ID_MUTE, OnMute)
+	ON_UPDATE_COMMAND_UI(ID_MUTE, OnUpdateMute)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -211,7 +213,7 @@ void CMetis3View::OnInitialUpdate()
 	LoadRCMSMenu();
 	CRect rc;
 	CWnd* pWnd = GetDlgItem(IDC_SPLITTER_1);
-	if(!pWnd){ AfxMessageBox("Fatal Error: Could not create splitter control!", MB_ICONSTOP);  return;}
+	ASSERT(pWnd);
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_sSplitter1.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_1);
@@ -219,7 +221,7 @@ void CMetis3View::OnInitialUpdate()
 	m_sSplitter1.SetRange(200, 200, 1);
 	
 	pWnd = GetDlgItem(IDC_SPLITTER_2);
-	if(!pWnd){ AfxMessageBox("Fatal Error: Could not create splitter control!", MB_ICONSTOP);  return;}
+	ASSERT(pWnd);
 	pWnd->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_sSplitter2.Create(WS_CHILD | WS_VISIBLE, rc, this, IDC_SPLITTER_2);
@@ -244,13 +246,15 @@ void CMetis3View::OnInitialUpdate()
 	m_iImageList.Create(16, 16, ILC_COLORDDB|ILC_MASK, 4, 1);
 	m_iImageList.Add(&bitmap, RGB(255,0,255));
 	
+	m_lcUsers.SetImageList(&m_iImageList, LVSIL_SMALL);
+
 	if(g_sSettings.GetDisplayNode()){
 
-		m_lcUsers.SetHeadings("User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150;Node-IP,120;Node-Port,80");
+		m_lcUsers.SetHeadings(IDS_USERLIST_NODE);
 	}
 	else{
 
-		m_lcUsers.SetHeadings("User,136;Share,60;Speed,80;IP (Admin/Op),120;Hostname (Admin/Op),150");
+		m_lcUsers.SetHeadings(IDS_USERLIST_SHORT);
 	}
 	m_lcUsers.LoadColumnInfo();
 	
@@ -261,7 +265,7 @@ void CMetis3View::OnInitialUpdate()
 		g_sSettings.GetRGBIP(),
 		g_sSettings.GetRGBPort()
 		);
-	m_lcUsers.SetBkColor(g_sSettings.GetRGBBg());
+	m_lcUsers.SetBkColor(g_sSettings.GetRGBBg());	  
 
 	m_lcUsers.SetColors(
 		g_sSettings.GetRGBNormalMsg(),
@@ -269,13 +273,13 @@ void CMetis3View::OnInitialUpdate()
 		g_sSettings.GetRGBLine(),
 		g_sSettings.GetRGBIP(),
 		g_sSettings.GetRGBPort()
-		);
+		);		
 
 	if(g_sSettings.GetHiliteUsers()){
 
 		m_lcUsers.SetHiLite();
 	}
-	m_lcUsers.SetImageList(&m_iImageList, LVSIL_SMALL);
+
 	m_lcUsers.SetFont(&m_fFont);
 	m_eInput.SetFont(&m_fFont);
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
@@ -301,7 +305,7 @@ void CMetis3View::OnInitialUpdate()
 	m_mxClient.m_bOldJoin   = GetDocument()->m_bOldJoin;
 
 	m_mxClient.SetRoom(GetDocument()->m_strRoom);
-	WriteSystemMsg("Connecting. Stand by...", g_sSettings.GetRGBPend());
+	WriteSystemMsg(IDS_CONNECTING, g_sSettings.GetRGBPend());
 
 	if(g_sSettings.GetLog()){
 
@@ -312,14 +316,16 @@ void CMetis3View::OnInitialUpdate()
 			if(m_bFileOpened){
 
 				m_fLog.SeekToEnd();
-				m_fLog.WriteString("\n----- Started Logging ----\n\n");
+				CString strStart;
+				strStart.LoadString(IDS_LOG_START);
+				m_fLog.WriteString(strStart);
 			}
 
 		}
 		CATCH(CFileException, e){
 
 			m_bFileOpened = FALSE;
-			WriteSystemMsg("Error: Could not open logfile.", g_sSettings.GetRGBErr());
+			WriteSystemMsg(IDS_ERROR_LOGFILE_OPEN, g_sSettings.GetRGBErr());
 		}END_CATCH;
 	}
 	else{
@@ -357,7 +363,7 @@ LRESULT CMetis3View::OnReloadCfg(WPARAM w, LPARAM l)
 	else{
 
 		m_lcUsers.SetHiLite(FALSE);
-	}
+	}		 
 	m_eInput.SetBkColor(g_sSettings.GetRGBBg());
 	m_rSys.Init(IDC_SYS);
 	m_rSys.SetBackgroundColor(FALSE, g_sSettings.GetRGBBg());
@@ -400,7 +406,7 @@ void CMetis3View::DoResize2(int delta)
 
 	CSplitterControl::ChangeHeight(&m_rSys, delta, CW_TOPALIGN);
 	CSplitterControl::ChangeHeight(&m_rChat, -delta, CW_BOTTOMALIGN);
-//	CSplitterControl::ChangeHeight(&m_eInput, 0);
+
 	Invalidate();
 	UpdateWindow();
 }
@@ -490,13 +496,13 @@ void CMetis3View::OnTimer(UINT nIDEvent)
 
 		CString strOut;
 
-		strOut.Format("Redirecting to %s", m_strTarget);
+		strOut.Format(IDS_REDIRECTING, m_strTarget);
 		WriteSystemMsg(strOut, g_sSettings.GetRGBPend());
 
 		// 0100007F1A2B
 		if((m_strTarget.GetLength() - m_strTarget.ReverseFind('_') -1) != 12){
 
-			strOut.Format("%s does not appear to be a valid room name. Redirect aborted.", m_strTarget);
+			strOut.Format(IDS_ERROR_REDIRECT_ROOMNAMEINVALID, m_strTarget);
 			WriteSystemMsg(strOut, g_sSettings.GetRGBErr());
 			if(m_mxClient.m_bListen){
 
@@ -540,14 +546,25 @@ void CMetis3View::WriteSystemMsg(CString strMsg, COLORREF crText)
 	}
 }
 
+
+void CMetis3View::WriteSystemMsg(UINT nID, COLORREF rColor)
+{
+
+	CString strMsg;
+	strMsg.LoadString(nID);
+	WriteSystemMsg(strMsg, rColor);
+}
+
 void CMetis3View::RemoveUser(const CString strUser, const CString strIP, WORD wPort)
 {
 
-	LVFINDINFO fi;
+	/*LVFINDINFO fi;
 	fi.flags = LVFI_STRING|LVFI_WRAP;
 	fi.psz = strUser;
 
-	int nPos = m_lcUsers.FindItem(&fi, -1);
+	int nPos = m_lcUsers.FindItem(&fi, -1);	*/
+
+	int nPos = m_lcUsers.SafeFind(strUser);
 
 	if(nPos >= 0){
 
@@ -586,7 +603,7 @@ LRESULT CMetis3View::OnRoomRename(WPARAM wParam, LPARAM lParam)
 	GetDocument()->SetTitle(strRoom, TRUE);
 	((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.UpdateTitle(this, GetDocument()->m_strRoom);
 
-	strOut.Format("Roomname changed from %s to %s", strOldRoom, GetDocument()->m_strRoom);
+	strOut.Format(IDS_ROOMRENAME, strOldRoom, GetDocument()->m_strRoom);
 	
 	WriteSystemMsg(strOut, g_sSettings.GetRGBOK());
 	Log("System:", strOut);
@@ -610,7 +627,9 @@ LRESULT CMetis3View::OnTopic(WPARAM wParam, LPARAM lParam)
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBTopic());
 	}
 
-	m_rChat.SetText(" Topic: " + strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
+	CString strOut;
+	strOut.Format(IDS_TOPIC, strTopic);
+	m_rChat.SetText(strOut, g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
 
 	Log("Topic:", strTopic);
 
@@ -669,7 +688,6 @@ LRESULT CMetis3View::OnAddUser(WPARAM wParam, LPARAM lParam)
 
 		if(Util::ScanMessage(pUserInfo, wLen, "SDWWDW", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles, &user.wUserLever, &dwRealIP) < 6){
 
-			TRACE("Error decoding join notification packet\n");
 			return 0;
 		}
 	}
@@ -677,7 +695,6 @@ LRESULT CMetis3View::OnAddUser(WPARAM wParam, LPARAM lParam)
 
 		if(Util::ScanMessage(pUserInfo, wLen, "SDWWD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles) != 5){
 
-			TRACE("Error decoding join notification packet\n");
 			return 0;
 		}
 		user.wUserLever = 0;
@@ -716,7 +733,6 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 		BYTE btDummy;
 		if(Util::ScanMessage(pUserInfo, wLen, "SDWWDB", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles, &btDummy) < 6){
 
-			TRACE("Error decoding join notification packet\n");
 			return 0;
 		}
 		user.wUserLever = (WORD)btDummy;
@@ -726,7 +742,6 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 		BYTE btDummy;
 		if(Util::ScanMessage(pUserInfo, wLen, "SDWWDBD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles, &btDummy, &dwRealIP) < 6){
 
-			TRACE("Error decoding join notification packet\n");
 			return 0;
 		}
 		user.wUserLever = (WORD)btDummy;
@@ -735,7 +750,6 @@ LRESULT CMetis3View::OnJoin(WPARAM wParam, LPARAM lParam)
 
 		if(Util::ScanMessage(pUserInfo, wLen, "SDWWD", &lpUser, &dwIP, &user.wNodePort, &user.wLineType, &user.dwNumFiles) != 5){
 
-			TRACE("Error decoding join notification packet\n");
 			return 0;
 		}
 
@@ -822,7 +836,6 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 									&lpOldName, &dwOldIP, &wOldPort,
 									&lpNewName, &dwNewIP, &wNewPort, &wLine, &dwFiles, &wMode, &dwRealIP) < 9){
 
-			TRACE("Error decoding rename notification packet\n");
 			return 0;
 		}
 	}
@@ -832,7 +845,6 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 									&lpOldName, &dwOldIP, &wOldPort,
 									&lpNewName, &dwNewIP, &wNewPort, &wLine, &dwFiles) != 8){
 
-			TRACE("Error decoding rename notification packet\n");
 			return 0;
 		}
 		wMode = 0;
@@ -840,13 +852,14 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	//CString strOldName;
 	//strOldName.Format("%s", lpOldName);
 
-	LVFINDINFO fi;
-	fi.flags = LVFI_STRING|LVFI_WRAP;
-	fi.psz = lpOldName;
+	//LVFINDINFO fi;
+	//fi.flags = LVFI_STRING|LVFI_WRAP;
+	//fi.psz = lpOldName;
 
 	m_lcUsers.Sort();
 
-	int nPos = m_lcUsers.FindItem(&fi, -1);
+	//int nPos = m_lcUsers.FindItem(&fi, -1);
+	int nPos = m_lcUsers.SafeFind(lpOldName);
 
 	if(GetDocument()->m_strName.Find(lpNewName, 0) == 0){
 
@@ -865,28 +878,21 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 		if(i >= m_aUsers.GetSize()){
 
 			CString strMsg;
-			strMsg.Format("Error during User-Rename handling: User %s does not exist\n", lpOldName);
+			strMsg.Format(IDS_FIXME_NAME_ERROR, lpOldName);
 			WriteSystemMsg(strMsg, g_sSettings.GetRGBErr());
 			return 0;
 		}
 		oldUser = m_aUsers[i];
 		newUser = oldUser;
 
-		newUser.strUser = lpNewName;
-		newUser.wLineType = wLine;
-		newUser.wNodePort = wNewPort;
-		newUser.dwNumFiles = dwFiles;
-		newUser.strNodeIP = Util::FormatIP(dwNewIP);
-		newUser.wUserLever = wMode;
-		newUser.strRealIP = Util::FormatIP(dwRealIP);
-		if(oldUser.strRealIP != newUser.strRealIP){
-
-			newUser.strHostname = CMySocket::GetHostName(newUser.strRealIP);
-		}
-		else{
-
-			newUser.strHostname = oldUser.strHostname;
-		}
+		newUser.strUser		= lpNewName;
+		newUser.wLineType	= wLine;
+		newUser.wNodePort	= wNewPort;
+		newUser.dwNumFiles	= dwFiles;
+		newUser.strNodeIP	= Util::FormatIP(dwNewIP);
+		newUser.wUserLever	= wMode;
+		newUser.strRealIP	= oldUser.strRealIP;
+		newUser.strHostname = oldUser.strHostname;
 		
 		m_aUsers.SetAt(i, newUser);
 		m_lcUsers.DeleteItem(nPos);
@@ -897,7 +903,7 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 	else{
 
 		CString strErr;
-		strErr.Format("Debug Assertion Failed (call: OnRenameMsg): Could not locate '%s' in the userlist. Please report this error. CMyListCtrl::FindItem returned %d\n", lpOldName, nPos);
+		strErr.Format(IDS_FIXME_NAME_ERROR, lpOldName, nPos);
 		WriteSystemMsg(strErr, g_sSettings.GetRGBErr());
 		return 0;
 	}
@@ -911,10 +917,11 @@ LRESULT CMetis3View::OnRenameMsg(WPARAM wParam, LPARAM lParam)
 }
 
 
-LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
+LRESULT CMetis3View::OnOpMessage(WPARAM wParam, LPARAM lParam)
 {
 
 	CString strMsg = (char*)lParam;
+	CString strName;
 	WORD  wType		= LOWORD(wParam);
 	WORD  wLen		= HIWORD(wParam);
 	
@@ -928,23 +935,22 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 	}
 	if(wType == 0x00D2){ // opmsgs
 
-		if(strMsg.Find("") > 0){
+		if((strMsg.Find("") > 0) || (strMsg.Find("") >= 0)){
 			
-			CString strName;
-			CTokenizer token(strMsg, "> ");
+			CTokenizer token(strMsg, "");
 			token.Next(strName);
 			strMsg = token.Tail();
+			
+			if(!strName.IsEmpty()){
 
-			strName = strName.Mid(1, strName.GetLength()-1);
+				strName = strName.Mid(1, strName.GetLength()-3);
+				strName.TrimRight();
+			}
 			if(GetDocument()->m_strName.Find(strName, 0) == 0){
 
 				UpdateAverageLag(FALSE);
 			}
 			
-			for(int i = 0; i < g_aPlugins.GetSize(); i++){
-
-				PLUGIN->OnOpMessage((DWORD)m_hWnd, &strName, &strMsg);
-			}
 			if(strMsg.IsEmpty()) return 1;
 
 			m_rChat.SetText(" " + g_sSettings.GetBrMsgFront() +  strName + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
@@ -963,6 +969,10 @@ LRESULT CMetis3View::OnRenNotify(WPARAM wParam, LPARAM lParam)
 		m_rChat.SetText(" " + g_sSettings.GetBrMsgEnd() + " ", g_sSettings.GetRGBOp(), g_sSettings.GetRGBBg());
 		m_rChat.SetText(strMsg + "\n", g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
 		Log(":", strMsg);
+	}
+	for(int i = 0; i < g_aPlugins.GetSize(); i++){
+
+		PLUGIN->OnOpMessage((DWORD)m_hWnd, &strName, &strMsg);
 	}
 	
 	return 1;
@@ -983,7 +993,6 @@ LRESULT CMetis3View::OnPart(WPARAM wParam, LPARAM lParam)
 
 	if(Util::ScanMessage(pPart, wLen, "SDW", &lpUser, &dwIP, &wPort) != 3){
 
-		TRACE("Error decoding Part notification packet\n");
 		return 0;
 	}
 
@@ -1186,7 +1195,7 @@ LRESULT CMetis3View::OnUnknown(WPARAM wParam, LPARAM lParam)
 		if(c == '\0') strCmd+="0";
 		else strCmd.Insert(i, c);
 	}
-	strOut.Format("Fixme: Unknown Command 0x%X len=%d cmd=%s", wType, wLen, strCmd);
+	strOut.Format(IDS_FIXME_UNKNOWN_COMMAND, wType, wLen, strCmd);
 	WriteSystemMsg(strOut);
 
 	return 1;
@@ -1198,6 +1207,51 @@ void CMetis3View::Input(CString strText)
 	m_eInput.SetWindowText(strText);
 	m_eInput.PostMessage(WM_KEYDOWN, 13, 256);
 	OnInput(1, (LPARAM)(LPCTSTR)strText);
+}
+
+
+BOOL CMetis3View::HandleCustomCmds(CString& rString)
+{
+
+	if(rString.Find("/nick ") == 0){
+
+		CString strNick = rString.Mid(6);
+		Util::MakeValidUserName(strNick);
+		GetDocument()->m_strName = strNick;
+		m_mxClient.SendRename(GetDocument()->m_strName, GetDocument()->m_dwFiles, GetDocument()->m_wLine);
+		if(m_nServerType == SERVER_WINMX353){
+
+			m_mxClient.SendRename(GetDocument()->m_strName, GetDocument()->m_dwFiles, GetDocument()->m_wLine);
+		}
+		rString.Empty();
+		return TRUE; // dont handle this any further ... bla
+	}
+	else if(rString.Find("/walk") == 0){
+
+		rString = rString.Mid(5);
+		rString.Insert(0, "/me walks");
+	}
+	else if(rString.Find("/sleep") == 0){
+
+		rString = rString.Mid(6);
+		rString.Insert(0, "/me sleeps");
+	}
+	else if(rString.Find("/cry") == 0){
+
+		rString = rString.Mid(4);
+		rString.Insert(0, "/me cries");
+	}
+	else if(rString.Find("/shout") == 0){
+
+		rString = rString.Mid(6);
+		rString.Insert(0, "/me shouts");
+	}
+	else if(rString.Find("/steal") == 0){
+
+		rString = rString.Mid(6);
+		rString.Insert(0, "/me steals");
+	}
+	return FALSE;
 }
 
 LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
@@ -1221,7 +1275,15 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 
 	if(m_strInput.Find("{\\rtf", 0) >= 0){
 
-		m_strInput = "Sorry, I made a futile attemp to send an RTF exploit to the room. RoboMX outsmarted me though and blocked it. Please kick my butt!";
+		m_strInput.LoadString(IDS_RTF_BLOCK);
+	}
+
+	if(HandleCustomCmds(m_strInput)){
+
+		// Command is not to be send to server!
+		// abort ;)
+		UpdateData(FALSE);
+		return 1;
 	}
 
 	if((CMyEdit::SearchHistory(m_strInput) == 0) && g_sSettings.GetSaveHistory()){
@@ -1265,12 +1327,12 @@ LRESULT CMetis3View::OnInput(WPARAM wParam, LPARAM lParam)
 		}
 		else if((m_strInput.Find("/action ", 0) == 0) && (m_nServerType != SERVER_WINMX353)){
 
-			m_strInput = m_strInput.Mid(9);
+			m_strInput = m_strInput.Mid(8);
 			bAction = TRUE;
 		}
 		else if((m_strInput.Find("/emote ", 0) == 0) && (m_nServerType != SERVER_WINMX353)){
 
-			m_strInput = m_strInput.Mid(8);
+			m_strInput = m_strInput.Mid(7);
 			bAction = TRUE;
 		}
 
@@ -1770,7 +1832,7 @@ void CMetis3View::OnUserlistCustomizethismenu()
 	}END_CATCH;
 
 
-	AfxMessageBox("RoboMX will now open the a configuration file in notepad. Please adjust the RCMS commands to the one used in this room, save the document and re-join the channel. Do not change the order of the commands in the file.", MB_ICONINFORMATION);
+	AfxMessageBox(IDS_EDIT_MENU, MB_ICONINFORMATION);
 
 	ShellExecute(0, "open", "notepad.exe", strIniFile, 0, SW_SHOW);
 }
@@ -1813,12 +1875,12 @@ void CMetis3View::OnUserlistIgnore()
 			CString strIgnored;
 			if(m_nServerType == SERVER_WINMX353){
 
-				strIgnored.Format("/me ignored user '%s'", strUser);
+				strIgnored.Format(IDS_IGNORED_MX353, strUser);
 				m_mxClient.SendNew(strIgnored);
 			}
 			else{
 
-				strIgnored.Format("ignored user '%s'", strUser);
+				strIgnored.Format(IDS_IGNORED, strUser);
 				m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), FALSE);
 			}
 		}
@@ -1848,12 +1910,12 @@ void CMetis3View::OnUserlistUnignore()
 					CString strIgnored;
 					if(m_nServerType == SERVER_WINMX353){
 
-						strIgnored.Format("/me un-ignored user '%s'", strUser);
+						strIgnored.Format(IDS_UNIGNORE_MX353, strUser);
 						m_mxClient.SendNew(strIgnored);
 					}
 					else{
 
-						strIgnored.Format("un-ignored user '%s''", strUser);
+						strIgnored.Format(IDS_UNIGNORE, strUser);
 						m_mxClient.SendMessage(strIgnored, strIgnored.GetLength(), FALSE);
 					}
 				}
@@ -1962,7 +2024,7 @@ void CMetis3View::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		
 		m_pStatusBar->SetPaneText(1, GetDocument()->m_strRoomShort);
 
-		strText.Format("Average Lag: %u ms", m_dwAvLag);
+		strText.Format(IDS_AVERAGE_LAG, m_dwAvLag);
 		COLORREF cr = 0;
 		if(m_dwAvLag <= 500) cr = RGB(0, 100, 0);
 		else if((m_dwAvLag > 500) && (m_dwAvLag <= 1000)) cr = 0;
@@ -1970,9 +2032,8 @@ void CMetis3View::OnUpdate(CView* pSender, LPARAM lHint, CObject* pHint)
 		else cr = RGB(200, 0, 0);
 		m_pStatusBar->SetPaneText(2, strText, cr);
 
-		strText.Format("%0d users", m_lcUsers.GetItemCount());
+		strText.Format(IDS_USERS, m_lcUsers.GetItemCount());
 		m_pStatusBar->SetPaneText(3, strText);
-		//m_pStatusBar->Invalidate();
 	}
 }
 
@@ -1992,7 +2053,7 @@ void CMetis3View::UpdateAverageLag(BOOL bStart)
 		m_dwAvLag = (m_dwAvLag + dwTime) / 2;
 		m_dwLastTic = 0;
 		
-		strText.Format("Average Lag: %u ms", m_dwAvLag);
+		strText.Format(IDS_AVERAGE_LAG, m_dwAvLag);
 		
 		COLORREF cr = 0;
 		if(m_dwAvLag <= 500) cr = RGB(0, 100, 0);
@@ -2009,7 +2070,7 @@ void CMetis3View::OnReconnect()
 {
 
 	Disconnect();
-	WriteSystemMsg("Reconnecting. Stand by...", g_sSettings.GetRGBPend());
+	WriteSystemMsg(IDS_RECONNECTING, g_sSettings.GetRGBPend());
 	m_mxClient.Connect();
 }
 
@@ -2058,7 +2119,7 @@ void CMetis3View::OnDisplayAveragelag()
 	if(!m_mxClient.m_bListen) return;
 	
 	CString strMsg;
-	strMsg.Format("Average Lag in channel is %d seconds and %03d milliseconds", m_dwAvLag / 1000, m_dwAvLag % 1000);
+	strMsg.Format(IDS_AVERAGE_LAG_CHAT, m_dwAvLag / 1000, m_dwAvLag % 1000);
 	Input(strMsg);
 }
 
@@ -2083,7 +2144,7 @@ void CMetis3View::OnChatroomSearchongoogle()
 	if(!strSearch.IsEmpty()){
 
 		CString strTmp;
-		strTmp.Format("http://www.google.com/search?hl=en&ie=UTF-8&oe=UTF-8&q=%s&btnG=Google+Search", strSearch);
+		strTmp.Format(IDS_GOOGLE_STR, strSearch);
 		ShellExecute(0, "open", strTmp, 0, 0, SW_SHOW);
 	}
 }
@@ -2329,37 +2390,37 @@ void CMetis3View::OnAwayControl(UINT nID)
 	switch(nID){
 
 		case ID_AWAYCONTROL_ZZZZZZZZZZZZZZZZ:
-			strReason = "zZzZZZZZzzZzZzz";
+			strReason.LoadString(IDS_ZZZZZZZZ);
 			break;
 		case ID_AWAYCONTROL_WORK:
-			strReason = "Work";
+			strReason.LoadString(IDS_WORK);
 			break;
 		case ID_AWAYCONTROL_SLEEP:
-			strReason = "Sleep";
+			strReason.LoadString(IDS_SLEEP);
 			break;
 		case ID_AWAYCONTROL_FRESHAIR:
-			strReason = "Getting Fresh Air";
+			strReason.LoadString(IDS_FRESHAIR);
 			break;
 		case ID_AWAYCONTROL_BATHROOM:
-			strReason = "Bathroom";
+			strReason.LoadString(IDS_BATH);
 			break;
 		case ID_AWAYCONTROL_SMOKEBREAK:
-			strReason = "Smoke";
+			strReason.LoadString(IDS_SMOKE);
 			break;
 		case ID_AWAYCONTROL_FOOD:
-			strReason = "Food";
+			strReason.LoadString(IDS_FOOD);
 			break;
 		case ID_AWAYCONTROL_BEER:
-			strReason = "Beer";
+			strReason.LoadString(IDS_BEER);
 			break;
 		case ID_AWAYCONTROL_TV:
-			strReason = "Watching TV";
+			strReason.LoadString(IDS_TV);
 			break;
 		case ID_AWAYCONTROL_STORE:
-			strReason = "Run to the store";
+			strReason.LoadString(IDS_STORE);
 			break;
 		case ID_AWAYCONTROL_NONEOFYOURBUISNESS:
-			strReason = "Wont tell you :-P";
+			strReason.LoadString(IDS_NOTYOURBUISNESS);
 			break;
 		case ID_AWAYCONTROL_ENTERREASON:
 			strReason = GetUserInput();
@@ -2370,7 +2431,7 @@ void CMetis3View::OnAwayControl(UINT nID)
 	
 	if(!strReason.IsEmpty()){
 
-		strMessage.Format("/me is AFK, %s", strReason);
+		strMessage.Format(IDS_AWAYCTRL, strReason);
 		((CMainFrame*)GetApp()->m_pMainWnd)->m_bAway = TRUE;
 		((CMainFrame*)AfxGetMainWnd())->m_strAway = strReason;
 		((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.InputAll(strMessage);
@@ -2399,11 +2460,11 @@ void CMetis3View::OnAwayControlBack(UINT nID)
 	switch(nID){
 
 		case ID_BACK_SETBACK:
-			strMessage.Format("/me is now back from »%s«. %s was away for %s", strReason, GetDocument()->m_strName, strTime);
+			strMessage.Format(IDS_AWAY_BACK, strReason, GetDocument()->m_strName, strTime);
 			((CMainFrame*)AfxGetMainWnd())->m_wndDocSelector.InputAll(strMessage);
 			break;
 		case ID_BACK_SETSI8LENTBACK:
-			strMessage.Format("You are now back from »%s«. You have been away for %s\n", strReason, strTime);
+			strMessage.Format(IDS_AWAY_SILENTBACK, strReason, strTime);
 			m_rChat.SetText(strMessage, g_sSettings.GetRGBNormalMsg(), g_sSettings.GetRGBBg());
 			break;
 		default:
@@ -2450,7 +2511,7 @@ BOOL CMetis3View::Log(CString strName, CString strText)
 	}
 	CATCH(CFileException, e){
 
-		WriteSystemMsg("Error: Could not write data to logfile.", g_sSettings.GetRGBErr());
+		WriteSystemMsg(IDS_ERROR_LOGFILE_WRITE, g_sSettings.GetRGBErr());
 		m_bFileOpened = FALSE;
 		return FALSE;
 	}END_CATCH;
@@ -2486,7 +2547,9 @@ void CMetis3View::OnChatroomViewtopic()
 		m_rChat.SetText(strTime, g_sSettings.GetRGBTime(), g_sSettings.GetRGBTopic());
 	}
 
-	m_rChat.SetText(" Topic: " + GetDocument()->m_strTopic + "\n", g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
+	CString strOut;
+	strOut.Format(IDS_TOPIC, GetDocument()->m_strTopic);
+	m_rChat.SetText(strOut, g_sSettings.GetRGBTopic(), g_sSettings.GetRGBBg());
 }
 
 void CMetis3View::OnChatroomAddtoautojoin()
@@ -2504,8 +2567,11 @@ void CMetis3View::OnChatroomAddtoautojoin()
 		strTmp.Format("AutoJoin_%03d", i);
 		if(ini.GetValue("AutoJoins", strTmp, "") == GetDocument()->m_strRoom){
 
-			ini.SetValue("AutoJoins", strTmp, "");			
-			WriteSystemMsg("Channel " + GetDocument()->m_strRoom + " was removed from Auto-Join list.", g_sSettings.GetRGBPend());
+			ini.SetValue("AutoJoins", strTmp, "");	
+
+			CString strOut;
+			strOut.Format(IDS_AUTOJOIN_REMOVE, GetDocument()->m_strRoom);
+			WriteSystemMsg(strOut, g_sSettings.GetRGBPend());
 			return;
 		}
 	}
@@ -2519,7 +2585,10 @@ void CMetis3View::OnChatroomAddtoautojoin()
 	strTmp.Format("AutoJoin_%03d", i);
 	ini.SetValue("AutoJoins", "Num", (i <= n ? n : n+1));
 	ini.SetValue("AutoJoins", strTmp, GetDocument()->m_strRoom);
-	WriteSystemMsg("Channel " + GetDocument()->m_strRoom + " added to Auto-Join list.", g_sSettings.GetRGBOK());
+
+	CString strOut;
+	strOut.Format(IDS_AUTOJOIN_ADD, GetDocument()->m_strRoom);
+	WriteSystemMsg(strOut, g_sSettings.GetRGBOK());
 }
 
 void CMetis3View::OnChatroomViewcurrentbans()
@@ -2531,6 +2600,18 @@ void CMetis3View::OnChatroomViewcurrentbans()
 	}
 	else{
 
-		WriteSystemMsg("This feature only works with WinMX 3.53 rooms.", g_sSettings.GetRGBPend());
+		WriteSystemMsg(IDS_ERROR_MX353ONLY, g_sSettings.GetRGBPend());
 	}
+}
+
+void CMetis3View::OnMute()
+{
+
+	g_sSettings.SetSfxChatSfx(!g_sSettings.GetSfxChatSfx());
+}
+
+void CMetis3View::OnUpdateMute(CCmdUI *pCmdUI)
+{
+
+	pCmdUI->SetCheck(!g_sSettings.GetSfxChatSfx());
 }

@@ -610,3 +610,18 @@ void CMyListCtrl::SetHiLite(BOOL bHiLite)
 
 	m_bHiLite = bHiLite;
 }
+
+int CMyListCtrl::SafeFind(LPCTSTR lpszItem)
+{
+
+
+	for(int i = 0; i < GetItemCount(); i++){
+
+		if(GetItemText(i, 0).Compare(lpszItem) == 0){
+
+			return i;
+		}
+	}
+
+	return -1;
+}

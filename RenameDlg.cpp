@@ -76,13 +76,13 @@ void CRenameDlg::OnOK()
 
 	if(m_strName.GetLength() < 1){
 
-		AfxMessageBox("Username too short.", MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_NAME_SHORT, MB_ICONINFORMATION);
 		return;
 	}
 
 	if((m_strName.Find(" ") >= 0) || (m_strName.Find("\\rtf") >= 0)){
 
-		AfxMessageBox("Username contains illegal characters!", MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_NAME_INVALID, MB_ICONINFORMATION);
 		return;
 	}
 
@@ -90,7 +90,7 @@ void CRenameDlg::OnOK()
 
 	if(m_strName.GetLength() > 44){
 		
-		AfxMessageBox("Username is too long. Must not be longer then 38 characters (without ID).", MB_ICONINFORMATION);
+		AfxMessageBox(IDS_ERROR_NAME_LONG, MB_ICONINFORMATION);
 		return;
 	}
 

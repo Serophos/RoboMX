@@ -150,7 +150,7 @@ void CChannelView::OnInitialUpdate()
 
 	ListView_SetExtendedListViewStyle(m_lcList.m_hWnd, LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES | LVS_EX_UNDERLINEHOT);
 
-	m_lcList.SetHeadings("Room,300;Users,50;Limit,50;Topic,300");
+	m_lcList.SetHeadings(IDS_ROOMLIST);
 	m_lcList.LoadColumnInfo();
 
 	m_lcList.SetColors(
@@ -166,7 +166,12 @@ void CChannelView::OnInitialUpdate()
 	m_pgStatus.SetRange(0, 100);
 
 	m_mxClient.SetCallBackProck(CChannelView::ClientCallback, (DWORD)this);
-	m_mxClient.Connect(NULL, "ROBOMX000", 0, 6699);
+	CString strNick = g_sSettings.GetNickname();
+	if(strNick.ReverseFind('_') == strNick.GetLength() - 6){
+
+		strNick = strNick.Left(strNick.GetLength() - 6);
+	}
+	m_mxClient.Connect(NULL, strNick, 0, 6699);
 }
 
 LRESULT CChannelView::OnReloadCfg(WPARAM w, LPARAM l)
@@ -227,7 +232,12 @@ void CChannelView::OnClearRefresh()
 {
 
 	m_lcList.DeleteAllItems();
-	m_mxClient.Connect(NULL, "ROBOMX000", 0, 6699);
+	CString strNick = g_sSettings.GetNickname();
+	if(strNick.ReverseFind('_') == strNick.GetLength() - 6){
+
+		strNick = strNick.Left(strNick.GetLength() - 6);
+	}
+	m_mxClient.Connect(NULL, strNick, 0, 6699);
 	GetDlgItem(IDC_REFRESH)->EnableWindow(FALSE);
 	GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(FALSE);
 }
@@ -235,7 +245,12 @@ void CChannelView::OnClearRefresh()
 void CChannelView::OnRefresh() 
 {
 
-	m_mxClient.Connect(NULL, "ROBOMX000", 0, 6699);
+	CString strNick = g_sSettings.GetNickname();
+	if(strNick.ReverseFind('_') == strNick.GetLength() - 6){
+
+		strNick = strNick.Left(strNick.GetLength() - 6);
+	}
+	m_mxClient.Connect(NULL, strNick, 0, 6699);
 	GetDlgItem(IDC_REFRESH)->EnableWindow(FALSE);
 	GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(FALSE);
 }
@@ -248,21 +263,21 @@ BOOL CChannelView::ClientCallback(DWORD dwParam, WPARAM wParam, LPARAM lParam)
 		case CLN_ERROR :
 			switch(lParam){
 				case CLNC_WPNCONNECTFAILED :
-					m_pThis->SetPaneStatus("Could not connect to WPN");
+					//m_pThis->SetPaneStatus("Could not connect to WPN");
 					return TRUE;
 
 				case CLNC_WPNGETPARENTFAILED :
-					m_pThis->SetPaneStatus("Connection to Parent Node failed.");
+					//m_pThis->SetPaneStatus("Connection to Parent Node failed.");
 					return TRUE;
 				}
 			break;		
 
 		case CLN_WPNCONNECTSTART :
-			m_pThis->SetPaneStatus("Connecting to WPN");
+			//m_pThis->SetPaneStatus("Connecting to WPN");
 			return TRUE; 
 
 		case CLN_WPNCONNECTED :
-			m_pThis->SetPaneStatus("Loading channel list...");
+			//m_pThis->SetPaneStatus("Loading channel list...");
 			m_pThis->m_nLastItem = GetTickCount();
 			m_pThis->m_mxClient.SendQueStatus(1, 1, 0);
 			m_pThis->m_mxClient.SendFormatMessage(WPN_ENUMCHATROOMS, "D", 0);
@@ -272,19 +287,19 @@ BOOL CChannelView::ClientCallback(DWORD dwParam, WPARAM wParam, LPARAM lParam)
 			return TRUE;
 
 		case CLN_CHANGEPARENTSTART :
-			m_pThis->m_pStatusBar->SetPaneText(0, "");
+			//m_pThis->m_pStatusBar->SetPaneText(0, "");
 			return TRUE;
 		
 		case CLN_CHANGEPARENTCOMP :
-			m_pThis->m_pStatusBar->SetPaneText(0, "");
+			//m_pThis->m_pStatusBar->SetPaneText(0, "");
 			return TRUE;
 
 		case CLN_PARENTDISCONNECTED :
-			m_pThis->SetPaneStatus("Parent node closed connection");
+			//m_pThis->SetPaneStatus("Parent node closed connection");
 			return TRUE;	
 
 		case CLN_WPNDISCONNECTED :
-			m_pThis->SetPaneStatus("WPN Disconnected");
+			//m_pThis->SetPaneStatus("WPN Disconnected");
 			return TRUE;
 		
 		case CLN_CHATROOMINFO : {
@@ -335,7 +350,9 @@ void CChannelView::OnTimer(UINT nIDEvent)
 			m_mxClient.Disconnect();
 			GetDlgItem(IDC_REFRESH)->EnableWindow(TRUE);
 			GetDlgItem(IDC_CLEAR_REFRESH)->EnableWindow(TRUE);
-			m_pStatusBar->SetPaneText(0, "Finished.");
+			CString strOut;
+			strOut.LoadString(IDS_FINISHED);
+			m_pStatusBar->SetPaneText(0, strOut);
 			KillTimer(TIMER_LOAD);
 		}
 		
@@ -343,15 +360,17 @@ void CChannelView::OnTimer(UINT nIDEvent)
 		m_nPerc = (int)((float)m_lcList.GetItemCount() / 1500.f * 100.f);
 		m_pgStatus.SetPos(m_nPerc);
 		m_tTime.Calculate(m_nPerc);
-		strNum.Format("%04d Rooms (ETA: %s, %s, %s)", m_lcList.GetItemCount(), m_tTime.GetRemainingString(), m_tTime.GetElapsedString(), m_tTime.GetEstimateString());
+		strNum.Format(IDS_ROOMS_ETA, m_lcList.GetItemCount(), m_tTime.GetRemainingString(), m_tTime.GetElapsedString(), m_tTime.GetEstimateString());
 		GetDlgItem(IDC_STATIC_ROOMS)->SetWindowText(strNum);
 
 		if(m_pStatusBar){
 
 			if(((CMainFrame*)GetApp()->m_pMainWnd)->GetActiveFrame() == GetParentFrame()){
-				m_pStatusBar->SetPaneText(1, "Channel List");
+				CString strOut;
+				strOut.LoadString(IDS_CHANNELLIST);
+				m_pStatusBar->SetPaneText(1, strOut);
 				CString strText;
-				strText.Format("%d channels", m_lcList.GetItemCount());
+				strText.Format(IDS_NUMCHANNELS, m_lcList.GetItemCount());
 				m_pStatusBar->SetLagColor(0, strText);
 				m_pStatusBar->SetPaneText(2, strText);
 				m_pStatusBar->SetPaneText(3, "");

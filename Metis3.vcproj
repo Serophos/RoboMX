@@ -500,6 +500,9 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ListViewCtrlEx.cpp">
+			</File>
+			<File
 				RelativePath="MainFrm.cpp">
 				<FileConfiguration
 					Name="Release|Win32">
@@ -960,6 +963,9 @@
 				RelativePath="ListClient.h">
 			</File>
 			<File
+				RelativePath=".\ListViewCtrlEx.h">
+			</File>
+			<File
 				RelativePath="MainFrm.h">
 			</File>
 			<File
@@ -1076,6 +1082,15 @@
 			</File>
 			<File
 				RelativePath="res\channel.bmp">
+			</File>
+			<File
+				RelativePath=".\res\hand.cur">
+			</File>
+			<File
+				RelativePath=".\res\hdrdown.bmp">
+			</File>
+			<File
+				RelativePath=".\res\hdrup.bmp">
 			</File>
 			<File
 				RelativePath=".\res\icon1.ico">

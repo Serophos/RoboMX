@@ -105,7 +105,7 @@ void CMetis3App::ApplyPic(void)
 		//if (hBmp == NULL){
 		if(m_iBgImage.Load(g_sSettings.GetImage()) == E_FAIL){
 
-			AfxMessageBox("Error. Could not load Background image", MB_OK);
+			AfxMessageBox(IDS_ERROR_BG_LOAD, MB_OK);
 		}
 		else{
 
@@ -141,7 +141,7 @@ BOOL CMetis3App::InitInstance()
 
 	if(!Util::CheckRichEdit((_TCHAR*)lpszModuleName)){
 
-		if(AfxMessageBox("Your RICHED32.DLL is too old to run RoboMX. You need at least version 5.0 to run it.\nDo you want to download the necessary files now?", MB_YESNO+MB_ICONQUESTION) == IDYES){
+		if(AfxMessageBox(IDS_ERROR_RICHEDIT, MB_YESNO+MB_ICONQUESTION) == IDYES){
 
 			ShellExecute(0, "open", "http://mxcontrol.sourceforge.net/modules.php?name=Downloads&d_op=viewdownload&cid=12", 0, 0, SW_SHOW);
 			return FALSE;
@@ -156,7 +156,7 @@ BOOL CMetis3App::InitInstance()
 	// Initialize OLE libraries
 	if (!AfxOleInit())
 	{
-		AfxMessageBox("Could not initialize Ole-Interface.", MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_OLE, MB_ICONSTOP);
 		return FALSE;
 	}
 
@@ -168,13 +168,13 @@ BOOL CMetis3App::InitInstance()
 
 	if(!InitCommonControlsEx(&icc)){
 
-		AfxMessageBox("Could not initialzie Common Conttrols.", MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_COMCTRL, MB_ICONSTOP);
 		return FALSE;
 	}
 
 	if(!AfxInitRichEdit2()){
 
-		AfxMessageBox("Could not initialize Richedit 2.0 Interface.", MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_RICHEDIT_INIT, MB_ICONSTOP);
 		return FALSE;
 	}
 
@@ -190,7 +190,7 @@ BOOL CMetis3App::InitInstance()
 	
 	if(m_nWSA){
 
-		AfxMessageBox("Could not initialize Winsock.", MB_OK+MB_ICONSTOP);
+		AfxMessageBox(IDS_ERROR_WINSOCK, MB_OK+MB_ICONSTOP);
 		return FALSE;
 	}
 
@@ -231,7 +231,7 @@ BOOL CMetis3App::InitInstance()
 		return FALSE;
 	AddDocTemplate(pSettingsTemplate);
 
-	CMultiDocTemplate* pServerTemplate;
+	/*CMultiDocTemplate* pServerTemplate;
 	pServerTemplate = new CMultiDocTemplate(
 		IDR_SERVER,
 		RUNTIME_CLASS(CServerDoc),
@@ -240,7 +240,7 @@ BOOL CMetis3App::InitInstance()
 	if (!pServerTemplate)
 		return FALSE;
 	pServerTemplate->SetContainerInfo(IDR_SERVER);
-	AddDocTemplate(pServerTemplate);
+	AddDocTemplate(pServerTemplate);	 */
 
 
 	// create main MDI Frame window
@@ -276,9 +276,10 @@ BOOL CMetis3App::InitInstance()
 		((CMainFrame*)pMainFrame)->OnChannelChannellist();
 	}
 	
-	((CMainFrame*)pMainFrame)->ExecuteAutoJoins();
+	if(GetKeyState(VK_SHIFT) >= 0){
 
-	((CMainFrame*)pMainFrame)->StopAni();
+		((CMainFrame*)pMainFrame)->ExecuteAutoJoins();
+	}
 	return TRUE;
 }
 
